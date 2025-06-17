@@ -5,7 +5,10 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile";
-import Toilets from "../pages/Toilets";
+import Restrooms from "../pages/Restrooms";
+import RestroomDetails from "../pages/RestroomDetails";
+import EditRestroom from "../pages/EditRestroom";
+import AddRestroom from "../pages/AddRestroom";
 import NotFound from "../pages/NotFound";
 
 // Protected route wrapper
@@ -27,7 +30,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/toilets" replace />,
+        element: <Navigate to="/restrooms" replace />,
       },
       {
         path: "login",
@@ -46,10 +49,34 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "toilets",
+        path: "restrooms",
         element: (
           <ProtectedRoute>
-            <Toilets />
+            <Restrooms />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "restrooms/add",
+        element: (
+          <ProtectedRoute>
+            <AddRestroom />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "restrooms/:id",
+        element: (
+          <ProtectedRoute>
+            <RestroomDetails />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "restrooms/:id/edit",
+        element: (
+          <ProtectedRoute>
+            <EditRestroom />
           </ProtectedRoute>
         ),
       },
