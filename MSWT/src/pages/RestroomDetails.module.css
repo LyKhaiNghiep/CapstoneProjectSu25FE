@@ -1,0 +1,98 @@
+.container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.breadcrumb {
+  margin-bottom: 20px;
+}
+
+.breadcrumbButton {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.breadcrumbSeparator {
+  margin: 0 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.breadcrumbCurrent {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pageTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: black;
+  margin: 0 0 32px 0;
+}
+
+.detailsCard {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.fieldContainer {
+  margin-bottom: 24px;
+}
+
+.fieldContainer:last-child {
+  margin-bottom: 0;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: black;
+  margin-bottom: 8px;
+}
+
+.fieldValue {
+  padding: 12px 16px;
+  background-color: #f3f4f6;
+  border-radius: 6px;
+  font-size: 14px;
+  color: black;
+}
+
+.fieldValueLarge {
+  padding: 12px 16px;
+  background-color: #f3f4f6;
+  border-radius: 6px;
+  font-size: 14px;
+  color: black;
+  min-height: 120px;
+}
+
+.statusBadge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statusActive {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.statusMaintenance {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.notFound {
+  padding: 20px;
+}
