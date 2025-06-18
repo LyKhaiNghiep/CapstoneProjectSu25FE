@@ -50,7 +50,7 @@ const Sidebar = () => {
     },
     {
       title: "Nhà vệ sinh",
-      path: "/toilets",
+      path: "/restrooms",
       icon: HiOutlineHome,
     },
     {

@@ -4,21 +4,31 @@ const Pagination = ({ currentPage = 1, totalPages = 3, onPageChange }) => {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <div className="flex items-center justify-center gap-24px space-x-3 py-6"style={{ gap: '12px' }} >
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "8px",
+        paddingTop: "16px",
+        paddingBottom: "16px",
+      }}
+    >
       {/* Previous Button */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`
-          p-3 rounded-full border transition-colors bg-[#FFDED4]
-          ${
-            currentPage === 1
-              ? "border-[#FFDED4] text-white cursor-not-allowed"
-              : "border-[#FFDED4] text-white hover:bg-gray-50"
-          }
-        `}
+        style={{
+          padding: "8px",
+          borderRadius: "6px",
+          border: "1px solid #FFDED4",
+          backgroundColor: "#FFDED4",
+          color: currentPage === 1 ? "#9ca3af" : "#374151",
+          cursor: currentPage === 1 ? "not-allowed" : "pointer",
+          transition: "all 0.2s",
+        }}
       >
-        <HiOutlineChevronLeft className="w-5 h-5" />
+        <HiOutlineChevronLeft style={{ width: "16px", height: "16px" }} />
       </button>
 
       {/* Page Numbers */}
@@ -26,14 +36,21 @@ const Pagination = ({ currentPage = 1, totalPages = 3, onPageChange }) => {
         <button
           key={page}
           onClick={() => onPageChange(page)}
-          className={`
-            w-12 h-12 rounded-full border transition-colors font-medium text-sm
-            ${
-              page === currentPage
-                ? "bg-[#FF5B27] text-white border-[#FF5B27]"
-                : "border-[#FF5B27] text-white hover:bg-gray-50 bg-[#FFDED4]"
-            }
-          `}
+          style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "6px",
+            border: "1px solid #FF5B27",
+            backgroundColor: page === currentPage ? "#FF5B27" : "#FFDED4",
+            color: page === currentPage ? "white" : "#374151",
+            fontSize: "14px",
+            fontWeight: "500",
+            cursor: "pointer",
+            transition: "all 0.2s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
           {page}
         </button>
@@ -43,16 +60,17 @@ const Pagination = ({ currentPage = 1, totalPages = 3, onPageChange }) => {
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`
-          p-3 rounded-full border transition-colors bg-[#FFDED4]
-          ${
-            currentPage === totalPages
-              ? "border-[#FFDED4] text-white cursor-not-allowed"
-              : "border-[#FFDED4] text-white hover:bg-gray-50"
-          }
-        `}
+        style={{
+          padding: "8px",
+          borderRadius: "6px",
+          border: "1px solid #FFDED4",
+          backgroundColor: "#FFDED4",
+          color: currentPage === totalPages ? "#9ca3af" : "#374151",
+          cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+          transition: "all 0.2s",
+        }}
       >
-        <HiOutlineChevronRight className="w-5 h-5" />
+        <HiOutlineChevronRight style={{ width: "16px", height: "16px" }} />
       </button>
     </div>
   );
