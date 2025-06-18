@@ -4,7 +4,7 @@ const Pagination = ({ currentPage = 1, totalPages = 3, onPageChange }) => {
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <div className="flex items-center justify-center space-x-3 py-6">
+    <div className="flex items-center justify-center gap-24px space-x-3 py-6"style={{ gap: '12px' }} >
       {/* Previous Button */}
       <button
         onClick={() => onPageChange(currentPage - 1)}

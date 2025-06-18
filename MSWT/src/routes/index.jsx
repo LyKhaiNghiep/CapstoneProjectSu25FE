@@ -6,19 +6,12 @@ import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile";
 import Toilets from "../pages/Toilets";
+import UserManagement from "../pages/UserManagement";
+import ReportManagement from "../pages/ReportManagement";
 import NotFound from "../pages/NotFound";
 
-// Protected route wrapper
-const ProtectedRoute = ({ children }) => {
-  // Add your authentication logic here
-  const isAuthenticated = true; // Set to true for now to test
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
+// We'll use the auth context in RootLayout instead of here
+// This makes routing simpler and handles authentication at layout level
 
 export const router = createBrowserRouter([
   {
@@ -27,7 +20,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/toilets" replace />,
+        element: <Navigate to="/login" replace />,
       },
       {
         path: "login",
@@ -39,27 +32,23 @@ export const router = createBrowserRouter([
       },
       {
         path: "dashboard",
-        element: (
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        ),
+        element: <Dashboard />,
       },
       {
         path: "toilets",
-        element: (
-          <ProtectedRoute>
-            <Toilets />
-          </ProtectedRoute>
-        ),
+        element: <Toilets />,
       },
       {
         path: "profile",
-        element: (
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        ),
+        element: <Profile />,
+      },
+      {
+        path: "user-management",
+        element: <UserManagement />,
+      },
+      {
+        path: "report-management",
+        element: <ReportManagement />,
       },
       {
         path: "*",

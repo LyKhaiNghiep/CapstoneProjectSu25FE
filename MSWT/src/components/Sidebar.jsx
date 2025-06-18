@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import {
   HiOutlineChartBar,
   HiOutlineUsers,
@@ -8,20 +9,28 @@ import {
   HiOutlineHome,
   HiOutlineCalendar,
   HiOutlineClock,
+  HiOutlineLogout,
 } from "react-icons/hi";
 
 const Sidebar = () => {
   const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+      logout();
+    }
+  };
 
   const menuItems = [
     {
-      title: "Báo cáo vấn đề",
-      path: "/reports",
+      title: "Danh sách báo cáo",
+      path: "/report-management",
       icon: HiOutlineChartBar,
     },
     {
       title: "Danh sách người dùng",
-      path: "/users",
+      path: "/user-management",
       icon: HiOutlineUsers,
     },
     {
@@ -59,12 +68,16 @@ const Sidebar = () => {
   return (
     <div
       style={{
+        position: "fixed",
+        left: 0,
+        top: 0,
         width: "256px",
         height: "100vh",
         backgroundColor: "white",
         borderRight: "1px solid #e5e7eb",
         display: "flex",
         flexDirection: "column",
+        zIndex: 1000,
       }}
     >
       {/* Header */}
@@ -148,7 +161,7 @@ const Sidebar = () => {
         </ul>
       </nav>
 
-      {/* User Info */}
+      {/* User Info & Logout */}
       <div
         style={{
           padding: "24px",
@@ -156,7 +169,7 @@ const Sidebar = () => {
           marginTop: "auto",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "16px" }}>
           <div
             style={{
               width: "48px",
@@ -175,7 +188,7 @@ const Sidebar = () => {
                 fontSize: "16px",
               }}
             >
-              AM
+              {user?.username?.charAt(0).toUpperCase() || 'A'}
             </span>
           </div>
           <div style={{ marginLeft: "16px" }}>
@@ -188,7 +201,7 @@ const Sidebar = () => {
                 marginBottom: "2px",
               }}
             >
-              Alex Morgan
+              {user?.name || 'Administrator'}
             </p>
             <p
               style={{
@@ -197,10 +210,44 @@ const Sidebar = () => {
                 margin: 0,
               }}
             >
-              Leader
+              {user?.role || 'admin'}
             </p>
           </div>
         </div>
+        
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+            padding: "12px 16px",
+            fontSize: "14px",
+            fontWeight: "500",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: "transparent",
+            color: "#dc2626",
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = "#fef2f2";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = "transparent";
+          }}
+        >
+          <HiOutlineLogout
+            style={{
+              width: "20px",
+              height: "20px",
+              marginRight: "12px",
+            }}
+          />
+          Đăng xuất
+        </button>
       </div>
     </div>
   );
