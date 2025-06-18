@@ -32,7 +32,7 @@ const Login = () => {
       const result = login(formData.username, formData.password);
       
       if (result.success) {
-        navigate('/toilets'); // Navigate to default page after login
+        navigate('/restrooms'); // Navigate to default page after login
       } else {
         setError(result.error);
       }

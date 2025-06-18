@@ -9,6 +9,8 @@ import Restrooms from "../pages/Restrooms";
 import RestroomDetails from "../pages/RestroomDetails";
 import EditRestroom from "../pages/EditRestroom";
 import AddRestroom from "../pages/AddRestroom";
+import UserManagement from "../pages/UserManagement";
+import ReportManagement from "../pages/ReportManagement";
 import NotFound from "../pages/NotFound";
 
 // We'll use the auth context in RootLayout instead of here
@@ -37,35 +39,19 @@ export const router = createBrowserRouter([
       },
       {
         path: "restrooms",
-        element: (
-          <ProtectedRoute>
-            <Restrooms />
-          </ProtectedRoute>
-        ),
+        element: <Restrooms />,
       },
       {
         path: "restrooms/add",
-        element: (
-          <ProtectedRoute>
-            <AddRestroom />
-          </ProtectedRoute>
-        ),
+        element: <AddRestroom />,
       },
       {
         path: "restrooms/:id",
-        element: (
-          <ProtectedRoute>
-            <RestroomDetails />
-          </ProtectedRoute>
-        ),
+        element: <RestroomDetails />,
       },
       {
         path: "restrooms/:id/edit",
-        element: (
-          <ProtectedRoute>
-            <EditRestroom />
-          </ProtectedRoute>
-        ),
+        element: <EditRestroom />,
       },
       {
         path: "profile",
