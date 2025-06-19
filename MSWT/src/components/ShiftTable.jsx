@@ -7,35 +7,30 @@ import {
   HiChevronDown,
 } from "react-icons/hi";
 
-const RestroomTable = ({
-  restrooms,
-  onActionClick,
-  sortState,
-  onSortClick,
-}) => {
+const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
 
-  // Debug log to check restrooms data
-  console.log("RestroomTable received restrooms:", restrooms);
-  console.log("RestroomTable restrooms length:", restrooms?.length);
+  // Debug log to check shifts data
+  console.log("ShiftTable received shifts:", shifts);
+  console.log("ShiftTable shifts length:", shifts?.length);
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "hoạt động":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
-      case "bảo trì":
+      case "tạm dừng":
         return { backgroundColor: "#fee2e2", color: "#dc2626" };
       default:
         return { backgroundColor: "#f3f4f6", color: "#374151" };
     }
   };
 
-  const handleDropdownToggle = (restroomId) => {
-    setOpenDropdown(openDropdown === restroomId ? null : restroomId);
+  const handleDropdownToggle = (shiftId) => {
+    setOpenDropdown(openDropdown === shiftId ? null : shiftId);
   };
 
-  const handleActionSelect = (action, restroom) => {
-    onActionClick({ action, restroom });
+  const handleActionSelect = (action, shift) => {
+    onActionClick({ action, shift });
     setOpenDropdown(null);
   };
 
@@ -75,7 +70,7 @@ const RestroomTable = ({
                 }}
                 onClick={onSortClick}
               >
-                Phòng
+                Ca làm
                 <div
                   style={{
                     display: "flex",
@@ -109,7 +104,7 @@ const RestroomTable = ({
                 color: "#374151",
               }}
             >
-              Khu vực
+              Thời gian bắt đầu
             </th>
             <th
               style={{
@@ -120,7 +115,7 @@ const RestroomTable = ({
                 color: "#374151",
               }}
             >
-              Chi tiết
+              Thời gian kết thúc
             </th>
             <th
               style={{
@@ -147,9 +142,9 @@ const RestroomTable = ({
           </tr>
         </thead>
         <tbody>
-          {restrooms.map((restroom, index) => (
+          {shifts.map((shift, index) => (
             <tr
-              key={restroom.id}
+              key={shift.id}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -161,7 +156,7 @@ const RestroomTable = ({
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
-              {/* Room Column */}
+              {/* Shift Name Column */}
               <td
                 style={{
                   padding: "16px 24px",
@@ -170,10 +165,10 @@ const RestroomTable = ({
                   color: "#111827",
                 }}
               >
-                {restroom.room}
+                {shift.name}
               </td>
 
-              {/* Area Column */}
+              {/* Start Time Column */}
               <td
                 style={{
                   padding: "16px 24px",
@@ -181,22 +176,18 @@ const RestroomTable = ({
                   color: "#6b7280",
                 }}
               >
-                {restroom.area}
+                {shift.startTime}
               </td>
 
-              {/* Details Column */}
+              {/* End Time Column */}
               <td
                 style={{
                   padding: "16px 24px",
                   fontSize: "14px",
                   color: "#6b7280",
-                  maxWidth: "200px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
                 }}
               >
-                {restroom.details}
+                {shift.endTime}
               </td>
 
               {/* Status Column */}
@@ -208,10 +199,10 @@ const RestroomTable = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getStatusColor(restroom.status),
+                    ...getStatusColor(shift.status),
                   }}
                 >
-                  {restroom.status}
+                  {shift.status}
                 </span>
               </td>
 
@@ -224,7 +215,7 @@ const RestroomTable = ({
                 }}
               >
                 <button
-                  onClick={() => handleDropdownToggle(restroom.id)}
+                  onClick={() => handleDropdownToggle(shift.id)}
                   style={{
                     color: "#6b7280",
                     background: "transparent",
@@ -249,7 +240,7 @@ const RestroomTable = ({
                 </button>
 
                 {/* Dropdown Menu */}
-                {openDropdown === restroom.id && (
+                {openDropdown === shift.id && (
                   <div
                     style={{
                       position: "absolute",
@@ -265,7 +256,7 @@ const RestroomTable = ({
                     }}
                   >
                     <button
-                      onClick={() => handleActionSelect("view", restroom)}
+                      onClick={() => handleActionSelect("view", shift)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -291,7 +282,7 @@ const RestroomTable = ({
                       Xem chi tiết
                     </button>
                     <button
-                      onClick={() => handleActionSelect("update", restroom)}
+                      onClick={() => handleActionSelect("update", shift)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -345,4 +336,4 @@ const RestroomTable = ({
   );
 };
 
-export default RestroomTable;
+export default ShiftTable;

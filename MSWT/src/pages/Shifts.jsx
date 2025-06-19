@@ -1,30 +1,28 @@
 import { useState, useEffect } from "react";
 import { HiOutlineSearch, HiOutlinePlus, HiX } from "react-icons/hi";
-import RestroomTable from "../components/RestroomTable";
+import ShiftTable from "../components/ShiftTable";
 import Pagination from "../components/Pagination";
 import Notification from "../components/Notification";
 
-const Restrooms = () => {
+const Shifts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [showAddRestroomPopup, setShowAddRestroomPopup] = useState(false);
-  const [showViewRestroomModal, setShowViewRestroomModal] = useState(false);
-  const [showUpdateRestroomModal, setShowUpdateRestroomModal] = useState(false);
-  const [selectedRestroom, setSelectedRestroom] = useState(null);
+  const [showAddShiftPopup, setShowAddShiftPopup] = useState(false);
+  const [showViewShiftModal, setShowViewShiftModal] = useState(false);
+  const [showUpdateShiftModal, setShowUpdateShiftModal] = useState(false);
+  const [selectedShift, setSelectedShift] = useState(null);
   const [sortState, setSortState] = useState("default"); // "asc", "desc", or "default"
-  const [updateRestroomData, setUpdateRestroomData] = useState({
-    floorNumber: "",
-    areaName: "",
-    restroomNumber: "",
-    description: "",
+  const [updateShiftData, setUpdateShiftData] = useState({
+    name: "",
+    startTime: "",
+    endTime: "",
     status: "",
   });
-  const [newRestroom, setNewRestroom] = useState({
-    floorNumber: "",
-    areaName: "",
-    restroomNumber: "",
-    description: "",
-    status: "Hoạt động",
+  const [newShift, setNewShift] = useState({
+    name: "",
+    startTime: "",
+    endTime: "",
+    status: "active",
   });
   const [notification, setNotification] = useState({
     isVisible: false,
@@ -34,85 +32,109 @@ const Restrooms = () => {
 
   const itemsPerPage = 5;
 
-  // Sample data for dropdowns
-  const sampleAreas = [
-    { id: "1", name: "Khu A" },
-    { id: "2", name: "Khu B" },
-    { id: "3", name: "Khu C" },
-    { id: "4", name: "Khu D" },
-  ];
-
-  const sampleFloors = [
-    { id: "1", name: "Tầng 1" },
-    { id: "2", name: "Tầng 2" },
-    { id: "3", name: "Tầng 3" },
-    { id: "4", name: "Tầng 4" },
-    { id: "5", name: "Tầng 5" },
-  ];
-
+  // Sample data for statuses
   const sampleStatuses = [
-    { id: "1", name: "Hoạt động" },
-    { id: "2", name: "Bảo trì" },
+    { id: "1", name: "active", label: "Hoạt động" },
+    { id: "2", name: "inactive", label: "Tạm dừng" },
   ];
 
-  // Default restroom data
-  const defaultRestrooms = [
+  // Default shift data
+  const defaultShifts = [
     {
       id: "1",
-      room: "Nhà vệ sinh 01",
-      area: "Khu A",
-      details: "Có 2 thùng rác trong phòng, 1 thùng ngoài",
+      name: "1",
+      startTime: "07:30",
+      endTime: "14:20",
       status: "Hoạt động",
-      floorNumber: "Tầng 1",
-      areaName: "Khu A",
-      restroomNumber: "01",
-      description:
-        "Nhà vệ sinh có 2 thùng rác trong phòng và 1 thùng rác ngoài. Đảm bảo vệ sinh sạch sẽ các thùng rác.",
+      statusValue: "active",
       createdDate: "2024-01-15",
     },
     {
       id: "2",
-      room: "Nhà vệ sinh 02",
-      area: "Khu B",
-      details: "Thùng rác kế bên chậu cây, gần hành lang",
-      status: "Bảo trì",
-      floorNumber: "Tầng 1",
-      areaName: "Khu B",
-      restroomNumber: "02",
-      description:
-        "Nhà vệ sinh với thùng rác được đặt kế bên chậu cây, gần hành lang. Hiện đang trong quá trình bảo trì định kỳ.",
+      name: "2",
+      startTime: "16:00",
+      endTime: "20:00",
+      status: "Tạm dừng",
+      statusValue: "inactive",
       createdDate: "2024-02-10",
     },
   ];
 
-  const [restrooms, setRestrooms] = useState([]);
+  const [shifts, setShifts] = useState([]);
 
   // LocalStorage functions
-  const saveRestroomsToLocalStorage = (restroomData) => {
+  const saveShiftsToLocalStorage = (shiftData) => {
     try {
-      localStorage.setItem(
-        "restroomManagement_restrooms",
-        JSON.stringify(restroomData)
-      );
+      localStorage.setItem("shiftManagement_shifts", JSON.stringify(shiftData));
       console.log("Đã lưu dữ liệu vào LocalStorage");
     } catch (error) {
       console.error("❌ Lỗi khi lưu vào LocalStorage:", error);
     }
   };
 
-  const loadRestroomsFromLocalStorage = () => {
+  // Helper function to convert Vietnamese time format to HH:MM
+  const convertVietnameseTimeToHHMM = (timeStr) => {
+    // Remove Vietnamese time indicators
+    let cleanTime = timeStr.replace(/\s*(sáng|chiều|tối)\s*/g, "").trim();
+
+    // Handle different time formats and ensure HH:MM format
+    if (cleanTime.includes(":")) {
+      const [hours, minutes] = cleanTime.split(":");
+      const paddedHours = hours.padStart(2, "0");
+      const paddedMinutes = minutes ? minutes.padStart(2, "0") : "00";
+      return `${paddedHours}:${paddedMinutes}`;
+    }
+
+    // If no colon, assume it's just hours
+    const paddedHours = cleanTime.padStart(2, "0");
+    return `${paddedHours}:00`;
+  };
+
+  const loadShiftsFromLocalStorage = () => {
     try {
-      const savedRestrooms = localStorage.getItem(
-        "restroomManagement_restrooms"
-      );
-      if (savedRestrooms) {
-        const parsedRestrooms = JSON.parse(savedRestrooms);
+      const savedShifts = localStorage.getItem("shiftManagement_shifts");
+      if (savedShifts) {
+        const parsedShifts = JSON.parse(savedShifts);
+
+        // Migrate old time format to new 24-hour format
+        const migratedShifts = parsedShifts.map((shift) => {
+          let startTime = shift.startTime;
+          let endTime = shift.endTime;
+
+          // Convert old Vietnamese format to 24-hour format
+          if (
+            startTime &&
+            (startTime.includes("sáng") ||
+              startTime.includes("chiều") ||
+              startTime.includes("tối"))
+          ) {
+            startTime = convertVietnameseTimeToHHMM(startTime);
+          }
+          if (
+            endTime &&
+            (endTime.includes("sáng") ||
+              endTime.includes("chiều") ||
+              endTime.includes("tối"))
+          ) {
+            endTime = convertVietnameseTimeToHHMM(endTime);
+          }
+
+          return {
+            ...shift,
+            startTime,
+            endTime,
+          };
+        });
+
+        // Save the migrated data back to localStorage
+        saveShiftsToLocalStorage(migratedShifts);
+
         console.log(
-          "✅ Đã tải dữ liệu từ LocalStorage:",
-          parsedRestrooms.length,
-          "restrooms"
+          "✅ Đã tải và chuyển đổi dữ liệu từ LocalStorage:",
+          migratedShifts.length,
+          "shifts"
         );
-        return parsedRestrooms;
+        return migratedShifts;
       }
     } catch (error) {
       console.error("❌ Lỗi khi tải từ LocalStorage:", error);
@@ -122,129 +144,250 @@ const Restrooms = () => {
 
   // Load data when component mounts
   useEffect(() => {
-    const savedRestrooms = loadRestroomsFromLocalStorage();
-    if (savedRestrooms && savedRestrooms.length > 0) {
-      setRestrooms(savedRestrooms);
+    const savedShifts = loadShiftsFromLocalStorage();
+    if (savedShifts && savedShifts.length > 0) {
+      setShifts(savedShifts);
     } else {
-      setRestrooms(defaultRestrooms);
-      saveRestroomsToLocalStorage(defaultRestrooms);
+      setShifts(defaultShifts);
+      saveShiftsToLocalStorage(defaultShifts);
     }
   }, []);
 
-  const handleActionClick = ({ action, restroom }) => {
+  const handleActionClick = ({ action, shift }) => {
     if (action === "view") {
-      setSelectedRestroom(restroom);
-      setShowViewRestroomModal(true);
+      setSelectedShift(shift);
+      setShowViewShiftModal(true);
     } else if (action === "update") {
-      setSelectedRestroom(restroom);
-      setUpdateRestroomData({
-        floorNumber: restroom.floorNumber,
-        areaName: restroom.areaName,
-        restroomNumber: restroom.restroomNumber,
-        description: restroom.description,
-        status: restroom.status,
+      setSelectedShift(shift);
+      setUpdateShiftData({
+        name: shift.name,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        status: shift.statusValue,
       });
-      setShowUpdateRestroomModal(true);
+      setShowUpdateShiftModal(true);
     }
   };
 
   const handleCloseViewModal = () => {
-    setShowViewRestroomModal(false);
-    setSelectedRestroom(null);
+    setShowViewShiftModal(false);
+    setSelectedShift(null);
   };
 
   const handleCloseUpdateModal = () => {
-    setShowUpdateRestroomModal(false);
-    setSelectedRestroom(null);
-    setUpdateRestroomData({
-      floorNumber: "",
-      areaName: "",
-      restroomNumber: "",
-      description: "",
+    setShowUpdateShiftModal(false);
+    setSelectedShift(null);
+    setUpdateShiftData({
+      name: "",
+      startTime: "",
+      endTime: "",
       status: "",
     });
   };
 
+  // Time validation function
+  const validateTimeInput = (value) => {
+    // Remove any non-digit characters except colon
+    let cleanValue = value.replace(/[^\d:]/g, "");
+
+    // Limit to HH:MM format
+    if (cleanValue.length > 5) {
+      cleanValue = cleanValue.substring(0, 5);
+    }
+
+    // Auto-add colon after 2 digits
+    if (cleanValue.length === 2 && !cleanValue.includes(":")) {
+      cleanValue += ":";
+    }
+
+    // Validate the time format
+    if (cleanValue.includes(":")) {
+      let [hours, minutes] = cleanValue.split(":");
+
+      // Validate hours (00-23)
+      if (hours && parseInt(hours) > 23) {
+        hours = "23";
+      }
+
+      // Validate minutes (00-59)
+      if (minutes && parseInt(minutes) > 59) {
+        minutes = "59";
+      }
+
+      // Ensure two digits for hours
+      if (hours && hours.length === 1) {
+        hours = "0" + hours;
+      }
+
+      // Ensure two digits for minutes when complete
+      if (minutes !== undefined) {
+        if (minutes.length === 1) {
+          minutes = "0" + minutes;
+        } else if (minutes.length === 0) {
+          minutes = "00";
+        }
+      }
+
+      cleanValue = hours + ":" + (minutes || "");
+    } else if (cleanValue.length === 1 || cleanValue.length === 2) {
+      // If only hours are entered, pad with zero if needed
+      if (cleanValue.length === 1) {
+        cleanValue = "0" + cleanValue;
+      }
+    }
+
+    return cleanValue;
+  };
+
   const handleUpdateChange = (e) => {
     const { name, value } = e.target;
-    setUpdateRestroomData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    if (name === "startTime" || name === "endTime") {
+      const validatedTime = validateTimeInput(value);
+      setUpdateShiftData((prev) => ({
+        ...prev,
+        [name]: validatedTime,
+      }));
+    } else {
+      setUpdateShiftData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmitUpdate = (e) => {
     e.preventDefault();
-    const updatedRestrooms = restrooms.map((restroom) =>
-      restroom.id === selectedRestroom.id
-        ? {
-            ...restroom,
-            ...updateRestroomData,
-            room: `Nhà vệ sinh ${updateRestroomData.restroomNumber}`,
-            area: updateRestroomData.areaName,
-            details: updateRestroomData.description || restroom.details,
-          }
-        : restroom
+
+    // Validate required fields
+    if (
+      !updateShiftData.name ||
+      !updateShiftData.startTime ||
+      !updateShiftData.endTime ||
+      !updateShiftData.status
+    ) {
+      showNotificationMessage(
+        "error",
+        "Vui lòng điền đầy đủ thông tin bắt buộc!"
+      );
+      return;
+    }
+
+    // Validate time format (24-hour format with leading zeros)
+    const timePattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timePattern.test(updateShiftData.startTime)) {
+      showNotificationMessage(
+        "error",
+        "Thời gian bắt đầu không hợp lệ! Vui lòng nhập theo định dạng HH:MM"
+      );
+      return;
+    }
+    if (!timePattern.test(updateShiftData.endTime)) {
+      showNotificationMessage(
+        "error",
+        "Thời gian kết thúc không hợp lệ! Vui lòng nhập theo định dạng HH:MM"
+      );
+      return;
+    }
+
+    const statusObj = sampleStatuses.find(
+      (s) => s.name === updateShiftData.status
     );
-    setRestrooms(updatedRestrooms);
-    saveRestroomsToLocalStorage(updatedRestrooms);
+    const updatedShifts = shifts.map((shift) =>
+      shift.id === selectedShift.id
+        ? {
+            ...shift,
+            ...updateShiftData,
+            status: statusObj ? statusObj.label : updateShiftData.status,
+            statusValue: updateShiftData.status,
+          }
+        : shift
+    );
+    setShifts(updatedShifts);
+    saveShiftsToLocalStorage(updatedShifts);
     handleCloseUpdateModal();
-    showNotificationMessage("success", "Đã cập nhật nhà vệ sinh thành công!");
+    showNotificationMessage("success", "Đã cập nhật ca làm thành công!");
   };
 
-  const handleAddRestroom = () => {
-    setShowAddRestroomPopup(true);
+  const handleAddShift = () => {
+    setShowAddShiftPopup(true);
   };
 
   const handleClosePopup = () => {
-    setShowAddRestroomPopup(false);
-    setNewRestroom({
-      floorNumber: "",
-      areaName: "",
-      restroomNumber: "",
-      description: "",
-      status: "Hoạt động",
+    setShowAddShiftPopup(false);
+    setNewShift({
+      name: "",
+      startTime: "",
+      endTime: "",
+      status: "active",
     });
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewRestroom((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    if (name === "startTime" || name === "endTime") {
+      const validatedTime = validateTimeInput(value);
+      setNewShift((prev) => ({
+        ...prev,
+        [name]: validatedTime,
+      }));
+    } else {
+      setNewShift((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
-  const handleSubmitRestroom = (e) => {
+  const handleSubmitShift = (e) => {
     e.preventDefault();
-    if (
-      newRestroom.floorNumber &&
-      newRestroom.areaName &&
-      newRestroom.restroomNumber &&
-      newRestroom.status
-    ) {
-      const restroomToAdd = {
-        ...newRestroom,
-        id: Date.now().toString(),
-        room: `Nhà vệ sinh ${newRestroom.restroomNumber}`,
-        area: newRestroom.areaName,
-        details:
-          newRestroom.description ||
-          `Nhà vệ sinh ${newRestroom.restroomNumber} tại ${newRestroom.areaName}`,
-        createdDate: new Date().toISOString().split("T")[0],
-      };
 
-      const updatedRestrooms = [...restrooms, restroomToAdd];
-      setRestrooms(updatedRestrooms);
-      saveRestroomsToLocalStorage(updatedRestrooms);
-      handleClosePopup();
-      showNotificationMessage("success", "Đã thêm nhà vệ sinh thành công!");
-    } else {
+    // Validate required fields
+    if (
+      !newShift.name ||
+      !newShift.startTime ||
+      !newShift.endTime ||
+      !newShift.status
+    ) {
       showNotificationMessage(
         "error",
         "Vui lòng điền đầy đủ thông tin bắt buộc!"
       );
+      return;
     }
+
+    // Validate time format (24-hour format with leading zeros)
+    const timePattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timePattern.test(newShift.startTime)) {
+      showNotificationMessage(
+        "error",
+        "Thời gian bắt đầu không hợp lệ! Vui lòng nhập theo định dạng HH:MM"
+      );
+      return;
+    }
+    if (!timePattern.test(newShift.endTime)) {
+      showNotificationMessage(
+        "error",
+        "Thời gian kết thúc không hợp lệ! Vui lòng nhập theo định dạng HH:MM"
+      );
+      return;
+    }
+
+    const statusObj = sampleStatuses.find((s) => s.name === newShift.status);
+    const shiftToAdd = {
+      ...newShift,
+      id: Date.now().toString(),
+      status: statusObj ? statusObj.label : newShift.status,
+      statusValue: newShift.status,
+      createdDate: new Date().toISOString().split("T")[0],
+    };
+
+    const updatedShifts = [...shifts, shiftToAdd];
+    setShifts(updatedShifts);
+    saveShiftsToLocalStorage(updatedShifts);
+    handleClosePopup();
+    showNotificationMessage("success", "Đã thêm ca làm thành công!");
   };
 
   const showNotificationMessage = (type, message) => {
@@ -262,24 +405,24 @@ const Restrooms = () => {
     }));
   };
 
-  const filteredRestrooms = restrooms.filter(
-    (restroom) =>
-      restroom.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restroom.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restroom.details.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredShifts = shifts.filter(
+    (shift) =>
+      shift.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shift.startTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shift.endTime.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Sort filtered restrooms based on sort state
-  const sortedRestrooms = [...filteredRestrooms].sort((a, b) => {
+  // Sort filtered shifts based on sort state
+  const sortedShifts = [...filteredShifts].sort((a, b) => {
     if (sortState === "default") {
       // Sort by creation date (newest first)
       return new Date(b.createdDate) - new Date(a.createdDate);
     } else if (sortState === "asc") {
-      // Sort by room name A-Z
-      return a.room.toLowerCase().localeCompare(b.room.toLowerCase());
+      // Sort by shift name A-Z
+      return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
     } else if (sortState === "desc") {
-      // Sort by room name Z-A
-      return b.room.toLowerCase().localeCompare(a.room.toLowerCase());
+      // Sort by shift name Z-A
+      return b.name.toLowerCase().localeCompare(a.name.toLowerCase());
     }
     return 0;
   });
@@ -295,10 +438,10 @@ const Restrooms = () => {
   };
 
   // Calculate pagination
-  const totalPages = Math.ceil(sortedRestrooms.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedShifts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentRestrooms = sortedRestrooms.slice(startIndex, endIndex);
+  const currentShifts = sortedShifts.slice(startIndex, endIndex);
 
   // Reset to page 1 when searching
   const handleSearchChange = (e) => {
@@ -335,13 +478,11 @@ const Restrooms = () => {
                 marginBottom: "16px",
               }}
             >
-              Danh sách nhà vệ sinh
+              Ca làm
             </h1>
             <span>Trang chủ</span>
             <span style={{ margin: "0 8px" }}>›</span>
-            <span style={{ color: "#374151", fontWeight: "500" }}>
-              Danh sách nhà vệ sinh
-            </span>
+            <span style={{ color: "#374151", fontWeight: "500" }}>Ca làm</span>
           </nav>
         </div>
 
@@ -369,7 +510,7 @@ const Restrooms = () => {
             </div>
             <input
               type="text"
-              placeholder="Tìm nhà vệ sinh"
+              placeholder="Tìm ca làm"
               value={searchTerm}
               onChange={handleSearchChange}
               style={{
@@ -388,9 +529,9 @@ const Restrooms = () => {
 
           {/* Action Buttons */}
           <div style={{ display: "flex", gap: "12px", marginLeft: "24px" }}>
-            {/* Add Restroom Button */}
+            {/* Add Shift Button */}
             <button
-              onClick={handleAddRestroom}
+              onClick={handleAddShift}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -409,16 +550,16 @@ const Restrooms = () => {
               onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
             >
               <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
-              Thêm nhà vệ sinh
+              Thêm ca làm
             </button>
           </div>
         </div>
       </div>
 
-      {/* Restroom Table Container */}
+      {/* Shift Table Container */}
       <div style={{ flex: "1", overflow: "auto", minHeight: 0 }}>
-        <RestroomTable
-          restrooms={currentRestrooms}
+        <ShiftTable
+          shifts={currentShifts}
           onActionClick={handleActionClick}
           sortState={sortState}
           onSortClick={handleSortClick}
@@ -434,8 +575,8 @@ const Restrooms = () => {
         />
       </div>
 
-      {/* Add Restroom Popup */}
-      {showAddRestroomPopup && (
+      {/* Add Shift Popup */}
+      {showAddShiftPopup && (
         <div
           style={{
             position: "fixed",
@@ -482,7 +623,7 @@ const Restrooms = () => {
                   margin: 0,
                 }}
               >
-                Thêm nhà vệ sinh mới
+                Thêm ca làm mới
               </h2>
               <button
                 onClick={handleClosePopup}
@@ -506,7 +647,7 @@ const Restrooms = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmitRestroom}>
+            <form onSubmit={handleSubmitShift}>
               <div style={{ marginBottom: "16px" }}>
                 <label
                   style={{
@@ -517,91 +658,15 @@ const Restrooms = () => {
                     color: "#374151",
                   }}
                 >
-                  Tầng *
-                </label>
-                <select
-                  name="floorNumber"
-                  value={newRestroom.floorNumber}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  <option value="">Chọn tầng</option>
-                  {sampleFloors.map((floor) => (
-                    <option key={floor.id} value={floor.name}>
-                      {floor.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Khu vực *
-                </label>
-                <select
-                  name="areaName"
-                  value={newRestroom.areaName}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  <option value="">Chọn khu vực</option>
-                  {sampleAreas.map((area) => (
-                    <option key={area.id} value={area.name}>
-                      {area.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Số phòng *
+                  Tên ca làm *
                 </label>
                 <input
                   type="text"
-                  name="restroomNumber"
-                  value={newRestroom.restroomNumber}
+                  name="name"
+                  value={newShift.name}
                   onChange={handleInputChange}
                   required
-                  placeholder="Nhập số phòng"
+                  placeholder="Enter slot name"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -626,11 +691,77 @@ const Restrooms = () => {
                     color: "#374151",
                   }}
                 >
+                  Thời gian bắt đầu *
+                </label>
+                <input
+                  type="text"
+                  name="startTime"
+                  value={newShift.startTime}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="HH:MM"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Thời gian kết thúc *
+                </label>
+                <input
+                  type="text"
+                  name="endTime"
+                  value={newShift.endTime}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="HH:MM"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
+              </div>
+
+              <div style={{ marginBottom: "24px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
                   Trạng thái *
                 </label>
                 <select
                   name="status"
-                  value={newRestroom.status}
+                  value={newShift.status}
                   onChange={handleInputChange}
                   required
                   style={{
@@ -647,43 +778,10 @@ const Restrooms = () => {
                 >
                   {sampleStatuses.map((status) => (
                     <option key={status.id} value={status.name}>
-                      {status.name}
+                      {status.label}
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div style={{ marginBottom: "24px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Mô tả
-                </label>
-                <textarea
-                  name="description"
-                  value={newRestroom.description}
-                  onChange={handleInputChange}
-                  rows={4}
-                  placeholder="Nhập mô tả chi tiết..."
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                    resize: "vertical",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                />
               </div>
 
               {/* Buttons */}
@@ -715,7 +813,7 @@ const Restrooms = () => {
                     (e.target.style.backgroundColor = "white")
                   }
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
@@ -737,7 +835,7 @@ const Restrooms = () => {
                     (e.target.style.backgroundColor = "#FF5B27")
                   }
                 >
-                  Thêm nhà vệ sinh
+                  Tạo ca làm
                 </button>
               </div>
             </form>
@@ -745,8 +843,8 @@ const Restrooms = () => {
         </div>
       )}
 
-      {/* View Restroom Modal */}
-      {showViewRestroomModal && selectedRestroom && (
+      {/* View Shift Modal */}
+      {showViewShiftModal && selectedShift && (
         <div
           style={{
             position: "fixed",
@@ -793,7 +891,7 @@ const Restrooms = () => {
                   margin: 0,
                 }}
               >
-                Chi tiết nhà vệ sinh
+                Chi tiết ca làm
               </h2>
               <button
                 onClick={handleCloseViewModal}
@@ -816,11 +914,11 @@ const Restrooms = () => {
               </button>
             </div>
 
-            {/* Restroom Info */}
+            {/* Shift Info */}
             <div
               style={{ display: "flex", flexDirection: "column", gap: "20px" }}
             >
-              {/* Restroom Details */}
+              {/* Shift Details */}
               <div
                 style={{
                   display: "grid",
@@ -836,7 +934,7 @@ const Restrooms = () => {
                       color: "#6b7280",
                     }}
                   >
-                    Tên phòng
+                    Tên ca làm
                   </label>
                   <p
                     style={{
@@ -846,73 +944,7 @@ const Restrooms = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedRestroom.room}
-                  </p>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Khu vực
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    {selectedRestroom.area}
-                  </p>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Tầng
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    {selectedRestroom.floorNumber}
-                  </p>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Số phòng
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    {selectedRestroom.restroomNumber}
+                    {selectedShift.name}
                   </p>
                 </div>
 
@@ -934,15 +966,59 @@ const Restrooms = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedRestroom.createdDate
-                      ? new Date(
-                          selectedRestroom.createdDate
-                        ).toLocaleDateString("vi-VN")
+                    {selectedShift.createdDate
+                      ? new Date(selectedShift.createdDate).toLocaleDateString(
+                          "vi-VN"
+                        )
                       : "Chưa cập nhật"}
                   </p>
                 </div>
 
                 <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Thời gian bắt đầu
+                  </label>
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedShift.startTime}
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Thời gian kết thúc
+                  </label>
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedShift.endTime}
+                  </p>
+                </div>
+
+                <div style={{ gridColumn: "1 / -1" }}>
                   <label
                     style={{
                       fontSize: "14px",
@@ -967,44 +1043,19 @@ const Restrooms = () => {
                         fontWeight: "600",
                         borderRadius: "9999px",
                         backgroundColor:
-                          selectedRestroom.status === "Hoạt động"
+                          selectedShift.status === "Hoạt động"
                             ? "#dcfce7"
                             : "#fee2e2",
                         color:
-                          selectedRestroom.status === "Hoạt động"
+                          selectedShift.status === "Hoạt động"
                             ? "#15803d"
                             : "#dc2626",
                       }}
                     >
-                      {selectedRestroom.status}
+                      {selectedShift.status}
                     </span>
                   </p>
                 </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#6b7280",
-                  }}
-                >
-                  Mô tả chi tiết
-                </label>
-                <p
-                  style={{
-                    fontSize: "16px",
-                    color: "#111827",
-                    margin: "4px 0 0 0",
-                    lineHeight: "1.6",
-                  }}
-                >
-                  {selectedRestroom.description ||
-                    selectedRestroom.details ||
-                    "Chưa có mô tả"}
-                </p>
               </div>
             </div>
 
@@ -1041,8 +1092,8 @@ const Restrooms = () => {
         </div>
       )}
 
-      {/* Update Restroom Modal */}
-      {showUpdateRestroomModal && selectedRestroom && (
+      {/* Update Shift Modal */}
+      {showUpdateShiftModal && selectedShift && (
         <div
           style={{
             position: "fixed",
@@ -1089,7 +1140,7 @@ const Restrooms = () => {
                   margin: 0,
                 }}
               >
-                Cập nhật nhà vệ sinh
+                Cập nhật ca làm
               </h2>
               <button
                 onClick={handleCloseUpdateModal}
@@ -1124,88 +1175,12 @@ const Restrooms = () => {
                     color: "#374151",
                   }}
                 >
-                  Tầng *
-                </label>
-                <select
-                  name="floorNumber"
-                  value={updateRestroomData.floorNumber}
-                  onChange={handleUpdateChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  <option value="">Chọn tầng</option>
-                  {sampleFloors.map((floor) => (
-                    <option key={floor.id} value={floor.name}>
-                      {floor.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Khu vực *
-                </label>
-                <select
-                  name="areaName"
-                  value={updateRestroomData.areaName}
-                  onChange={handleUpdateChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  <option value="">Chọn khu vực</option>
-                  {sampleAreas.map((area) => (
-                    <option key={area.id} value={area.name}>
-                      {area.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Số phòng *
+                  Tên ca làm *
                 </label>
                 <input
                   type="text"
-                  name="restroomNumber"
-                  value={updateRestroomData.restroomNumber}
+                  name="name"
+                  value={updateShiftData.name}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1232,11 +1207,77 @@ const Restrooms = () => {
                     color: "#374151",
                   }}
                 >
+                  Thời gian bắt đầu *
+                </label>
+                <input
+                  type="text"
+                  name="startTime"
+                  value={updateShiftData.startTime}
+                  onChange={handleUpdateChange}
+                  required
+                  placeholder="HH:MM"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Thời gian kết thúc *
+                </label>
+                <input
+                  type="text"
+                  name="endTime"
+                  value={updateShiftData.endTime}
+                  onChange={handleUpdateChange}
+                  required
+                  placeholder="HH:MM"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
+              </div>
+
+              <div style={{ marginBottom: "24px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
                   Trạng thái *
                 </label>
                 <select
                   name="status"
-                  value={updateRestroomData.status}
+                  value={updateShiftData.status}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1254,42 +1295,10 @@ const Restrooms = () => {
                 >
                   {sampleStatuses.map((status) => (
                     <option key={status.id} value={status.name}>
-                      {status.name}
+                      {status.label}
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div style={{ marginBottom: "24px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Mô tả
-                </label>
-                <textarea
-                  name="description"
-                  value={updateRestroomData.description}
-                  onChange={handleUpdateChange}
-                  rows={4}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                    resize: "vertical",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                />
               </div>
 
               {/* Buttons */}
@@ -1321,7 +1330,7 @@ const Restrooms = () => {
                     (e.target.style.backgroundColor = "white")
                   }
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
@@ -1354,4 +1363,4 @@ const Restrooms = () => {
   );
 };
 
-export default Restrooms;
+export default Shifts;
