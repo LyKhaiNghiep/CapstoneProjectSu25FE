@@ -32,7 +32,7 @@ const Login = () => {
       const result = login(formData.username, formData.password);
       
       if (result.success) {
-        navigate('/restrooms'); // Navigate to default page after login
+        navigate('/user-management'); // Navigate to user management after login
       } else {
         setError(result.error);
       }
@@ -42,20 +42,47 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)'
-    }}>
-      <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-sm mx-4" style={{
-        backdropFilter: 'blur(20px)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)'
-      }}>
-        <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">Đăng nhập</h1>
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        background: 'linear-gradient(135deg, #ff6b9d 0%, #c44569 25%, #f8b500 50%, #f0932b 75%, #6c5ce7 100%)'
+      }}
+    >
+      {/* White Popup Container */}
+      <div 
+        className="w-full max-w-sm mx-auto"
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '24px',
+          padding: '50px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          marginTop : '100px',
+          marginLeft : '400px',
+          marginRight : '400px',
+          marginBottom : '100px',
+        }}
+      >
+        
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 
+            className="text-xl font-medium"
+            style={{ color: '#374151' }}
+          >
+            Đăng nhập
+          </h1>
         </div>
 
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          
+          {/* Username Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-3">
+            <label 
+              className="block text-sm mb-2"
+              style={{ color: '#6B7280' }}
+            >
               Tài khoản
             </label>
             <input
@@ -63,18 +90,26 @@ const Login = () => {
               name="username"
               value={formData.username}
               onChange={handleInputChange}
-              className="w-full px-4 py-4 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-blue-400 focus:bg-white outline-none transition-all text-gray-800 placeholder-gray-400"
-              placeholder=""
-              required
               style={{
-                fontSize: '16px',
-                lineHeight: '1.5'
+                width: '100%',
+                padding: '12px 16px',
+                backgroundColor: '#F9FAFB',
+                border: 'none',
+                borderRadius: '12px',
+                outline: 'none',
+                color: '#374151',
+                fontSize: '14px'
               }}
+              required
             />
           </div>
 
+          {/* Password Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-3">
+            <label 
+              className="block text-sm mb-2"
+              style={{ color: '#6B7280' }}
+            >
               Mật khẩu
             </label>
             <input
@@ -82,68 +117,100 @@ const Login = () => {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full px-4 py-4 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-blue-400 focus:bg-white outline-none transition-all text-gray-800 placeholder-gray-400"
-              placeholder=""
-              required
               style={{
-                fontSize: '16px',
-                lineHeight: '1.5'
+                width: '100%',
+                padding: '12px 16px',
+                backgroundColor: '#F9FAFB',
+                border: 'none',
+                borderRadius: '12px',
+                outline: 'none',
+                color: '#374151',
+                fontSize: '14px'
               }}
+              required
             />
           </div>
 
+          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl text-sm text-center">
-              {error}
+            <div className="text-center">
+              <p style={{ color: '#EF4444', fontSize: '14px' }}>{error}</p>
             </div>
           )}
 
-          <div className="text-center pt-2">
+          {/* Forgot Password */}
+          <div className="text-center">
             <button
               type="button"
-              className="text-sm text-blue-500 hover:text-blue-700 transition-colors font-medium"
               onClick={() => alert('Chức năng quên mật khẩu sẽ được triển khai sau')}
+              style={{
+                color: '#F97316',
+                fontSize: '14px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'none'
+              }}
+              onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+              onMouseOut={(e) => e.target.style.textDecoration = 'none'}
             >
-              Quên mật khẩu?
+              Quên mật khẩu
             </button>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 rounded-2xl font-semibold text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             style={{
-              background: 'linear-gradient(135deg, #ff9a56 0%, #ff6b9d 100%)',
-              fontSize: '16px',
-              marginTop: '32px'
-            }}
-            onMouseEnter={(e) => {
-              if (!isLoading) {
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 10px 25px rgba(255, 107, 157, 0.4)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isLoading) {
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 4px 15px rgba(255, 107, 157, 0.3)';
-              }
+              width: '100%',
+              padding: '12px',
+              background: isLoading ? '#D1D5DB' : 'linear-gradient(to right, #FB923C, #F472B6)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.5 : 1
             }}
           >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                Đang đăng nhập...
-              </div>
-            ) : (
-              'Đăng nhập'
-            )}
+            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
-            Tài khoản demo: <span className="font-semibold text-gray-700">admin1</span> / Mật khẩu: <span className="font-semibold text-gray-700">1</span>
+        {/* Demo Info */}
+        <div 
+          className="mt-6 pt-4 text-center"
+          style={{
+            borderTop: '1px solid #F3F4F6'
+          }}
+        >
+          <p style={{ color: '#6B7280', fontSize: '12px' }}>
+            Demo: 
+            <span 
+              style={{
+                fontFamily: 'monospace',
+                backgroundColor: '#F3F4F6',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                margin: '0 4px'
+              }}
+            >
+              admin1
+            </span> 
+            / 
+            <span 
+              style={{
+                fontFamily: 'monospace',
+                backgroundColor: '#F3F4F6',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                margin: '0 4px'
+              }}
+            >
+              1
+            </span>
           </p>
         </div>
       </div>

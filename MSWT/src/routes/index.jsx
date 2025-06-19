@@ -12,9 +12,22 @@ import AddRestroom from "../pages/AddRestroom";
 import UserManagement from "../pages/UserManagement";
 import ReportManagement from "../pages/ReportManagement";
 import NotFound from "../pages/NotFound";
+import { useAuth } from "../contexts/AuthContext";
 
-// We'll use the auth context in RootLayout instead of here
-// This makes routing simpler and handles authentication at layout level
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Loading...</div>; // Or your loading component
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+};
 
 export const router = createBrowserRouter([
   {
@@ -35,35 +48,67 @@ export const router = createBrowserRouter([
       },
       {
         path: "dashboard",
-        element: <Dashboard />,
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "restrooms",
-        element: <Restrooms />,
+        element: (
+          <ProtectedRoute>
+            <Restrooms />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "restrooms/add",
-        element: <AddRestroom />,
+        element: (
+          <ProtectedRoute>
+            <AddRestroom />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "restrooms/:id",
-        element: <RestroomDetails />,
+        element: (
+          <ProtectedRoute>
+            <RestroomDetails />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "restrooms/:id/edit",
-        element: <EditRestroom />,
+        element: (
+          <ProtectedRoute>
+            <EditRestroom />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "profile",
-        element: <Profile />,
+        element: (
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "user-management",
-        element: <UserManagement />,
+        element: (
+          <ProtectedRoute>
+            <UserManagement />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "report-management",
-        element: <ReportManagement />,
+        element: (
+          <ProtectedRoute>
+            <ReportManagement />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "*",
