@@ -11,6 +11,7 @@ import EditRestroom from "../pages/EditRestroom";
 import AddRestroom from "../pages/AddRestroom";
 import UserManagement from "../pages/UserManagement";
 import ReportManagement from "../pages/ReportManagement";
+import TrashBinList from "../pages/TrashBinList";
 import NotFound from "../pages/NotFound";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -86,6 +87,15 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: "trash",
+        element: (
+          <ProtectedRoute>
+            <TrashBinList />
+          </ProtectedRoute>
+        ),
+      },
+      
       {
         path: "profile",
         element: (
