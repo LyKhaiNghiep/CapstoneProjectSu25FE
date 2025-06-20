@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   HiOutlineDotsVertical,
   HiOutlineEye,
@@ -7,17 +7,42 @@ import {
   HiChevronDown,
 } from "react-icons/hi";
 
-const RestroomTable = ({
-  restrooms,
-  onActionClick,
-  sortState,
-  onSortClick,
-}) => {
+const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
 
-  // Debug log to check restrooms data
-  console.log("RestroomTable received restrooms:", restrooms);
-  console.log("RestroomTable restrooms length:", restrooms?.length);
+  // Debug log to check floors data
+  // console.log("FloorTable received floors:", floors);
+  // console.log("FloorTable floors length:", floors?.length);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openDropdown !== null) {
+        // Check if click is inside the dropdown or on the dropdown button
+        const isDropdownButton = event.target.closest("[data-dropdown-button]");
+        const isDropdownMenu = event.target.closest(
+          "[data-dropdown-container]"
+        );
+
+        // Only close if clicking outside both the button and menu
+        if (!isDropdownButton && !isDropdownMenu) {
+          setOpenDropdown(null);
+        }
+      }
+    };
+
+    if (openDropdown !== null) {
+      // Add slight delay to prevent immediate closing
+      const timeoutId = setTimeout(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+      }, 50);
+
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [openDropdown]);
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -30,12 +55,14 @@ const RestroomTable = ({
     }
   };
 
-  const handleDropdownToggle = (restroomId) => {
-    setOpenDropdown(openDropdown === restroomId ? null : restroomId);
+  const handleDropdownToggle = (floorId) => {
+    console.log("🎯 Dropdown toggle for floor ID:", floorId);
+    setOpenDropdown(openDropdown === floorId ? null : floorId);
   };
 
-  const handleActionSelect = (action, restroom) => {
-    onActionClick({ action, restroom });
+  const handleActionSelect = (action, floor) => {
+    console.log("🔥 FloorTable - Action selected:", action, floor);
+    onActionClick({ action, floor });
     setOpenDropdown(null);
   };
 
@@ -49,7 +76,7 @@ const RestroomTable = ({
         backgroundColor: "white",
         borderRadius: "12px",
         border: "1px solid #f0f0f0",
-        overflow: "hidden",
+        overflow: "visible",
         boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.06)",
       }}
     >
@@ -75,7 +102,7 @@ const RestroomTable = ({
                 }}
                 onClick={onSortClick}
               >
-                Phòng
+                Tầng
                 <div
                   style={{
                     display: "flex",
@@ -109,7 +136,7 @@ const RestroomTable = ({
                 color: "#374151",
               }}
             >
-              Khu vực
+              Tổng nhà vệ sinh
             </th>
             <th
               style={{
@@ -120,7 +147,7 @@ const RestroomTable = ({
                 color: "#374151",
               }}
             >
-              Chi tiết
+              Tổng thùng rác
             </th>
             <th
               style={{
@@ -147,9 +174,9 @@ const RestroomTable = ({
           </tr>
         </thead>
         <tbody>
-          {restrooms.map((restroom, index) => (
+          {floors.map((floor, index) => (
             <tr
-              key={restroom.id}
+              key={floor.id}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -161,7 +188,7 @@ const RestroomTable = ({
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
-              {/* Room Column */}
+              {/* Floor Name Column */}
               <td
                 style={{
                   padding: "16px 24px",
@@ -170,10 +197,10 @@ const RestroomTable = ({
                   color: "#111827",
                 }}
               >
-                {restroom.room}
+                {floor.name}
               </td>
 
-              {/* Area Column */}
+              {/* Total Restrooms Column */}
               <td
                 style={{
                   padding: "16px 24px",
@@ -181,22 +208,18 @@ const RestroomTable = ({
                   color: "#6b7280",
                 }}
               >
-                {restroom.area}
+                {floor.totalRestrooms} phòng
               </td>
 
-              {/* Details Column */}
+              {/* Total Trash Cans Column */}
               <td
                 style={{
                   padding: "16px 24px",
                   fontSize: "14px",
                   color: "#6b7280",
-                  maxWidth: "200px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
                 }}
               >
-                {restroom.details}
+                {floor.totalTrashCans} thùng
               </td>
 
               {/* Status Column */}
@@ -208,10 +231,10 @@ const RestroomTable = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getStatusColor(restroom.status),
+                    ...getStatusColor(floor.status),
                   }}
                 >
-                  {restroom.status}
+                  {floor.status}
                 </span>
               </td>
 
@@ -221,10 +244,21 @@ const RestroomTable = ({
                   padding: "16px 24px",
                   textAlign: "center",
                   position: "relative",
+                  overflow: "visible",
                 }}
               >
                 <button
-                  onClick={() => handleDropdownToggle(restroom.id)}
+                  data-dropdown-button="true"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log(
+                      "🔥 Button clicked for floor:",
+                      floor.id,
+                      floor.name
+                    );
+                    handleDropdownToggle(floor.id);
+                  }}
                   style={{
                     color: "#6b7280",
                     background: "transparent",
@@ -249,36 +283,40 @@ const RestroomTable = ({
                 </button>
 
                 {/* Dropdown Menu */}
-                {openDropdown === restroom.id && (
+                {openDropdown === floor.id && (
                   <div
+                    data-dropdown-container="true"
                     style={{
                       position: "absolute",
-                      bottom: "50%",
-                      right: "8px",
+                      top: "100%",
+                      right: "0px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
                       borderRadius: "8px",
-                      boxShadow:
-                        "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                      zIndex: 10,
-                      minWidth: "140px",
+                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      zIndex: 1000,
+                      minWidth: "160px",
+                      marginTop: "4px",
                     }}
                   >
                     <button
-                      onClick={() => handleActionSelect("view", restroom)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleActionSelect("view", floor);
+                      }}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
                         textAlign: "left",
                         fontSize: "14px",
                         color: "#374151",
+                        backgroundColor: "transparent",
+                        border: "none",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
-                        borderRadius: "8px 8px 0 0",
+                        transition: "background-color 0.2s",
                       }}
                       onMouseEnter={(e) =>
                         (e.target.style.backgroundColor = "#f9fafb")
@@ -291,20 +329,23 @@ const RestroomTable = ({
                       Xem chi tiết
                     </button>
                     <button
-                      onClick={() => handleActionSelect("update", restroom)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleActionSelect("update", floor);
+                      }}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
                         textAlign: "left",
                         fontSize: "14px",
                         color: "#374151",
+                        backgroundColor: "transparent",
+                        border: "none",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
-                        borderRadius: "0 0 8px 8px",
+                        transition: "background-color 0.2s",
                         borderTop: "1px solid #f3f4f6",
                       }}
                       onMouseEnter={(e) =>
@@ -326,23 +367,8 @@ const RestroomTable = ({
           ))}
         </tbody>
       </table>
-
-      {/* Click outside to close dropdown */}
-      {openDropdown && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 5,
-          }}
-          onClick={() => setOpenDropdown(null)}
-        />
-      )}
     </div>
   );
 };
 
-export default RestroomTable;
+export default FloorTable;

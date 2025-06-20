@@ -6,9 +6,8 @@ import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile";
 import Restrooms from "../pages/Restrooms";
-import RestroomDetails from "../pages/RestroomDetails";
-import EditRestroom from "../pages/EditRestroom";
-import AddRestroom from "../pages/AddRestroom";
+import Shifts from "../pages/Shifts";
+import Floors from "../pages/Floors";
 import UserManagement from "../pages/UserManagement";
 import ReportManagement from "../pages/ReportManagement";
 import TrashBinList from "../pages/TrashBinList";
@@ -18,15 +17,15 @@ import { useAuth } from "../contexts/AuthContext";
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return <div>Loading...</div>; // Or your loading component
   }
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 };
 
@@ -64,26 +63,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "restrooms/add",
+        path: "shifts",
         element: (
           <ProtectedRoute>
-            <AddRestroom />
+            <Shifts />
           </ProtectedRoute>
         ),
       },
       {
-        path: "restrooms/:id",
+        path: "floors",
         element: (
           <ProtectedRoute>
-            <RestroomDetails />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "restrooms/:id/edit",
-        element: (
-          <ProtectedRoute>
-            <EditRestroom />
+            <Floors />
           </ProtectedRoute>
         ),
       },
