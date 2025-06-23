@@ -11,7 +11,6 @@ export interface EnhancedFetchOptions extends RequestInit {
   params?: Record<string, string>;
   token?: string;
   timeout?: number;
-  useNextApiUrl: boolean;
 }
 
 const getErrorMessage = (status: number, message?: string): string => {
@@ -39,15 +38,9 @@ export const MAX_TIME_OUT = 300000; // 5 minutes
 
 export async function enhancedFetch<T>(
   endpoint: string,
-  options: EnhancedFetchOptions = { method: "GET", useNextApiUrl: true }
+  options: EnhancedFetchOptions = { method: "GET" }
 ): Promise<T> {
-  const {
-    params,
-    token,
-    timeout = MAX_TIME_OUT,
-    useNextApiUrl,
-    ...fetchOptions
-  } = options;
+  const { params, token, timeout = MAX_TIME_OUT, ...fetchOptions } = options;
 
   // Build URL with query parameters
   const baseUrl = (import.meta as any).env.VITE_API_URL;
