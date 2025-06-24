@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { HiOutlineSearch, HiOutlinePlus, HiX } from "react-icons/hi";
-import RestroomTable from "../components/RestroomTable";
-import Pagination from "../components/Pagination";
+import { Restroom } from "../config/models/restroom.model";
+import { useRestrooms } from "../hooks/useRestroom";
+import { useState } from "react";
+import { HiOutlinePlus, HiOutlineSearch, HiX } from "react-icons/hi";
 import Notification from "../components/Notification";
+import Pagination from "../components/Pagination";
+import RestroomTable from "../components/RestroomTable";
 
 const Restrooms = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,15 +12,11 @@ const Restrooms = () => {
   const [showAddRestroomPopup, setShowAddRestroomPopup] = useState(false);
   const [showViewRestroomModal, setShowViewRestroomModal] = useState(false);
   const [showUpdateRestroomModal, setShowUpdateRestroomModal] = useState(false);
-  const [selectedRestroom, setSelectedRestroom] = useState(null);
+  const [selectedRestroom, setSelectedRestroom] = useState<Restroom | null>(
+    null
+  );
   const [sortState, setSortState] = useState("default"); // "asc", "desc", or "default"
-  const [updateRestroomData, setUpdateRestroomData] = useState({
-    floorNumber: "",
-    areaName: "",
-    restroomNumber: "",
-    description: "",
-    status: "",
-  });
+  const [updateRestroomData, setUpdateRestroomData] = useState<Restroom>();
   const [newRestroom, setNewRestroom] = useState({
     floorNumber: "",
     areaName: "",
@@ -31,6 +29,15 @@ const Restrooms = () => {
     type: "success",
     message: "",
   });
+
+  const {
+    restrooms,
+    isLoading,
+    error,
+    createRestroom,
+    updateRestroom,
+    deleteRestroom,
+  } = useRestrooms();
 
   const itemsPerPage = 5;
 
@@ -55,40 +62,8 @@ const Restrooms = () => {
     { id: "2", name: "Bảo trì" },
   ];
 
-  // Default restroom data
-  const defaultRestrooms = [
-    {
-      id: "1",
-      room: "Nhà vệ sinh 01",
-      area: "Khu A",
-      details: "Có 2 thùng rác trong phòng, 1 thùng ngoài",
-      status: "Hoạt động",
-      floorNumber: "Tầng 1",
-      areaName: "Khu A",
-      restroomNumber: "01",
-      description:
-        "Nhà vệ sinh có 2 thùng rác trong phòng và 1 thùng rác ngoài. Đảm bảo vệ sinh sạch sẽ các thùng rác.",
-      createdDate: "2024-01-15",
-    },
-    {
-      id: "2",
-      room: "Nhà vệ sinh 02",
-      area: "Khu B",
-      details: "Thùng rác kế bên chậu cây, gần hành lang",
-      status: "Bảo trì",
-      floorNumber: "Tầng 1",
-      areaName: "Khu B",
-      restroomNumber: "02",
-      description:
-        "Nhà vệ sinh với thùng rác được đặt kế bên chậu cây, gần hành lang. Hiện đang trong quá trình bảo trì định kỳ.",
-      createdDate: "2024-02-10",
-    },
-  ];
-
-  const [restrooms, setRestrooms] = useState([]);
-
   // LocalStorage functions
-  const saveRestroomsToLocalStorage = (restroomData) => {
+  const saveRestroomsToLocalStorage = (restroomData: any) => {
     try {
       localStorage.setItem(
         "restroomManagement_restrooms",
@@ -120,30 +95,19 @@ const Restrooms = () => {
     return null;
   };
 
-  // Load data when component mounts
-  useEffect(() => {
-    const savedRestrooms = loadRestroomsFromLocalStorage();
-    if (savedRestrooms && savedRestrooms.length > 0) {
-      setRestrooms(savedRestrooms);
-    } else {
-      setRestrooms(defaultRestrooms);
-      saveRestroomsToLocalStorage(defaultRestrooms);
-    }
-  }, []);
-
-  const handleActionClick = ({ action, restroom }) => {
+  const handleActionClick = ({
+    action,
+    restroom,
+  }: {
+    action: string;
+    restroom: Restroom;
+  }) => {
     if (action === "view") {
       setSelectedRestroom(restroom);
       setShowViewRestroomModal(true);
     } else if (action === "update") {
       setSelectedRestroom(restroom);
-      setUpdateRestroomData({
-        floorNumber: restroom.floorNumber,
-        areaName: restroom.areaName,
-        restroomNumber: restroom.restroomNumber,
-        description: restroom.description,
-        status: restroom.status,
-      });
+      setUpdateRestroomData(restroom);
       setShowUpdateRestroomModal(true);
     }
   };
@@ -156,37 +120,30 @@ const Restrooms = () => {
   const handleCloseUpdateModal = () => {
     setShowUpdateRestroomModal(false);
     setSelectedRestroom(null);
-    setUpdateRestroomData({
-      floorNumber: "",
-      areaName: "",
-      restroomNumber: "",
-      description: "",
-      status: "",
-    });
+    setUpdateRestroomData({} as Restroom);
   };
 
-  const handleUpdateChange = (e) => {
+  const handleUpdateChange = (e: any) => {
     const { name, value } = e.target;
-    setUpdateRestroomData((prev) => ({
+    setUpdateRestroomData((prev: any) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmitUpdate = (e) => {
+  const handleSubmitUpdate = (e: any) => {
     e.preventDefault();
-    const updatedRestrooms = restrooms.map((restroom) =>
-      restroom.id === selectedRestroom.id
+    const updatedRestrooms = restrooms.map((restroom: Restroom) =>
+      restroom.restroomId === selectedRestroom?.restroomId
         ? {
             ...restroom,
             ...updateRestroomData,
-            room: `Nhà vệ sinh ${updateRestroomData.restroomNumber}`,
-            area: updateRestroomData.areaName,
-            details: updateRestroomData.description || restroom.details,
+            room: `Nhà vệ sinh ${updateRestroomData?.restroomNumber}`,
+            area: updateRestroomData?.areaId,
+            details: updateRestroomData?.description || restroom.description,
           }
         : restroom
     );
-    setRestrooms(updatedRestrooms);
     saveRestroomsToLocalStorage(updatedRestrooms);
     handleCloseUpdateModal();
     showNotificationMessage("success", "Đã cập nhật nhà vệ sinh thành công!");
@@ -207,7 +164,7 @@ const Restrooms = () => {
     });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     const { name, value } = e.target;
     setNewRestroom((prev) => ({
       ...prev,
@@ -215,7 +172,7 @@ const Restrooms = () => {
     }));
   };
 
-  const handleSubmitRestroom = (e) => {
+  const handleSubmitRestroom = (e: any) => {
     e.preventDefault();
     if (
       newRestroom.floorNumber &&
@@ -235,7 +192,6 @@ const Restrooms = () => {
       };
 
       const updatedRestrooms = [...restrooms, restroomToAdd];
-      setRestrooms(updatedRestrooms);
       saveRestroomsToLocalStorage(updatedRestrooms);
       handleClosePopup();
       showNotificationMessage("success", "Đã thêm nhà vệ sinh thành công!");
@@ -247,7 +203,7 @@ const Restrooms = () => {
     }
   };
 
-  const showNotificationMessage = (type, message) => {
+  const showNotificationMessage = (type: string, message: string) => {
     setNotification({
       isVisible: true,
       type,
@@ -264,9 +220,11 @@ const Restrooms = () => {
 
   const filteredRestrooms = restrooms.filter(
     (restroom) =>
-      restroom.room.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restroom.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      restroom.details.toLowerCase().includes(searchTerm.toLowerCase())
+      restroom.restroomNumber
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      restroom.areaId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      restroom.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Sort filtered restrooms based on sort state
@@ -276,10 +234,14 @@ const Restrooms = () => {
       return new Date(b.createdDate) - new Date(a.createdDate);
     } else if (sortState === "asc") {
       // Sort by room name A-Z
-      return a.room.toLowerCase().localeCompare(b.room.toLowerCase());
+      return a.restroomNumber
+        .toLowerCase()
+        .localeCompare(b.restroomNumber.toLowerCase());
     } else if (sortState === "desc") {
       // Sort by room name Z-A
-      return b.room.toLowerCase().localeCompare(a.room.toLowerCase());
+      return b.restroomNumber
+        .toLowerCase()
+        .localeCompare(a.restroomNumber.toLowerCase());
     }
     return 0;
   });
@@ -405,8 +367,12 @@ const Restrooms = () => {
                 cursor: "pointer",
                 transition: "background-color 0.2s",
               }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#E04B1F")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
+              onMouseEnter={(e: any) =>
+                (e.target.style.backgroundColor = "#E04B1F")
+              }
+              onMouseLeave={(e: any) =>
+                (e.target.style.backgroundColor = "#FF5B27")
+              }
             >
               <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
               Thêm nhà vệ sinh
@@ -494,10 +460,10 @@ const Restrooms = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) =>
+                onMouseEnter={(e: any) =>
                   (e.target.style.backgroundColor = "#f3f4f6")
                 }
-                onMouseLeave={(e) =>
+                onMouseLeave={(e: any) =>
                   (e.target.style.backgroundColor = "transparent")
                 }
               >
@@ -708,10 +674,10 @@ const Restrooms = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) =>
+                  onMouseEnter={(e: any) =>
                     (e.target.style.backgroundColor = "#f9fafb")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor = "white")
                   }
                 >
@@ -730,10 +696,10 @@ const Restrooms = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) =>
+                  onMouseEnter={(e: any) =>
                     (e.target.style.backgroundColor = "#E04B1F")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor = "#FF5B27")
                   }
                 >
@@ -805,10 +771,10 @@ const Restrooms = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) =>
+                onMouseEnter={(e: any) =>
                   (e.target.style.backgroundColor = "#f3f4f6")
                 }
-                onMouseLeave={(e) =>
+                onMouseLeave={(e: any) =>
                   (e.target.style.backgroundColor = "transparent")
                 }
               >
@@ -846,7 +812,7 @@ const Restrooms = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedRestroom.room}
+                    {selectedRestroom.restroomNumber}
                   </p>
                 </div>
 
@@ -868,7 +834,7 @@ const Restrooms = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedRestroom.area}
+                    {selectedRestroom.areaId}
                   </p>
                 </div>
 
@@ -890,7 +856,7 @@ const Restrooms = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedRestroom.floorNumber}
+                    {selectedRestroom.floorId}
                   </p>
                 </div>
 
@@ -934,11 +900,12 @@ const Restrooms = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedRestroom.createdDate
+                    // TODO: created date for restroom
+                    {/* {selectedRestroom.createdDate
                       ? new Date(
                           selectedRestroom.createdDate
                         ).toLocaleDateString("vi-VN")
-                      : "Chưa cập nhật"}
+                      : "Chưa cập nhật"} */}
                   </p>
                 </div>
 
@@ -1001,9 +968,7 @@ const Restrooms = () => {
                     lineHeight: "1.6",
                   }}
                 >
-                  {selectedRestroom.description ||
-                    selectedRestroom.details ||
-                    "Chưa có mô tả"}
+                  {selectedRestroom.description || "Chưa có mô tả"}
                 </p>
               </div>
             </div>
@@ -1029,10 +994,12 @@ const Restrooms = () => {
                   cursor: "pointer",
                   transition: "background-color 0.2s",
                 }}
-                onMouseEnter={(e) =>
+                onMouseEnter={(e: any) =>
                   (e.target.style.backgroundColor = "#f9fafb")
                 }
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "white")}
+                onMouseLeave={(e: any) =>
+                  (e.target.style.backgroundColor = "white")
+                }
               >
                 Đóng
               </button>
@@ -1101,10 +1068,10 @@ const Restrooms = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) =>
+                onMouseEnter={(e: any) =>
                   (e.target.style.backgroundColor = "#f3f4f6")
                 }
-                onMouseLeave={(e) =>
+                onMouseLeave={(e: any) =>
                   (e.target.style.backgroundColor = "transparent")
                 }
               >
@@ -1128,7 +1095,7 @@ const Restrooms = () => {
                 </label>
                 <select
                   name="floorNumber"
-                  value={updateRestroomData.floorNumber}
+                  value={updateRestroomData?.floorId}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1166,7 +1133,7 @@ const Restrooms = () => {
                 </label>
                 <select
                   name="areaName"
-                  value={updateRestroomData.areaName}
+                  value={updateRestroomData?.areaId}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1205,7 +1172,7 @@ const Restrooms = () => {
                 <input
                   type="text"
                   name="restroomNumber"
-                  value={updateRestroomData.restroomNumber}
+                  value={updateRestroomData?.restroomNumber}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1236,7 +1203,7 @@ const Restrooms = () => {
                 </label>
                 <select
                   name="status"
-                  value={updateRestroomData.status}
+                  value={updateRestroomData?.status}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1274,7 +1241,7 @@ const Restrooms = () => {
                 </label>
                 <textarea
                   name="description"
-                  value={updateRestroomData.description}
+                  value={updateRestroomData?.description}
                   onChange={handleUpdateChange}
                   rows={4}
                   style={{
@@ -1314,10 +1281,10 @@ const Restrooms = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) =>
+                  onMouseEnter={(e: any) =>
                     (e.target.style.backgroundColor = "#f9fafb")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor = "white")
                   }
                 >
@@ -1336,10 +1303,10 @@ const Restrooms = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) =>
+                  onMouseEnter={(e: any) =>
                     (e.target.style.backgroundColor = "#E04B1F")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor = "#FF5B27")
                   }
                 >
