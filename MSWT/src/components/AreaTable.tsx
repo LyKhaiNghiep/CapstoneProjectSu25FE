@@ -1,21 +1,39 @@
-import React, { useState } from "react";
-import { HiOutlineEye, HiOutlinePencil, HiOutlineTrash, HiOutlineDotsVertical } from "react-icons/hi";
-import Pagination from "./Pagination";
+import { Area } from "@/config/models/restroom.model";
+import { useState } from "react";
+import {
+  HiOutlineDotsVertical,
+  HiOutlineEye,
+  HiOutlinePencil,
+  HiOutlineTrash,
+} from "react-icons/hi";
 
-const AreaTable = ({ 
-  areas, 
-  currentPage, 
-  itemsPerPage, 
-  onPageChange, 
-  onActionClick 
-}) => {
-  const [openDropdown, setOpenDropdown] = useState(null);
+interface IProps {
+  areas: Area[];
+  currentPage?: number;
+  itemsPerPage?: number;
+  onPageChange?: (page: number) => void;
+  onActionClick: (action: IAction) => void;
+}
+
+interface IAction {
+  action: string;
+  area: Area;
+}
+
+const AreaTable = ({
+  areas,
+  currentPage = 1,
+  itemsPerPage = 10,
+  onPageChange,
+  onActionClick,
+}: IProps) => {
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const totalPages = Math.ceil(areas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentAreas = areas.slice(startIndex, endIndex);
-
-  const getStatusColor = (status) => {
+  console.log("areas", areas);
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "Hoạt động":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
@@ -28,11 +46,11 @@ const AreaTable = ({
     }
   };
 
-  const handleDropdownToggle = (areaId) => {
+  const handleDropdownToggle = (areaId: string) => {
     setOpenDropdown(openDropdown === areaId ? null : areaId);
   };
 
-  const handleActionSelect = (action, area) => {
+  const handleActionSelect = (action: string, area: Area) => {
     onActionClick({ action, area });
     setOpenDropdown(null);
   };
@@ -43,18 +61,21 @@ const AreaTable = ({
         marginLeft: "32px",
         marginRight: "32px",
         marginTop: "0px",
-        marginBottom: "32px",
         backgroundColor: "white",
         borderRadius: "12px",
         border: "1px solid #f0f0f0",
         overflow: "auto",
-        maxHeight: "350px",
         boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.06)",
       }}
     >
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
-          <tr style={{ backgroundColor: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
+          <tr
+            style={{
+              backgroundColor: "#f9fafb",
+              borderBottom: "2px solid #e5e7eb",
+            }}
+          >
             <th
               style={{
                 padding: "16px",
@@ -158,7 +179,7 @@ const AreaTable = ({
                   color: "#111827",
                 }}
               >
-                {area.name}
+                {area.areaName}
               </td>
 
               {/* Floor Column */}
@@ -169,7 +190,7 @@ const AreaTable = ({
                   color: "#6b7280",
                 }}
               >
-                Tầng {area.floor}
+                Tầng {area.floor?.floorNumber}
               </td>
 
               {/* Start Room Column */}
@@ -180,7 +201,7 @@ const AreaTable = ({
                   color: "#6b7280",
                 }}
               >
-                {area.startRoom}
+                {area.roomBegin}
               </td>
 
               {/* End Room Column */}
@@ -191,7 +212,7 @@ const AreaTable = ({
                   color: "#6b7280",
                 }}
               >
-                {area.endRoom}
+                {area.roomEnd}
               </td>
 
               {/* Description Column */}
@@ -234,7 +255,7 @@ const AreaTable = ({
                 }}
               >
                 <button
-                  onClick={() => handleDropdownToggle(area.id)}
+                  onClick={() => handleDropdownToggle(area.areaId)}
                   style={{
                     color: "#6b7280",
                     background: "transparent",
@@ -244,11 +265,11 @@ const AreaTable = ({
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e: any) => {
                     e.target.style.color = "#374151";
                     e.target.style.backgroundColor = "#f3f4f6";
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={(e: any) => {
                     e.target.style.color = "#6b7280";
                     e.target.style.backgroundColor = "transparent";
                   }}
@@ -259,7 +280,7 @@ const AreaTable = ({
                 </button>
 
                 {/* Dropdown Menu */}
-                {openDropdown === area.id && (
+                {openDropdown === area.areaId && (
                   <div
                     style={{
                       position: "absolute",
@@ -268,13 +289,14 @@ const AreaTable = ({
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
                       borderRadius: "8px",
-                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                      boxShadow:
+                        "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
                       zIndex: 10,
                       minWidth: "140px",
                     }}
                   >
                     <button
-                      onClick={() => handleActionSelect('view', area)}
+                      onClick={() => handleActionSelect("view", area)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -289,14 +311,18 @@ const AreaTable = ({
                         gap: "8px",
                         borderRadius: "8px 8px 0 0",
                       }}
-                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#f9fafb")}
-                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                      onMouseEnter={(e: any) =>
+                        (e.target.style.backgroundColor = "#f9fafb")
+                      }
+                      onMouseLeave={(e: any) =>
+                        (e.target.style.backgroundColor = "transparent")
+                      }
                     >
                       <HiOutlineEye style={{ width: "16px", height: "16px" }} />
                       Xem chi tiết
                     </button>
                     <button
-                      onClick={() => handleActionSelect('edit', area)}
+                      onClick={() => handleActionSelect("edit", area)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -311,14 +337,20 @@ const AreaTable = ({
                         gap: "8px",
                         borderTop: "1px solid #f3f4f6",
                       }}
-                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#f9fafb")}
-                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                      onMouseEnter={(e: any) =>
+                        (e.target.style.backgroundColor = "#f9fafb")
+                      }
+                      onMouseLeave={(e: any) =>
+                        (e.target.style.backgroundColor = "transparent")
+                      }
                     >
-                      <HiOutlinePencil style={{ width: "16px", height: "16px" }} />
+                      <HiOutlinePencil
+                        style={{ width: "16px", height: "16px" }}
+                      />
                       Sửa
                     </button>
                     <button
-                      onClick={() => handleActionSelect('delete', area)}
+                      onClick={() => handleActionSelect("delete", area)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -334,10 +366,16 @@ const AreaTable = ({
                         borderRadius: "0 0 8px 8px",
                         borderTop: "1px solid #f3f4f6",
                       }}
-                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#fef2f2")}
-                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                      onMouseEnter={(e: any) =>
+                        (e.target.style.backgroundColor = "#fef2f2")
+                      }
+                      onMouseLeave={(e: any) =>
+                        (e.target.style.backgroundColor = "transparent")
+                      }
                     >
-                      <HiOutlineTrash style={{ width: "16px", height: "16px" }} />
+                      <HiOutlineTrash
+                        style={{ width: "16px", height: "16px" }}
+                      />
                       Xóa
                     </button>
                   </div>
@@ -366,4 +404,4 @@ const AreaTable = ({
   );
 };
 
-export default AreaTable; 
+export default AreaTable;

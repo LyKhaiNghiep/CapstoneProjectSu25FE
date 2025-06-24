@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { HiOutlinePlus, HiOutlineSearch, HiX, HiOutlineLocationMarker } from "react-icons/hi";
+import { Area, Floor } from "@/config/models/restroom.model";
+import { useAreas } from "../hooks/useArea";
+import { useState } from "react";
+import {
+  HiOutlineLocationMarker,
+  HiOutlinePlus,
+  HiOutlineSearch,
+  HiX,
+} from "react-icons/hi";
 import AreaTable from "../components/AreaTable";
 import Pagination from "../components/Pagination";
+import { useFloors } from "../hooks/useFloor";
+import { ICreateAreaRequest } from "@/config/models/area.model";
 
 const Areas = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,177 +19,57 @@ const Areas = () => {
   const [showAddAreaPopup, setShowAddAreaPopup] = useState(false);
   const [showViewAreaModal, setShowViewAreaModal] = useState(false);
   const [showUpdateAreaModal, setShowUpdateAreaModal] = useState(false);
-  const [selectedArea, setSelectedArea] = useState(null);
-  const [updateAreaData, setUpdateAreaData] = useState({
-    name: "",
-    floor: "",
-    startRoom: "",
-    endRoom: "",
+  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
+  const [updateAreaData, setUpdateAreaData] = useState<Area>({
+    areaName: "",
+    floor: undefined,
+    roomBegin: "",
+    roomEnd: "",
     description: "",
-    status: ""
+    status: "",
+    areaId: "",
+    floorId: "",
+    id: "",
   });
-  const [newArea, setNewArea] = useState({
-    name: "",
-    floor: "",
-    startRoom: "",
-    endRoom: "",
+  const [newArea, setNewArea] = useState<ICreateAreaRequest>({
+    areaName: "",
+    roomBegin: "",
+    roomEnd: "",
     description: "",
-    status: "Hoạt động"
+    floorId: "",
+    status: "Hoạt động",
   });
 
   const itemsPerPage = 5; // Số khu vực hiển thị mỗi trang
+  const { areas, createAsync } = useAreas();
+  const { floors } = useFloors();
 
-  // Sample area data - Dữ liệu mặc định
-  const defaultAreas = [
-    {
-      id: 1,
-      name: "Khu vực A",
-      floor: 1,
-      startRoom: "A101",
-      endRoom: "A120",
-      description: "Khu vực văn phòng chính, bao gồm các phòng họp và phòng làm việc",
-      status: "Hoạt động",
-      createdDate: "2024-01-15"
-    },
-    {
-      id: 2,
-      name: "Khu vực B",
-      floor: 1,
-      startRoom: "B101",
-      endRoom: "B115",
-      description: "Khu vực tiếp đón khách hàng và phòng chờ",
-      status: "Hoạt động",
-      createdDate: "2024-02-10"
-    },
-    {
-      id: 3,
-      name: "Khu vực C",
-      floor: 2,
-      startRoom: "C201",
-      endRoom: "C225",
-      description: "Khu vực phòng thí nghiệm và nghiên cứu",
-      status: "Bảo trì",
-      createdDate: "2024-01-20"
-    },
-    {
-      id: 4,
-      name: "Khu vực D",
-      floor: 2,
-      startRoom: "D201",
-      endRoom: "D210",
-      description: "Khu vực đào tạo và hội thảo",
-      status: "Hoạt động",
-      createdDate: "2024-03-05"
-    },
-    {
-      id: 5,
-      name: "Khu vực E",
-      floor: 3,
-      startRoom: "E301",
-      endRoom: "E330",
-      description: "Khu vực hành chính và quản lý",
-      status: "Hoạt động",
-      createdDate: "2024-02-28"
-    },
-    {
-      id: 6,
-      name: "Khu vực F",
-      floor: 3,
-      startRoom: "F301",
-      endRoom: "F315",
-      description: "Khu vực lưu trữ tài liệu và kho",
-      status: "Tạm ngưng",
-      createdDate: "2024-03-10"
-    },
-    {
-      id: 7,
-      name: "Khu vực G",
-      floor: 4,
-      startRoom: "G401",
-      endRoom: "G420",
-      description: "Khu vực giải trí và nghỉ ngơi cho nhân viên",
-      status: "Hoạt động",
-      createdDate: "2024-03-15"
-    },
-    {
-      id: 8,
-      name: "Khu vực H",
-      floor: 4,
-      startRoom: "H401",
-      endRoom: "H410",
-      description: "Khu vực máy chủ và hệ thống IT",
-      status: "Hoạt động",
-      createdDate: "2024-03-20"
-    }
-  ];
-
-  const [areas, setAreas] = useState([]);
-
-  // LocalStorage functions
-  const saveAreasToLocalStorage = (areasData) => {
-    try {
-      localStorage.setItem('areaManagement_areas', JSON.stringify(areasData));
-      console.log('✅ Đã lưu khu vực vào LocalStorage');
-    } catch (error) {
-      console.error('❌ Lỗi khi lưu khu vực vào LocalStorage:', error);
-    }
-  };
-
-  const loadAreasFromLocalStorage = () => {
-    try {
-      const savedAreas = localStorage.getItem('areaManagement_areas');
-      if (savedAreas) {
-        const parsedAreas = JSON.parse(savedAreas);
-        console.log('✅ Đã tải khu vực từ LocalStorage:', parsedAreas.length, 'areas');
-        return parsedAreas;
-      }
-    } catch (error) {
-      console.error('❌ Lỗi khi tải khu vực từ LocalStorage:', error);
-    }
-    return null;
-  };
-
-  // Load dữ liệu khi component mount
-  useEffect(() => {
-    const savedAreas = loadAreasFromLocalStorage();
-    if (savedAreas && savedAreas.length > 0) {
-      // Migrate old data - add missing fields if they don't exist
-      const migratedAreas = savedAreas.map(area => ({
-        ...area,
-        createdDate: area.createdDate || "2024-01-01"
-      }));
-      setAreas(migratedAreas);
-      // Save migrated data back to localStorage
-      if (JSON.stringify(migratedAreas) !== JSON.stringify(savedAreas)) {
-        saveAreasToLocalStorage(migratedAreas);
-      }
-    } else {
-      // Nếu chưa có dữ liệu trong LocalStorage, sử dụng dữ liệu mặc định
-      setAreas(defaultAreas);
-      saveAreasToLocalStorage(defaultAreas);
-    }
-  }, []);
-
-  const handleActionClick = ({ action, area }) => {
-    if (action === 'view') {
+  const handleActionClick = ({
+    action,
+    area,
+  }: {
+    action: string;
+    area: Area;
+  }) => {
+    if (action === "view") {
       setSelectedArea(area);
       setShowViewAreaModal(true);
-    } else if (action === 'edit') {
+    } else if (action === "edit") {
       setSelectedArea(area);
       setUpdateAreaData({
-        name: area.name,
+        areaName: area.areaName,
         floor: area.floor,
-        startRoom: area.startRoom,
-        endRoom: area.endRoom,
+        roomBegin: area.roomBegin,
+        roomEnd: area.roomEnd,
         description: area.description,
-        status: area.status
+        status: area.status,
+        areaId: area.areaId,
+        floorId: area.floorId,
+        id: area.id,
       });
       setShowUpdateAreaModal(true);
-    } else if (action === 'delete') {
+    } else if (action === "delete") {
       if (window.confirm("Bạn có chắc muốn xóa khu vực này?")) {
-        const updatedAreas = areas.filter(a => a.id !== area.id);
-        setAreas(updatedAreas);
-        saveAreasToLocalStorage(updatedAreas);
         alert("✅ Đã xóa khu vực thành công!");
       }
     }
@@ -195,32 +84,28 @@ const Areas = () => {
     setShowUpdateAreaModal(false);
     setSelectedArea(null);
     setUpdateAreaData({
-      name: "",
-      floor: "",
-      startRoom: "",
-      endRoom: "",
+      areaName: "",
+      floor: undefined,
+      roomBegin: "",
+      roomEnd: "",
       description: "",
-      status: ""
+      status: "",
+      areaId: "",
+      floorId: "",
+      id: "",
     });
   };
 
-  const handleUpdateChange = (e) => {
+  const handleUpdateChange = (e: any) => {
     const { name, value } = e.target;
-    setUpdateAreaData(prev => ({
+    setUpdateAreaData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSubmitUpdate = (e) => {
+  const handleSubmitUpdate = (e: any) => {
     e.preventDefault();
-    const updatedAreas = areas.map(area => 
-      area.id === selectedArea.id 
-        ? { ...area, ...updateAreaData, floor: parseInt(updateAreaData.floor) }
-        : area
-    );
-    setAreas(updatedAreas);
-    saveAreasToLocalStorage(updatedAreas);
     handleCloseUpdateModal();
     alert("✅ Đã cập nhật khu vực thành công!");
   };
@@ -232,50 +117,64 @@ const Areas = () => {
   const handleClosePopup = () => {
     setShowAddAreaPopup(false);
     setNewArea({
-      name: "",
-      floor: "",
-      startRoom: "",
-      endRoom: "",
+      areaName: "",
+      roomBegin: "",
+      roomEnd: "",
       description: "",
-      status: "Hoạt động"
+      status: "Hoạt động",
+      floorId: "",
     });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     const { name, value } = e.target;
-    setNewArea(prev => ({
+    setNewArea((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSubmitArea = (e) => {
+  const handleSubmitArea = (e: any) => {
     e.preventDefault();
-    if (newArea.name && newArea.floor && newArea.startRoom && newArea.endRoom) {
-      const areaToAdd = {
-        ...newArea,
-        id: Date.now(),
-        floor: parseInt(newArea.floor),
-        createdDate: new Date().toISOString().split('T')[0]
-      };
-      
-      const updatedAreas = [...areas, areaToAdd];
-      setAreas(updatedAreas);
-      
-      // Lưu vào LocalStorage
-      saveAreasToLocalStorage(updatedAreas);
-      
-      handleClosePopup();
-      
-      // Thông báo thành công
-      alert("✅ Đã thêm khu vực thành công!");
-    } else {
+
+    // Kiểm tra đầy đủ thông tin
+    if (
+      !newArea.floorId ||
+      !newArea.areaName ||
+      !newArea.roomBegin ||
+      !newArea.roomEnd
+    ) {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+      return;
     }
+
+    // Kiểm tra số phòng hợp lệ
+    const roomBeginNum = parseInt(newArea.roomBegin.trim());
+    const roomEndNum = parseInt(newArea.roomEnd.trim());
+
+    if (isNaN(roomBeginNum) || isNaN(roomEndNum)) {
+      alert("Số phòng phải là số hợp lệ!");
+      return;
+    }
+
+    if (roomBeginNum >= roomEndNum) {
+      alert("Số phòng bắt đầu phải nhỏ hơn số phòng kết thúc!");
+      return;
+    }
+
+    // Kiểm tra tên khu vực
+    if (newArea.areaName.trim().length < 2) {
+      alert("Tên khu vực phải có ít nhất 2 ký tự!");
+      return;
+    }
+    createAsync(newArea);
+
+    handleClosePopup();
+    alert("✅ Đã thêm khu vực thành công!");
   };
 
   // Filter areas based on active tab and search term
-  const filteredAreas = areas.filter(area => {
+  const filteredAreas = areas.filter((area) => {
     // Tab filtering
     let tabFilter;
     if (activeTab === "all") {
@@ -287,17 +186,17 @@ const Areas = () => {
     } else if (activeTab === "inactive") {
       tabFilter = area.status === "Tạm ngưng";
     }
-    
+
     if (!tabFilter) return false;
-    
+
     // Search filtering
     if (!searchTerm) return true;
-    
+
     return (
-      area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      area.areaName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       area.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.startRoom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.endRoom.toLowerCase().includes(searchTerm.toLowerCase())
+      area.roomBegin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      area.roomEnd.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -308,13 +207,21 @@ const Areas = () => {
   const currentAreas = filteredAreas.slice(startIndex, endIndex);
 
   // Reset về trang 1 khi search
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: any) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
 
   return (
-    <div style={{ backgroundColor: "#ffffff", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{
+        backgroundColor: "#ffffff",
+        height: "100vh",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
@@ -351,16 +258,19 @@ const Areas = () => {
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
-                borderBottom: activeTab === "all" ? "2px solid #FF5B27" : "2px solid transparent",
+                borderBottom:
+                  activeTab === "all"
+                    ? "2px solid #FF5B27"
+                    : "2px solid transparent",
                 color: activeTab === "all" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: any) => {
                 if (activeTab !== "all") {
                   e.target.style.color = "#374151";
                 }
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: any) => {
                 if (activeTab !== "all") {
                   e.target.style.color = "#6b7280";
                 }
@@ -380,16 +290,19 @@ const Areas = () => {
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
-                borderBottom: activeTab === "active" ? "2px solid #FF5B27" : "2px solid transparent",
+                borderBottom:
+                  activeTab === "active"
+                    ? "2px solid #FF5B27"
+                    : "2px solid transparent",
                 color: activeTab === "active" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: any) => {
                 if (activeTab !== "active") {
                   e.target.style.color = "#374151";
                 }
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: any) => {
                 if (activeTab !== "active") {
                   e.target.style.color = "#6b7280";
                 }
@@ -409,16 +322,19 @@ const Areas = () => {
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
-                borderBottom: activeTab === "maintenance" ? "2px solid #FF5B27" : "2px solid transparent",
+                borderBottom:
+                  activeTab === "maintenance"
+                    ? "2px solid #FF5B27"
+                    : "2px solid transparent",
                 color: activeTab === "maintenance" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: any) => {
                 if (activeTab !== "maintenance") {
                   e.target.style.color = "#374151";
                 }
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: any) => {
                 if (activeTab !== "maintenance") {
                   e.target.style.color = "#6b7280";
                 }
@@ -438,16 +354,19 @@ const Areas = () => {
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
-                borderBottom: activeTab === "inactive" ? "2px solid #FF5B27" : "2px solid transparent",
+                borderBottom:
+                  activeTab === "inactive"
+                    ? "2px solid #FF5B27"
+                    : "2px solid transparent",
                 color: activeTab === "inactive" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: any) => {
                 if (activeTab !== "inactive") {
                   e.target.style.color = "#374151";
                 }
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: any) => {
                 if (activeTab !== "inactive") {
                   e.target.style.color = "#6b7280";
                 }
@@ -518,8 +437,12 @@ const Areas = () => {
                 cursor: "pointer",
                 transition: "background-color 0.2s",
               }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#e04516")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
+              onMouseEnter={(e: any) =>
+                (e.target.style.backgroundColor = "#e04516")
+              }
+              onMouseLeave={(e: any) =>
+                (e.target.style.backgroundColor = "#FF5B27")
+              }
             >
               <HiOutlinePlus style={{ width: "20px", height: "20px" }} />
               Thêm khu vực
@@ -530,10 +453,7 @@ const Areas = () => {
 
       {/* Content Area */}
       <div style={{ flex: "0 0 auto" }}>
-        <AreaTable
-          areas={currentAreas}
-          onActionClick={handleActionClick}
-        />
+        <AreaTable areas={currentAreas} onActionClick={handleActionClick} />
       </div>
 
       {/* Pagination */}
@@ -571,7 +491,8 @@ const Areas = () => {
               maxWidth: "90vw",
               maxHeight: "90vh",
               overflow: "auto",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -604,8 +525,12 @@ const Areas = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                onMouseEnter={(e: any) =>
+                  (e.target.style.backgroundColor = "#f3f4f6")
+                }
+                onMouseLeave={(e: any) =>
+                  (e.target.style.backgroundColor = "transparent")
+                }
               >
                 <HiX style={{ width: "24px", height: "24px" }} />
               </button>
@@ -627,8 +552,8 @@ const Areas = () => {
                 </label>
                 <input
                   type="text"
-                  name="name"
-                  value={newArea.name}
+                  name="areaName"
+                  value={newArea.areaName}
                   onChange={handleInputChange}
                   required
                   placeholder="Nhập tên khu vực"
@@ -658,14 +583,11 @@ const Areas = () => {
                 >
                   Tầng *
                 </label>
-                <input
-                  type="number"
-                  name="floor"
-                  value={newArea.floor}
+                <select
+                  name="floorId"
+                  value={newArea.floorId}
                   onChange={handleInputChange}
                   required
-                  placeholder="Nhập số tầng"
-                  min="1"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -674,13 +596,23 @@ const Areas = () => {
                     fontSize: "14px",
                     outline: "none",
                     transition: "border-color 0.2s",
+                    backgroundColor: "white",
                   }}
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                />
+                >
+                  <option value="">Chọn tầng</option>
+                  {floors?.map((floor: Floor) => (
+                    <option key={floor.floorId} value={floor.floorId}>
+                      Tầng {floor.floorNumber}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+              <div
+                style={{ display: "flex", gap: "12px", marginBottom: "16px" }}
+              >
                 <div style={{ flex: 1 }}>
                   <label
                     style={{
@@ -695,8 +627,8 @@ const Areas = () => {
                   </label>
                   <input
                     type="text"
-                    name="startRoom"
-                    value={newArea.startRoom}
+                    name="roomBegin"
+                    value={newArea.roomBegin}
                     onChange={handleInputChange}
                     required
                     placeholder="VD: A101"
@@ -727,8 +659,8 @@ const Areas = () => {
                   </label>
                   <input
                     type="text"
-                    name="endRoom"
-                    value={newArea.endRoom}
+                    name="roomEnd"
+                    value={newArea.roomEnd}
                     onChange={handleInputChange}
                     required
                     placeholder="VD: A120"
@@ -763,7 +695,7 @@ const Areas = () => {
                   name="description"
                   value={newArea.description}
                   onChange={handleInputChange}
-                  rows="3"
+                  rows={3}
                   placeholder="Nhập mô tả khu vực"
                   style={{
                     width: "100%",
@@ -837,8 +769,12 @@ const Areas = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#f9fafb")}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = "white")}
+                  onMouseEnter={(e: any) =>
+                    (e.target.style.backgroundColor = "#f9fafb")
+                  }
+                  onMouseLeave={(e: any) =>
+                    (e.target.style.backgroundColor = "white")
+                  }
                 >
                   Hủy
                 </button>
@@ -855,8 +791,12 @@ const Areas = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#E04B1F")}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
+                  onMouseEnter={(e: any) =>
+                    (e.target.style.backgroundColor = "#E04B1F")
+                  }
+                  onMouseLeave={(e: any) =>
+                    (e.target.style.backgroundColor = "#FF5B27")
+                  }
                 >
                   Thêm khu vực
                 </button>
@@ -892,7 +832,8 @@ const Areas = () => {
               maxWidth: "90vw",
               maxHeight: "90vh",
               overflow: "auto",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -925,8 +866,12 @@ const Areas = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                onMouseEnter={(e: any) =>
+                  (e.target.style.backgroundColor = "#f3f4f6")
+                }
+                onMouseLeave={(e: any) =>
+                  (e.target.style.backgroundColor = "transparent")
+                }
               >
                 <HiX style={{ width: "24px", height: "24px" }} />
               </button>
@@ -949,7 +894,7 @@ const Areas = () => {
                 <input
                   type="text"
                   name="name"
-                  value={updateAreaData.name}
+                  value={updateAreaData.areaName}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -981,7 +926,7 @@ const Areas = () => {
                 <input
                   type="number"
                   name="floor"
-                  value={updateAreaData.floor}
+                  value={updateAreaData.floor?.floorNumber}
                   onChange={handleUpdateChange}
                   required
                   min="1"
@@ -999,7 +944,9 @@ const Areas = () => {
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+              <div
+                style={{ display: "flex", gap: "12px", marginBottom: "16px" }}
+              >
                 <div style={{ flex: 1 }}>
                   <label
                     style={{
@@ -1015,7 +962,7 @@ const Areas = () => {
                   <input
                     type="text"
                     name="startRoom"
-                    value={updateAreaData.startRoom}
+                    value={updateAreaData.roomBegin}
                     onChange={handleUpdateChange}
                     required
                     style={{
@@ -1046,7 +993,7 @@ const Areas = () => {
                   <input
                     type="text"
                     name="endRoom"
-                    value={updateAreaData.endRoom}
+                    value={updateAreaData.roomEnd}
                     onChange={handleUpdateChange}
                     required
                     style={{
@@ -1080,7 +1027,7 @@ const Areas = () => {
                   name="description"
                   value={updateAreaData.description}
                   onChange={handleUpdateChange}
-                  rows="3"
+                  rows={3}
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -1154,8 +1101,12 @@ const Areas = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#f9fafb")}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = "white")}
+                  onMouseEnter={(e: any) =>
+                    (e.target.style.backgroundColor = "#f9fafb")
+                  }
+                  onMouseLeave={(e: any) =>
+                    (e.target.style.backgroundColor = "white")
+                  }
                 >
                   Hủy
                 </button>
@@ -1172,8 +1123,12 @@ const Areas = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#E04B1F")}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
+                  onMouseEnter={(e: any) =>
+                    (e.target.style.backgroundColor = "#E04B1F")
+                  }
+                  onMouseLeave={(e: any) =>
+                    (e.target.style.backgroundColor = "#FF5B27")
+                  }
                 >
                   Cập nhật
                 </button>
@@ -1209,7 +1164,8 @@ const Areas = () => {
               maxWidth: "90vw",
               maxHeight: "90vh",
               overflow: "auto",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1242,69 +1198,142 @@ const Areas = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+                onMouseEnter={(e: any) =>
+                  (e.target.style.backgroundColor = "#f3f4f6")
+                }
+                onMouseLeave={(e: any) =>
+                  (e.target.style.backgroundColor = "transparent")
+                }
               >
                 <HiX style={{ width: "24px", height: "24px" }} />
               </button>
             </div>
 
             {/* Area Info */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+            >
               {/* Area Header */}
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "16px",
-                backgroundColor: "#f8fafc",
-                borderRadius: "8px"
-              }}>
-                <HiOutlineLocationMarker style={{ width: "24px", height: "24px", color: "#FF5B27" }} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "16px",
+                  backgroundColor: "#f8fafc",
+                  borderRadius: "8px",
+                }}
+              >
+                <HiOutlineLocationMarker
+                  style={{ width: "24px", height: "24px", color: "#FF5B27" }}
+                />
                 <div>
-                  <h4 style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}>
-                    {selectedArea.name}
+                  <h4
+                    style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}
+                  >
+                    {selectedArea.areaName}
                   </h4>
                   <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
-                    Tầng {selectedArea.floor}
+                    Tầng {selectedArea.floor?.floorNumber}
                   </p>
                 </div>
               </div>
 
               {/* Area Details */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "20px",
+                }}
+              >
                 <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
                     Phòng bắt đầu
                   </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedArea.startRoom}
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedArea.roomBegin}
                   </p>
                 </div>
 
                 <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
                     Phòng kết thúc
                   </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedArea.endRoom}
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedArea.roomEnd}
                   </p>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                {/* <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
                     Ngày tạo
                   </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedArea.createdDate ? new Date(selectedArea.createdDate).toLocaleDateString('vi-VN') : "Chưa cập nhật"}
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedArea.createdDate
+                      ? new Date(selectedArea.createdDate).toLocaleDateString(
+                          "vi-VN"
+                        )
+                      : "Chưa cập nhật"}
                   </p>
-                </div>
+                </div> */}
 
                 <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
                     Trạng thái
                   </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", margin: "4px 0 0 0" }}>
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
                     <span
                       style={{
                         display: "inline-flex",
@@ -1312,12 +1341,18 @@ const Areas = () => {
                         fontSize: "12px",
                         fontWeight: "600",
                         borderRadius: "9999px",
-                        backgroundColor: 
-                          selectedArea.status === "Hoạt động" ? "#dcfce7" :
-                          selectedArea.status === "Bảo trì" ? "#fef3c7" : "#fee2e2",
-                        color: 
-                          selectedArea.status === "Hoạt động" ? "#15803d" :
-                          selectedArea.status === "Bảo trì" ? "#d97706" : "#dc2626",
+                        backgroundColor:
+                          selectedArea.status === "Hoạt động"
+                            ? "#dcfce7"
+                            : selectedArea.status === "Bảo trì"
+                            ? "#fef3c7"
+                            : "#fee2e2",
+                        color:
+                          selectedArea.status === "Hoạt động"
+                            ? "#15803d"
+                            : selectedArea.status === "Bảo trì"
+                            ? "#d97706"
+                            : "#dc2626",
                       }}
                     >
                       {selectedArea.status}
@@ -1328,10 +1363,24 @@ const Areas = () => {
 
               {/* Description - Full width */}
               <div>
-                <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                <label
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#6b7280",
+                  }}
+                >
                   Mô tả
                 </label>
-                <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0", lineHeight: "1.5" }}>
+                <p
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#111827",
+                    margin: "4px 0 0 0",
+                    lineHeight: "1.5",
+                  }}
+                >
                   {selectedArea.description || "Không có mô tả"}
                 </p>
               </div>
@@ -1352,8 +1401,12 @@ const Areas = () => {
                   cursor: "pointer",
                   transition: "background-color 0.2s",
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#4b5563")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#6b7280")}
+                onMouseEnter={(e: any) =>
+                  (e.target.style.backgroundColor = "#4b5563")
+                }
+                onMouseLeave={(e: any) =>
+                  (e.target.style.backgroundColor = "#6b7280")
+                }
               >
                 Đóng
               </button>

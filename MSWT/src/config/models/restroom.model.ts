@@ -1,13 +1,15 @@
-export interface Area {
-  areaId: string;
-  areaName: string;
-  description?: string;
-}
+import { Floor } from "./floor.model";
 
-export interface Floor {
+export interface Area {
+  id: string;
+  areaId: string;
   floorId: string;
-  floorNumber: string;
-  description?: string;
+  description: string;
+  status: string;
+  roomBegin: string;
+  roomEnd: string;
+  areaName: string;
+  floor?: Floor;
 }
 
 export interface Schedule {
@@ -29,7 +31,7 @@ export interface Restroom {
   createdAt?: string;
   updatedAt?: string;
   area?: Area;
-  floor?: Floor;
+  // floor?: Floor;
   schedules?: Schedule[];
 }
 
