@@ -13,6 +13,8 @@ import ReportManagement from "../pages/ReportManagement";
 import TrashBinList from "../pages/TrashBinList";
 import NotFound from "../pages/NotFound";
 import { useAuth } from "../contexts/AuthContext";
+import Notifications from "../pages/Notifications";
+import Areas from "../pages/Areas";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -108,6 +110,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <ReportManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "notifications",
+        element: (
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "areas",
+        element: (
+          <ProtectedRoute>
+            <Areas />
           </ProtectedRoute>
         ),
       },

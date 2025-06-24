@@ -1,46 +1,62 @@
 import React, { useState } from 'react';
 import { HiOutlineSearch, HiOutlinePlus } from "react-icons/hi";
 import Pagination from "../components/Pagination";
+import TrashBinTable from "../components/TrashBinTable";
 
 const TrashBinList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [statusFilter, setStatusFilter] = useState("");
-  const [trashBins] = useState([
+  const [activeTab, setActiveTab] = useState("all"); // "all", "active", "full", "maintenance"
+  const [showDetailPopup, setShowDetailPopup] = useState(false);
+  const [selectedBin, setSelectedBin] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingBin, setEditingBin] = useState(null);
+  const [trashBins, setTrashBins] = useState([
     {
       id: 1,
       name: 'Thùng rác T1-01',
       area: 'Tầng 1 - Hành lang chính',
-      image: '/images/trash-bin-1.jpg',
+      location: 'Hành lang chính',
+      floor: 'Tầng 1',
+      image: 'https://i.pinimg.com/736x/0b/1a/b5/0b1ab5ad2297af7731196ecd5fc0f16b.jpg',
       status: 'Hoạt động'
     },
     {
       id: 2,
       name: 'Thùng rác T1-02',
       area: 'Tầng 1 - Phòng vệ sinh nam',
-      image: '/images/trash-bin-2.jpg',
-      status: 'Đầy'
+      location: 'Phòng vệ sinh nam',
+      floor: 'Tầng 1',
+      image: 'https://i.pinimg.com/736x/05/3e/4c/053e4cc264e69595e79bf599e7219516.jpg',
+      status: 'Hoạt động'
     },
     {
       id: 3,
       name: 'Thùng rác T2-01',
       area: 'Tầng 2 - Hành lang phía bắc',
-      image: '/images/trash-bin-3.jpg',
+      location: 'Hành lang phía bắc',
+      floor: 'Tầng 2',
+      image: 'https://i.pinimg.com/736x/0b/1a/b5/0b1ab5ad2297af7731196ecd5fc0f16b.jpg',
       status: 'Hoạt động'
     },
     {
       id: 4,
       name: 'Thùng rác T2-02',
       area: 'Tầng 2 - Phòng vệ sinh nữ',
-      image: '/images/trash-bin-4.jpg',
+      location: 'Phòng vệ sinh nữ',
+      floor: 'Tầng 2',
+      image: 'https://i.pinimg.com/736x/05/3e/4c/053e4cc264e69595e79bf599e7219516.jpg',
       status: 'Bảo trì'
     },
     {
       id: 5,
       name: 'Thùng rác T3-01',
       area: 'Tầng 3 - Khu vực nghỉ',
-      image: '/images/trash-bin-5.jpg',
+      location: 'Khu vực nghỉ',
+      floor: 'Tầng 3',
+      image: 'https://i.pinimg.com/736x/0b/1a/b5/0b1ab5ad2297af7731196ecd5fc0f16b.jpg',
       status: 'Hoạt động'
     }
   ]);
@@ -49,8 +65,7 @@ const TrashBinList = () => {
     switch (status) {
       case 'Hoạt động':
         return 'bg-green-100 text-green-800';
-      case 'Đầy':
-        return 'bg-red-100 text-red-800';
+      
       case 'Bảo trì':
         return 'bg-yellow-100 text-yellow-800';
       default:
@@ -58,10 +73,30 @@ const TrashBinList = () => {
     }
   };
 
+  // Filter trash bins based on active tab and search term
   const filteredTrashBins = trashBins.filter(bin => {
-    const matchesSearch = bin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         bin.area.toLowerCase().includes(searchTerm.toLowerCase());
+    // Tab filtering
+    let tabFilter;
+    if (activeTab === "all") {
+      tabFilter = true;
+    } else if (activeTab === "active") {
+      tabFilter = bin.status === "Hoạt động";
+    
+    } else if (activeTab === "maintenance") {
+      tabFilter = bin.status === "Bảo trì";
+    }
+    
+    if (!tabFilter) return false;
+    
+    // Search filtering
+    const matchesSearch = !searchTerm || 
+      bin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bin.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bin.location.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Status filter (keep this for backward compatibility)
     const matchesStatus = statusFilter === "" || bin.status === statusFilter;
+    
     return matchesSearch && matchesStatus;
   });
 
@@ -75,6 +110,35 @@ const TrashBinList = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
+  };
+
+  const handleActionClick = ({ action, bin }) => {
+    switch (action) {
+      case 'view':
+        setSelectedBin(bin);
+        setShowDetailPopup(true);
+        break;
+      case 'edit':
+        setEditingBin({ ...bin });
+        setShowEditModal(true);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleSaveStatus = () => {
+    if (editingBin) {
+      setTrashBins(prev => 
+        prev.map(bin => 
+          bin.id === editingBin.id 
+            ? { ...bin, status: editingBin.status }
+            : bin
+        )
+      );
+      setShowEditModal(false);
+      setEditingBin(null);
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -92,12 +156,7 @@ const TrashBinList = () => {
             {status}
           </span>
         );
-      case "Đầy":
-        return (
-          <span style={{ ...badgeStyle, backgroundColor: "#fee2e2", color: "#dc2626" }}>
-            {status}
-          </span>
-        );
+      
       case "Bảo trì":
         return (
           <span style={{ ...badgeStyle, backgroundColor: "#fef3c7", color: "#d97706" }}>
@@ -131,6 +190,128 @@ const TrashBinList = () => {
             </span>
           </nav>
         </div>
+
+        {/* Tabs
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
+            <button
+              onClick={() => {
+                setActiveTab("all");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "all" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "all" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "all") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "all") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Tất cả thùng rác
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("active");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "active" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "active" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "active") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "active") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Đang hoạt động
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("full");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "full" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "full" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "full") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "full") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Thùng đầy
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("maintenance");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "maintenance" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "maintenance" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "maintenance") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "maintenance") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Đang bảo trì
+            </button>
+          </div>
+        </div> */}
 
         {/* Search and Action Buttons */}
         <div
@@ -189,7 +370,7 @@ const TrashBinList = () => {
             >
               <option value="">Tất cả trạng thái</option>
               <option value="Hoạt động">Hoạt động</option>
-              <option value="Đầy">Đầy</option>
+              
               <option value="Bảo trì">Bảo trì</option>
             </select>
 
@@ -219,171 +400,11 @@ const TrashBinList = () => {
       </div>
 
       {/* Table Container */}
-      <div style={{ flex: "1", overflow: "auto", minHeight: 0, padding: "0 32px" }}>
-        <div style={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ backgroundColor: "#f9fafb", borderBottom: "1px solid #e5e7eb" }}>
-              <tr>
-                <th style={{ 
-                  padding: "12px 24px", 
-                  textAlign: "left", 
-                  fontSize: "12px", 
-                  fontWeight: "500", 
-                  color: "#6b7280", 
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em"
-                }}>
-                  Tên thùng rác
-                </th>
-                <th style={{ 
-                  padding: "12px 24px", 
-                  textAlign: "left", 
-                  fontSize: "12px", 
-                  fontWeight: "500", 
-                  color: "#6b7280", 
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em"
-                }}>
-                  Khu vực
-                </th>
-                <th style={{ 
-                  padding: "12px 24px", 
-                  textAlign: "left", 
-                  fontSize: "12px", 
-                  fontWeight: "500", 
-                  color: "#6b7280", 
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em"
-                }}>
-                  Hình ảnh
-                </th>
-                <th style={{ 
-                  padding: "12px 24px", 
-                  textAlign: "left", 
-                  fontSize: "12px", 
-                  fontWeight: "500", 
-                  color: "#6b7280", 
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em"
-                }}>
-                  Trạng thái
-                </th>
-                <th style={{ 
-                  padding: "12px 24px", 
-                  textAlign: "left", 
-                  fontSize: "12px", 
-                  fontWeight: "500", 
-                  color: "#6b7280", 
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em"
-                }}>
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody style={{ backgroundColor: "white" }}>
-              {currentTrashBins.map((bin, index) => (
-                <tr 
-                  key={bin.id} 
-                  style={{ 
-                    borderBottom: index === currentTrashBins.length - 1 ? "none" : "1px solid #f3f4f6",
-                    transition: "background-color 0.2s"
-                  }}
-                  onMouseEnter={(e) => e.target.parentElement.style.backgroundColor = "#f9fafb"}
-                  onMouseLeave={(e) => e.target.parentElement.style.backgroundColor = "white"}
-                >
-                  <td style={{ padding: "16px 24px" }}>
-                    <div>
-                      <div style={{ fontWeight: "500", color: "#111827", marginBottom: "4px" }}>
-                        {bin.name}
-                      </div>
-                      <div style={{ fontSize: "14px", color: "#6b7280" }}>
-                        ID: {bin.id}
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: "16px 24px" }}>
-                    <div style={{ color: "#111827" }}>{bin.area}</div>
-                  </td>
-                  <td style={{ padding: "16px 24px" }}>
-                    <div style={{ 
-                      width: "48px", 
-                      height: "48px", 
-                      backgroundColor: "#f3f4f6", 
-                      borderRadius: "8px", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "center" 
-                    }}>
-                      <img
-                        src={bin.image}
-                        alt={bin.name}
-                        style={{
-                          width: "24px",
-                          height: "24px",
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </div>
-                  </td>
-                  <td style={{ padding: "16px 24px" }}>
-                    {getStatusBadge(bin.status)}
-                  </td>
-                  <td style={{ padding: "16px 24px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <button 
-                        style={{ 
-                          color: "#3b82f6", 
-                          fontSize: "14px", 
-                          fontWeight: "500", 
-                          background: "none", 
-                          border: "none", 
-                          cursor: "pointer",
-                          transition: "color 0.2s"
-                        }}
-                        onMouseEnter={(e) => e.target.style.color = "#1d4ed8"}
-                        onMouseLeave={(e) => e.target.style.color = "#3b82f6"}
-                      >
-                        Xem
-                      </button>
-                      <button 
-                        style={{ 
-                          color: "#10b981", 
-                          fontSize: "14px", 
-                          fontWeight: "500", 
-                          background: "none", 
-                          border: "none", 
-                          cursor: "pointer",
-                          transition: "color 0.2s"
-                        }}
-                        onMouseEnter={(e) => e.target.style.color = "#059669"}
-                        onMouseLeave={(e) => e.target.style.color = "#10b981"}
-                      >
-                        Sửa
-                      </button>
-                      <button 
-                        style={{ 
-                          color: "#ef4444", 
-                          fontSize: "14px", 
-                          fontWeight: "500", 
-                          background: "none", 
-                          border: "none", 
-                          cursor: "pointer",
-                          transition: "color 0.2s"
-                        }}
-                        onMouseEnter={(e) => e.target.style.color = "#dc2626"}
-                        onMouseLeave={(e) => e.target.style.color = "#ef4444"}
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div style={{ flex: "0 0 auto" }}>
+        <TrashBinTable 
+          trashBins={currentTrashBins}
+          onActionClick={handleActionClick}
+        />
       </div>
 
       {/* Pagination */}
@@ -394,6 +415,260 @@ const TrashBinList = () => {
           onPageChange={setCurrentPage}
         />
       </div>
+
+      {/* Detail Popup */}
+      {showDetailPopup && selectedBin && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setShowDetailPopup(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "500px",
+              width: "90%",
+              maxHeight: "80vh",
+              overflow: "auto",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "24px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                Chi tiết thùng rác
+              </h2>
+              <button
+                onClick={() => setShowDetailPopup(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "24px",
+                  color: "#6b7280",
+                  cursor: "pointer",
+                  padding: "4px",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gap: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+                <img
+                  src={selectedBin.image}
+                  alt={selectedBin.name}
+                  style={{
+                    width: "200px",
+                    height: "200px",
+                    objectFit: "cover",
+                    borderRadius: "8px",
+                    border: "1px solid #e5e7eb",
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <div 
+                  style={{ 
+                    display: 'none',
+                    width: "200px",
+                    height: "200px", 
+                    backgroundColor: '#f3f4f6',
+                    borderRadius: '8px',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    color: '#9ca3af',
+                    border: "1px solid #e5e7eb",
+                  }}
+                >
+                  Không có hình ảnh
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "12px", alignItems: "center" }}>
+                <strong style={{ color: "#374151" }}>ID:</strong>
+                <span style={{ color: "#6b7280" }}>{selectedBin.id}</span>
+
+                <strong style={{ color: "#374151" }}>Tên thùng rác:</strong>
+                <span style={{ color: "#6b7280" }}>{selectedBin.name}</span>
+
+                <strong style={{ color: "#374151" }}>Địa điểm:</strong>
+                <span style={{ color: "#6b7280" }}>{selectedBin.location}</span>
+
+                <strong style={{ color: "#374151" }}>Tầng:</strong>
+                <span style={{ color: "#6b7280" }}>{selectedBin.floor}</span>
+
+                <strong style={{ color: "#374151" }}>Khu vực:</strong>
+                <span style={{ color: "#6b7280" }}>{selectedBin.area}</span>
+
+                <strong style={{ color: "#374151" }}>Trạng thái:</strong>
+                <div>
+                  {getStatusBadge(selectedBin.status)}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "24px", gap: "12px" }}>
+              <button
+                onClick={() => setShowDetailPopup(false)}
+                style={{
+                  padding: "10px 20px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "6px",
+                  backgroundColor: "white",
+                  color: "#374151",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = "#f9fafb"}
+                onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Status Modal */}
+      {showEditModal && editingBin && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                Sửa trạng thái thùng rác
+              </h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "24px",
+                  color: "#6b7280",
+                  cursor: "pointer",
+                  padding: "4px",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ marginBottom: "12px" }}>
+                <strong style={{ color: "#374151", display: "block", marginBottom: "4px" }}>
+                  Thùng rác: {editingBin.name}
+                </strong>
+                <span style={{ color: "#6b7280", fontSize: "14px" }}>
+                  {editingBin.location} - {editingBin.floor}
+                </span>
+              </div>
+
+              <div>
+                <label style={{ color: "#374151", fontWeight: "500", display: "block", marginBottom: "8px" }}>
+                  Trạng thái:
+                </label>
+                <select
+                  value={editingBin.status}
+                  onChange={(e) => setEditingBin({ ...editingBin, status: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    outline: "none",
+                    backgroundColor: "white",
+                  }}
+                >
+                  <option value="Hoạt động">Hoạt động</option>
+                  
+                  <option value="Bảo trì">Bảo trì</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button
+                onClick={() => setShowEditModal(false)}
+                style={{
+                  padding: "10px 20px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "6px",
+                  backgroundColor: "white",
+                  color: "#374151",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = "#f9fafb"}
+                onMouseLeave={(e) => e.target.style.backgroundColor = "white"}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSaveStatus}
+                style={{
+                  padding: "10px 20px",
+                  border: "none",
+                  borderRadius: "6px",
+                  backgroundColor: "#FF5B27",
+                  color: "white",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = "#E04B1F"}
+                onMouseLeave={(e) => e.target.style.backgroundColor = "#FF5B27"}
+              >
+                Lưu thay đổi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import Pagination from "../components/Pagination";
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("all"); // "all", "worker", "supervisor", "manager"
   const [showAddUserPopup, setShowAddUserPopup] = useState(false);
   const [showViewUserModal, setShowViewUserModal] = useState(false);
   const [showUpdateUserModal, setShowUpdateUserModal] = useState(false);
@@ -13,7 +14,8 @@ const UserManagement = () => {
   const [updateUserData, setUpdateUserData] = useState({
     name: "",
     position: "",
-    status: ""
+    status: "",
+    resignationReason: ""
   });
   const [newUser, setNewUser] = useState({
     name: "",
@@ -39,6 +41,8 @@ const UserManagement = () => {
       position: "Công nhân",
       phone: "08123455986",
       address: "123 Đường ABC, Quận 1, TP.HCM",
+      location: "Khu A",
+      floor: "Tầng 1",
       status: "Đang làm việc",
       avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
       createdDate: "2024-01-15"
@@ -50,6 +54,8 @@ const UserManagement = () => {
       position: "Giám sát viên",
       phone: "01257896658",
       address: "456 Đường XYZ, Quận 2, TP.HCM",
+      location: "Khu B",
+      floor: "Tầng 2",
       status: "Nghỉ phép",
       avatar: "https://i.pinimg.com/originals/88/0d/57/880d5790254f68ce92fe285cd255bb4d.gif",
       createdDate: "2024-02-10"
@@ -61,6 +67,8 @@ const UserManagement = () => {
       position: "Công nhân",
       phone: "01023554445",
       address: "789 Đường DEF, Quận 3, TP.HCM",
+      location: "Khu A",
+      floor: "Tầng 1",
       status: "Nghỉ việc",
       avatar: "https://i.pinimg.com/originals/74/e3/0f/74e30f31b38afa752f79f7ff0315ce37.gif",
       createdDate: "2024-01-20"
@@ -72,6 +80,8 @@ const UserManagement = () => {
       position: "Công nhân",
       phone: "09876543210",
       address: "321 Đường GHI, Quận 4, TP.HCM",
+      location: "Khu C",
+      floor: "Tầng 3",
       status: "Đang làm việc",
       avatar: "https://i.pinimg.com/originals/2c/b5/b7/2cb5b7bfa9506a980435078b0d41379d.gif",
       createdDate: "2024-03-05"
@@ -83,6 +93,8 @@ const UserManagement = () => {
       position: "Quản lý",
       phone: "01588999777",
       address: "654 Đường JKL, Quận 5, TP.HCM",
+      location: "Văn phòng",
+      floor: "Tầng 4",
       status: "Đang làm việc",
       avatar: "https://i.pinimg.com/originals/97/16/5e/97165e191052892894cb886b4a8c0971.gif",
       createdDate: "2024-02-28"
@@ -94,7 +106,9 @@ const UserManagement = () => {
       position: "Công nhân",
       phone: "0987654321",
       address: "111 Đường MNO, Quận 6, TP.HCM",
-      status: "Đang làm việc",
+      location: "Khu B",
+      floor: "Tầng 2",
+      status: "Đang kích hoạt",
       avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
       createdDate: "2024-03-10"
     },
@@ -105,7 +119,9 @@ const UserManagement = () => {
       position: "Giám sát viên",
       phone: "0123456789",
       address: "222 Đường PQR, Quận 7, TP.HCM",
-      status: "Nghỉ phép",
+      location: "Khu D",
+      floor: "Tầng 1",
+      status: "Đang trống lịch",
       avatar: "https://i.pinimg.com/originals/88/0d/57/880d5790254f68ce92fe285cd255bb4d.gif",
       createdDate: "2024-03-15"
     },
@@ -116,7 +132,9 @@ const UserManagement = () => {
       position: "Công nhân",
       phone: "0369852147",
       address: "333 Đường STU, Quận 8, TP.HCM",
-      status: "Đang làm việc",
+      location: "Khu A",
+      floor: "Tầng 3",
+      status: "Đang kích hoạt",
       avatar: "https://i.pinimg.com/originals/97/16/5e/97165e191052892894cb886b4a8c0971.gif",
       createdDate: "2024-03-20"
     },
@@ -127,6 +145,8 @@ const UserManagement = () => {
       position: "Quản lý",
       phone: "0741852963",
       address: "444 Đường VWX, Quận 9, TP.HCM",
+      location: "Văn phòng",
+      floor: "Tầng 5",
       status: "Đang làm việc",
       avatar: "https://i.pinimg.com/originals/74/e3/0f/74e30f31b38afa752f79f7ff0315ce37.gif",
       createdDate: "2024-03-25"
@@ -138,6 +158,8 @@ const UserManagement = () => {
       position: "Công nhân",
       phone: "0159753486",
       address: "555 Đường YZ, Quận 10, TP.HCM",
+      location: "Khu C",
+      floor: "Tầng 2",
       status: "Nghỉ việc",
       avatar: "https://i.pinimg.com/originals/2c/b5/b7/2cb5b7bfa9506a980435078b0d41379d.gif",
       createdDate: "2024-03-30"
@@ -179,6 +201,8 @@ const UserManagement = () => {
         ...user,
         email: user.email || `${user.name.toLowerCase()}@company.com`,
         address: user.address || "Chưa cập nhật địa chỉ",
+        location: user.location || "Chưa cập nhật",
+        floor: user.floor || "Chưa cập nhật",
         createdDate: user.createdDate || "2024-01-01"
       }));
       setUsers(migratedUsers);
@@ -202,7 +226,8 @@ const UserManagement = () => {
       setUpdateUserData({
         name: user.name,
         position: user.position,
-        status: user.status
+        status: user.status,
+        resignationReason: user.resignationReason || ""
       });
       setShowUpdateUserModal(true);
     }
@@ -219,14 +244,23 @@ const UserManagement = () => {
     setUpdateUserData({
       name: "",
       position: "",
-      status: ""
+      status: "",
+      resignationReason: ""
     });
   };
 
   const handleUpdateStatusChange = (e) => {
     setUpdateUserData(prev => ({
       ...prev,
-      status: e.target.value
+      status: e.target.value,
+      resignationReason: e.target.value === "Nghỉ việc" ? prev.resignationReason : ""
+    }));
+  };
+
+  const handleResignationReasonChange = (e) => {
+    setUpdateUserData(prev => ({
+      ...prev,
+      resignationReason: e.target.value
     }));
   };
 
@@ -234,7 +268,11 @@ const UserManagement = () => {
     e.preventDefault();
     const updatedUsers = users.map(user => 
       user.id === selectedUser.id 
-        ? { ...user, status: updateUserData.status }
+        ? { 
+            ...user, 
+            status: updateUserData.status,
+            resignationReason: updateUserData.status === "Nghỉ việc" ? updateUserData.resignationReason : undefined
+          }
         : user
     );
     setUsers(updatedUsers);
@@ -325,11 +363,31 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone.includes(searchTerm)
-  );
+  // Filter users based on active tab and search term
+  const filteredUsers = users.filter(user => {
+    // Tab filtering
+    let tabFilter;
+    if (activeTab === "all") {
+      tabFilter = true;
+    } else if (activeTab === "worker") {
+      tabFilter = user.position === "Công nhân";
+    } else if (activeTab === "supervisor") {
+      tabFilter = user.position === "Giám sát viên";
+    } else if (activeTab === "manager") {
+      tabFilter = user.position === "Quản lý";
+    }
+    
+    if (!tabFilter) return false;
+    
+    // Search filtering
+    if (!searchTerm) return true;
+    
+    return (
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phone.includes(searchTerm)
+    );
+  });
 
   // Tính toán pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -377,6 +435,128 @@ const UserManagement = () => {
           </nav>
         </div>
 
+        {/* Tabs */}
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
+            <button
+              onClick={() => {
+                setActiveTab("all");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "all" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "all" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "all") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "all") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Tất cả
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("worker");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "worker" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "worker" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "worker") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "worker") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Công nhân
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("supervisor");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "supervisor" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "supervisor" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "supervisor") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "supervisor") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Giám sát viên
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("manager");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "manager" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "manager" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "manager") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "manager") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Quản lý
+            </button>
+          </div>
+        </div>
+
         {/* Search and Add Button */}
         <div
           style={{
@@ -405,7 +585,7 @@ const UserManagement = () => {
               value={searchTerm}
               onChange={handleSearchChange}
               style={{
-                width: "40%",
+                width: "32%",
                 padding: "12px 16px 12px 48px",
                 border: "1px solid #d1d5db",
                 borderRadius: "50px",
@@ -452,7 +632,7 @@ const UserManagement = () => {
       </div>
 
       {/* User Table Container */}
-      <div style={{ flex: "1", overflow: "auto", minHeight: 0 }}>
+      <div style={{ flex: "0 0 auto" }}>
         <UserTable users={currentUsers} onActionClick={handleActionClick} />
       </div>
 
@@ -764,7 +944,7 @@ const UserManagement = () => {
                 </select>
               </div>
 
-              {/* <div style={{ marginBottom: "16px" }}>
+              <div style={{ marginBottom: "16px" }}>
                 <label
                   style={{
                     display: "block",
@@ -794,10 +974,12 @@ const UserManagement = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="Đang làm việc">Đang làm việc</option>
+                  <option value="Đang kích hoạt">Đang kích hoạt</option>
+                  <option value="Đang trống lịch">Đang trống lịch</option>
                   <option value="Nghỉ phép">Nghỉ phép</option>
                   <option value="Nghỉ việc">Nghỉ việc</option>
                 </select>
-              </div> */}
+              </div>
 
               <div style={{ marginBottom: "24px" }}>
                 <label
@@ -1044,9 +1226,13 @@ const UserManagement = () => {
                         borderRadius: "9999px",
                         backgroundColor: 
                           selectedUser.status === "Đang làm việc" ? "#dcfce7" :
+                          selectedUser.status === "Đang kích hoạt" ? "#dbeafe" :
+                          selectedUser.status === "Đang trống lịch" ? "#ede9fe" :
                           selectedUser.status === "Nghỉ phép" ? "#fef3c7" : "#fee2e2",
                         color: 
                           selectedUser.status === "Đang làm việc" ? "#15803d" :
+                          selectedUser.status === "Đang kích hoạt" ? "#1d4ed8" :
+                          selectedUser.status === "Đang trống lịch" ? "#7c3aed" :
                           selectedUser.status === "Nghỉ phép" ? "#d97706" : "#dc2626",
                       }}
                     >
@@ -1065,6 +1251,28 @@ const UserManagement = () => {
                   {selectedUser.address || "Chưa cập nhật địa chỉ"}
                 </p>
               </div>
+
+              {/* Resignation Reason - Only show when status is "Nghỉ việc" */}
+              {selectedUser.status === "Nghỉ việc" && selectedUser.resignationReason && (
+                <div>
+                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                    Lý do nghỉ việc
+                  </label>
+                  <p style={{ 
+                    fontSize: "16px", 
+                    fontWeight: "600", 
+                    color: "#111827", 
+                    margin: "4px 0 0 0",
+                    lineHeight: "1.5",
+                    padding: "8px",
+                    backgroundColor: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: "6px"
+                  }}>
+                    {selectedUser.resignationReason}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Close Button */}
@@ -1218,7 +1426,7 @@ const UserManagement = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: "24px" }}>
+              <div style={{ marginBottom: updateUserData.status === "Nghỉ việc" ? "16px" : "24px" }}>
                 <label
                   style={{
                     display: "block",
@@ -1248,10 +1456,49 @@ const UserManagement = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="Đang làm việc">Đang làm việc</option>
+                  <option value="Đang kích hoạt">Đang kích hoạt</option>
+                  <option value="Đang trống lịch">Đang trống lịch</option>
                   <option value="Nghỉ phép">Nghỉ phép</option>
                   <option value="Nghỉ việc">Nghỉ việc</option>
                 </select>
               </div>
+
+              {/* Resignation Reason Field - Only show when status is "Nghỉ việc" */}
+              {updateUserData.status === "Nghỉ việc" && (
+                <div style={{ marginBottom: "24px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "6px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#374151",
+                    }}
+                  >
+                    Lý do nghỉ việc *
+                  </label>
+                  <textarea
+                    value={updateUserData.resignationReason}
+                    onChange={handleResignationReasonChange}
+                    required
+                    rows="3"
+                    placeholder="Nhập lý do nghỉ việc..."
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      outline: "none",
+                      transition: "border-color 0.2s",
+                      backgroundColor: "white",
+                      resize: "vertical",
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                    onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                  />
+                </div>
+              )}
 
               {/* Buttons */}
               <div

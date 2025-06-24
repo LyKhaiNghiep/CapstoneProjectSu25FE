@@ -1,28 +1,31 @@
 import { useState } from "react";
 import { HiOutlineDotsVertical, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 
-const ReportTable = ({ reports, onActionClick }) => {
+const TrashBinTable = ({ trashBins, onActionClick }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
+
+  // Debug log to check trash bins data
+  console.log('TrashBinTable received trashBins:', trashBins);
+  console.log('TrashBinTable trashBins length:', trashBins?.length);
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
-      case "đã duyệt":
+      case "hoạt động":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
-      case "đang duyệt":
+      
+      case "bảo trì":
         return { backgroundColor: "#fef3c7", color: "#d97706" };
-      case "hoàn thành":
-        return { backgroundColor: "#ddd6fe", color: "#7c3aed" };
       default:
         return { backgroundColor: "#f3f4f6", color: "#374151" };
     }
   };
 
-  const handleDropdownToggle = (reportId) => {
-    setOpenDropdown(openDropdown === reportId ? null : reportId);
+  const handleDropdownToggle = (binId) => {
+    setOpenDropdown(openDropdown === binId ? null : binId);
   };
 
-  const handleActionSelect = (action, report) => {
-    onActionClick({ action, report });
+  const handleActionSelect = (action, bin) => {
+    onActionClick({ action, bin });
     setOpenDropdown(null);
   };
 
@@ -32,18 +35,18 @@ const ReportTable = ({ reports, onActionClick }) => {
         marginLeft: "32px",
         marginRight: "32px",
         marginTop: "0px",
-        marginBottom: "32px",
+        marginBottom: "12px",
         backgroundColor: "white",
         borderRadius: "12px",
         border: "1px solid #f0f0f0",
         overflow: "auto",
-        maxHeight: "350px",
+        maxHeight: "400px",
         boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.06)",
       }}
     >
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
-          <tr style={{ backgroundColor: "#FEF6F4", borderBottom: "2px solid #e5e7eb" }}>
+        <thead style={{ position: "sticky", top: 0, zIndex: 10 }} >
+          <tr style={{ backgroundColor: "#FEF6F4" }}>
             <th
               style={{
                 padding: "16px 24px",
@@ -53,19 +56,8 @@ const ReportTable = ({ reports, onActionClick }) => {
                 color: "#374151",
               }}
             >
-              Báo cáo
+              Tên thùng rác
             </th>
-                         <th
-               style={{
-                 padding: "16px 24px",
-                 textAlign: "left",
-                 fontSize: "13px",
-                 fontWeight: "600",
-                 color: "#374151",
-               }}
-             >
-               Mức độ ưu tiên
-             </th>
             <th
               style={{
                 padding: "16px 24px",
@@ -75,7 +67,29 @@ const ReportTable = ({ reports, onActionClick }) => {
                 color: "#374151",
               }}
             >
-              Mô tả
+              Địa điểm
+            </th>
+            <th
+              style={{
+                padding: "16px 24px",
+                textAlign: "left",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Tầng
+            </th>
+            <th
+              style={{
+                padding: "16px 24px",
+                textAlign: "center",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Hình ảnh
             </th>
             <th
               style={{
@@ -90,17 +104,6 @@ const ReportTable = ({ reports, onActionClick }) => {
             </th>
             <th
               style={{
-                padding: "16px 24px",
-                textAlign: "left",
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
-              Thời gian
-            </th>
-            <th
-              style={{
                 padding: "18px 24px",
                 textAlign: "center",
                 fontSize: "12px",
@@ -112,10 +115,10 @@ const ReportTable = ({ reports, onActionClick }) => {
             </th>
           </tr>
         </thead>
-        <tbody style={{ borderTop: "2px solid transparent" }}>
-          {reports.map((report, index) => (
+        <tbody>
+          {trashBins.map((bin, index) => (
             <tr
-              key={report.id}
+              key={bin.id}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -127,57 +130,89 @@ const ReportTable = ({ reports, onActionClick }) => {
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
-                             {/* Report Type Column */}
-               <td
-                 style={{
-                   padding: "16px 24px",
-                   fontSize: "14px",
-                   fontWeight: "500",
-                   color: "#111827",
-                 }}
-               >
-                 {report.reportType}
-               </td>
+              {/* Name Column */}
+              <td
+                style={{
+                  padding: "16px 24px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#111827",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: "500", color: "#111827", marginBottom: "4px" }}>
+                    {bin.name}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                    ID: {bin.id}
+                  </div>
+                </div>
+              </td>
 
-               {/* Priority Column */}
-               <td
-                 style={{
-                   padding: "16px 24px",
-                   fontSize: "14px",
-                 }}
-               >
-                 <span
-                   style={{
-                     display: "inline-flex",
-                     padding: "4px 12px",
-                     fontSize: "12px",
-                     fontWeight: "600",
-                     borderRadius: "9999px",
-                     backgroundColor: 
-                       report.priority === "Cao" ? "#fee2e2" :
-                       report.priority === "Trung bình" ? "#fef3c7" : "#dcfce7",
-                     color: 
-                       report.priority === "Cao" ? "#dc2626" :
-                       report.priority === "Trung bình" ? "#d97706" : "#15803d",
-                   }}
-                 >
-                   {report.priority || "Trung bình"}
-                 </span>
-               </td>
-
-              {/* Description Column */}
+              {/* Location Column */}
               <td
                 style={{
                   padding: "16px 24px",
                   fontSize: "14px",
                   color: "#6b7280",
-                  maxWidth: "300px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
                 }}
               >
-                {report.description || "Không có mô tả"}
+                {bin.location || "Chưa cập nhật"}
+              </td>
+
+              {/* Floor Column */}
+              <td
+                style={{
+                  padding: "16px 24px",
+                  fontSize: "14px",
+                  color: "#6b7280",
+                }}
+              >
+                {bin.floor || "Chưa cập nhật"}
+              </td>
+
+                            {/* Image Column */}
+              <td
+                style={{
+                  padding: "16px 24px",
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ 
+                  width: "48px", 
+                  height: "48px", 
+                  backgroundColor: "#f3f4f6", 
+                  borderRadius: "8px", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center",
+                  margin: "0 auto"
+                }}>
+                  <img
+                    src={bin.image}
+                    alt={bin.name}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "4px",
+                      objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  <div 
+                    style={{ 
+                      display: 'none', 
+                      fontSize: '12px', 
+                      color: '#9ca3af',
+                      textAlign: 'center'
+                    }}
+                  >
+                    No Image
+                  </div>
+                </div>
               </td>
 
               {/* Status Column */}
@@ -189,29 +224,11 @@ const ReportTable = ({ reports, onActionClick }) => {
                     fontSize: "12px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getStatusColor(report.status),
+                    ...getStatusColor(bin.status),
                   }}
                 >
-                  {report.status}
+                  {bin.status}
                 </span>
-              </td>
-
-              {/* Time Column */}
-              <td
-                style={{
-                  padding: "16px 24px",
-                  fontSize: "14px",
-                  color: "#6b7280",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: "14px", fontWeight: "500", color: "#111827" }}>
-                    {report.createdDate ? new Date(report.createdDate).toLocaleDateString('vi-VN') : "Chưa cập nhật"}
-                  </div>
-                  <div style={{ fontSize: "12px", color: "#6b7280" }}>
-                    {report.timeCreated || "00:00"}
-                  </div>
-                </div>
               </td>
 
               {/* Action Column */}
@@ -223,7 +240,7 @@ const ReportTable = ({ reports, onActionClick }) => {
                 }}
               >
                 <button
-                  onClick={() => handleDropdownToggle(report.id)}
+                  onClick={() => handleDropdownToggle(bin.id)}
                   style={{
                     color: "#6b7280",
                     background: "transparent",
@@ -248,11 +265,11 @@ const ReportTable = ({ reports, onActionClick }) => {
                 </button>
 
                 {/* Dropdown Menu */}
-                {openDropdown === report.id && (
+                {openDropdown === bin.id && (
                   <div
                     style={{
                       position: "absolute",
-                      bottom: "50%",
+                      bottom: "0%",
                       right: "8px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
@@ -263,7 +280,7 @@ const ReportTable = ({ reports, onActionClick }) => {
                     }}
                   >
                     <button
-                      onClick={() => handleActionSelect('view', report)}
+                      onClick={() => handleActionSelect('view', bin)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -285,7 +302,7 @@ const ReportTable = ({ reports, onActionClick }) => {
                       Xem chi tiết
                     </button>
                     <button
-                      onClick={() => handleActionSelect('update', report)}
+                      onClick={() => handleActionSelect('edit', bin)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -305,7 +322,7 @@ const ReportTable = ({ reports, onActionClick }) => {
                       onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
                     >
                       <HiOutlinePencil style={{ width: "16px", height: "16px" }} />
-                      Cập nhật
+                      Sửa
                     </button>
                   </div>
                 )}
@@ -333,4 +350,4 @@ const ReportTable = ({ reports, onActionClick }) => {
   );
 };
 
-export default ReportTable; 
+export default TrashBinTable; 

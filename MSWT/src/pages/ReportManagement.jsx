@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { HiOutlineSearch, HiOutlinePlus, HiX } from "react-icons/hi";
+import { HiOutlinePlus, HiX } from "react-icons/hi";
 import ReportTable from "../components/ReportTable";
 import Pagination from "../components/Pagination";
 
 const ReportManagement = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState(""); // Filter by priority
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("assigned"); // "assigned" or "created"
+  const [activeTab, setActiveTab] = useState("assigned"); // "assigned", "created", or "supervisor"
   const [showAddReportPopup, setShowAddReportPopup] = useState(false);
   const [showViewReportModal, setShowViewReportModal] = useState(false);
   const [showUpdateReportModal, setShowUpdateReportModal] = useState(false);
@@ -187,6 +187,54 @@ const ReportManagement = () => {
       createdDate: "2024-04-05",
       timeCreated: "14:00",
       createdBy: "Lý Thị K",
+      assignedTo: "Alex Morgan",
+      imageUrl: null
+    },
+    {
+      id: 11,
+      title: "Kiểm tra an toàn khu vực làm việc",
+      reportType: "Safety inspection",
+      location: "Floor 2",
+      description: "Kiểm tra định kỳ các thiết bị an toàn và lối thoát hiểm",
+      status: "Hoàn thành",
+      priority: "Cao",
+      reportedBy: "Giám sát viên A",
+      contactInfo: "0901234567",
+      createdDate: "2024-04-06",
+      timeCreated: "08:00",
+      createdBy: "Giám sát viên A",
+      assignedTo: "Nguyễn Văn A",
+      imageUrl: null
+    },
+    {
+      id: 12,
+      title: "Đánh giá hiệu suất vệ sinh tầng 3",
+      reportType: "Performance review",
+      location: "Floor 3",
+      description: "Đánh giá chất lượng công việc vệ sinh và đề xuất cải thiện",
+      status: "Đang duyệt",
+      priority: "Trung bình",
+      reportedBy: "Giám sát viên B",
+      contactInfo: "0912345678",
+      createdDate: "2024-04-07",
+      timeCreated: "10:30",
+      createdBy: "Giám sát viên B",
+      assignedTo: "Trần Thị B",
+      imageUrl: null
+    },
+    {
+      id: 13,
+      title: "Báo cáo tuần vệ sinh khu vực chung",
+      reportType: "Weekly report",
+      location: "All Floors",
+      description: "Tổng kết công việc vệ sinh tuần qua và kế hoạch tuần tới",
+      status: "Đã duyệt",
+      priority: "Thấp",
+      reportedBy: "Giám sát viên C",
+      contactInfo: "0923456789",
+      createdDate: "2024-04-08",
+      timeCreated: "16:00",
+      createdBy: "Giám sát viên C",
       assignedTo: "Alex Morgan",
       imageUrl: null
     }
@@ -378,25 +426,24 @@ const ReportManagement = () => {
     }
   };
 
-  // Filter reports based on active tab and search term
+  // Filter reports based on active tab and priority filter
   const filteredReports = reports.filter(report => {
     // Tab filtering
-    const tabFilter = activeTab === "assigned" 
-      ? report.assignedTo === currentUser 
-      : report.createdBy === currentUser;
+    let tabFilter;
+    if (activeTab === "assigned") {
+      tabFilter = report.assignedTo === currentUser;
+    } else if (activeTab === "created") {
+      tabFilter = report.createdBy === currentUser;
+    } else if (activeTab === "supervisor") {
+      tabFilter = report.reportedBy && report.reportedBy.includes("Giám sát viên");
+    }
     
     if (!tabFilter) return false;
     
-    // Search filtering
-    if (!searchTerm) return true;
+    // Priority filtering
+    if (!priorityFilter) return true;
     
-    return (
-      (report.title && report.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      report.reportType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reportedBy.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return report.priority === priorityFilter;
   });
 
   // Tính toán pagination
@@ -405,9 +452,9 @@ const ReportManagement = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentReports = filteredReports.slice(startIndex, endIndex);
 
-  // Reset về trang 1 khi search
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+  // Reset về trang 1 khi filter priority
+  const handlePriorityFilterChange = (e) => {
+    setPriorityFilter(e.target.value);
     setCurrentPage(1);
   };
 
@@ -464,7 +511,7 @@ const ReportManagement = () => {
                 }
               }}
             >
-              Báo cáo nhân viên
+              Báo cáo của nhân viên
             </button>
             <button
               onClick={() => {
@@ -495,10 +542,39 @@ const ReportManagement = () => {
             >
               Báo cáo của tôi
             </button>
+            <button
+              onClick={() => {
+                setActiveTab("supervisor");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "supervisor" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "supervisor" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== "supervisor") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== "supervisor") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Báo cáo của giám sát viên
+            </button>
           </div>
         </div>
 
-        {/* Search and Add Button */}
+        {/* Priority Filter and Add Button */}
         <div
           style={{
             display: "flex",
@@ -507,36 +583,30 @@ const ReportManagement = () => {
             marginBottom: "12px",
           }}
         >
-          {/* Search Box */}
+          {/* Priority Filter Dropdown */}
           <div style={{ position: "relative",  flex: "1" }}>
-            <div
+            <select
+              value={priorityFilter}
+              onChange={handlePriorityFilterChange}
               style={{
-                position: "absolute",
-                left: "16px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#9ca3af",
-              }}
-            >
-              <HiOutlineSearch style={{ width: "20px", height: "20px" }} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search reports"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              style={{
-                width: "100%",
-                padding: "12px 16px 12px 48px",
+                width: "30%",
+                padding: "12px 16px",
                 border: "1px solid #d1d5db",
-                borderRadius: "50px",
+                borderRadius: "8px",
                 fontSize: "14px",
                 outline: "none",
                 transition: "border-color 0.2s",
+                backgroundColor: "white",
+                cursor: "pointer",
               }}
               onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
               onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-            />
+            >
+              <option value="">Tất cả</option>
+              <option value="Cao">Cao</option>
+              <option value="Trung bình">Trung bình</option>
+              <option value="Thấp">Thấp</option>
+            </select>
           </div>
 
           {/* Action Buttons */}
@@ -569,7 +639,7 @@ const ReportManagement = () => {
       </div>
 
       {/* Report Table Container */}
-      <div style={{ flex: "1", overflow: "auto", minHeight: 0 }}>
+      <div style={{ flex: "0 0 auto" }}>
         <ReportTable reports={currentReports} onActionClick={handleActionClick} />
       </div>
 
@@ -763,7 +833,7 @@ const ReportManagement = () => {
                     color: "#374151",
                   }}
                 >
-                  Báo cáo về nhân viên *
+                  Báo cáo giám sát viên *
                 </label>
                 <select
                   name="reportedTo"
