@@ -43,7 +43,7 @@ export async function enhancedFetch<T>(
   const { params, token, timeout = MAX_TIME_OUT, ...fetchOptions } = options;
 
   // Build URL with query parameters
-  const baseUrl = (import.meta as any).env.VITE_API_URL;
+  const baseUrl = (import.meta as any).env.VITE_API_URL || "https://capstoneproject-mswt-su25.onrender.com/api";
   const url = new URL(`${baseUrl}/${endpoint}`);
   const finalUrl = buildUrlParams(url, params);
 
