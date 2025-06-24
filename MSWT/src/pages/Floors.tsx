@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
-import { HiOutlineSearch, HiOutlinePlus, HiX } from "react-icons/hi";
+import { Floor, ICreateFloorRequest } from "@/config/models/floor.model";
+import { Restroom } from "@/config/models/restroom.model";
+import { useState } from "react";
+import { HiOutlinePlus, HiOutlineSearch, HiX } from "react-icons/hi";
 import FloorTable from "../components/FloorTable";
-import Pagination from "../components/Pagination";
 import Notification from "../components/Notification";
+import Pagination from "../components/Pagination";
+import { useFloors } from "../hooks/useFloor";
 
 const Floors = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,7 +13,7 @@ const Floors = () => {
   const [showAddFloorPopup, setShowAddFloorPopup] = useState(false);
   const [showViewFloorModal, setShowViewFloorModal] = useState(false);
   const [showUpdateFloorModal, setShowUpdateFloorModal] = useState(false);
-  const [selectedFloor, setSelectedFloor] = useState(null);
+  const [selectedFloor, setSelectedFloor] = useState<Floor | null>(null);
   const [sortState, setSortState] = useState("default");
   const [updateFloorData, setUpdateFloorData] = useState({
     name: "",
@@ -18,10 +21,10 @@ const Floors = () => {
     trashCans: [],
     status: "",
   });
-  const [newFloor, setNewFloor] = useState({
-    name: "",
-    restrooms: [],
-    trashCans: [],
+  const [newFloor, setNewFloor] = useState<ICreateFloorRequest>({
+    floorNumber: 0,
+    numberOfBin: 0,
+    numberOfRestroom: 0,
     status: "Hoạt động",
   });
   const [notification, setNotification] = useState({
@@ -58,102 +61,53 @@ const Floors = () => {
     { id: "7", name: "Thùng #54" },
   ];
 
-  // Default floor data
-  const defaultFloors = [
-    {
-      id: "1",
-      name: "Tầng 1",
-      restrooms: ["Nhà vệ sinh #1", "Nhà vệ sinh #23", "Nhà vệ sinh #5454"],
-      trashCans: ["Thùng #23", "Thùng #54"],
-      totalRestrooms: 4,
-      totalTrashCans: 8,
-      status: "Hoạt động",
-      statusValue: "active",
-      createdDate: "2024-01-15",
-    },
-    {
-      id: "2",
-      name: "Tầng 2",
-      restrooms: ["Nhà vệ sinh #1", "Nhà vệ sinh #23", "Nhà vệ sinh #5454"],
-      trashCans: ["Thùng #23", "Thùng #54"],
-      totalRestrooms: 2,
-      totalTrashCans: 6,
-      status: "Hoạt động",
-      statusValue: "active",
-      createdDate: "2024-02-10",
-    },
-  ];
+  const { floors } = useFloors();
 
-  const [floors, setFloors] = useState([]);
+  if (floors.length === 0) return null;
 
-  // LocalStorage functions
-  const saveFloorsToLocalStorage = (floorData) => {
-    try {
-      localStorage.setItem("floorManagement_floors", JSON.stringify(floorData));
-      console.log("Đã lưu dữ liệu vào LocalStorage");
-    } catch (error) {
-      console.error("❌ Lỗi khi lưu vào LocalStorage:", error);
-    }
-  };
-
-  const loadFloorsFromLocalStorage = () => {
-    try {
-      const savedFloors = localStorage.getItem("floorManagement_floors");
-      if (savedFloors) {
-        const parsedFloors = JSON.parse(savedFloors);
-        console.log(
-          "✅ Đã tải dữ liệu từ LocalStorage:",
-          parsedFloors.length,
-          "floors"
-        );
-        return parsedFloors;
-      }
-    } catch (error) {
-      console.error("❌ Lỗi khi tải từ LocalStorage:", error);
-    }
-    return null;
-  };
-
-  // Load data when component mounts
-  useEffect(() => {
-    const savedFloors = loadFloorsFromLocalStorage();
-    if (savedFloors && savedFloors.length > 0) {
-      setFloors(savedFloors);
-    } else {
-      setFloors(defaultFloors);
-      saveFloorsToLocalStorage(defaultFloors);
-    }
-  }, []);
-
-  const handleActionClick = ({ action, floor }) => {
+  const handleActionClick = ({
+    action,
+    floor,
+  }: {
+    action: string;
+    floor: Floor;
+  }) => {
     console.log("🚀 Floors - handleActionClick called:", { action, floor });
     if (action === "view") {
       setSelectedFloor(floor);
       setShowViewFloorModal(true);
     } else if (action === "update") {
       setSelectedFloor(floor);
-      setUpdateFloorData({
-        name: floor.name,
-        restrooms: floor.restrooms || [],
-        trashCans: floor.trashCans || [],
-        status: floor.statusValue,
-      });
+      // setUpdateFloorData({
+      //   name: floor.name,
+      //   restrooms: floor.restrooms || [],
+      //   trashCans: floor.trashCans || [],
+      //   status: floor.statusValue,
+      // });
       setShowUpdateFloorModal(true);
     }
   };
 
   // Filtering and sorting logic
-  const filteredFloors = floors.filter((floor) =>
-    floor.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFloors = floors?.filter((floor: Floor) =>
+    floor?.floorNumber
+      ?.toString()
+      .toLowerCase()
+      ?.includes(searchTerm?.toLowerCase())
   );
 
-  const sortedFloors = [...filteredFloors].sort((a, b) => {
+  const sortedFloors = [...filteredFloors]?.sort((a, b) => {
     if (sortState === "default") {
-      return new Date(b.createdDate) - new Date(a.createdDate);
     } else if (sortState === "asc") {
-      return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      return a.floorNumber
+        ?.toString()
+        .toLowerCase()
+        .localeCompare(b.floorNumber?.toString().toLowerCase());
     } else if (sortState === "desc") {
-      return b.name.toLowerCase().localeCompare(a.name.toLowerCase());
+      return b.floorNumber
+        ?.toString()
+        .toLowerCase()
+        .localeCompare(a.floorNumber?.toString().toLowerCase());
     }
     return 0;
   });
@@ -174,12 +128,12 @@ const Floors = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentFloors = sortedFloors.slice(startIndex, endIndex);
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: any) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
 
-  const showNotificationMessage = (type, message) => {
+  const showNotificationMessage = (type: string, message: string) => {
     setNotification({
       isVisible: true,
       type,
@@ -213,14 +167,14 @@ const Floors = () => {
   const handleClosePopup = () => {
     setShowAddFloorPopup(false);
     setNewFloor({
-      name: "",
-      restrooms: [],
-      trashCans: [],
+      floorNumber: 0,
+      numberOfBin: 0,
+      numberOfRestroom: 0,
       status: "Hoạt động",
     });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     const { name, value } = e.target;
     setNewFloor((prev) => ({
       ...prev,
@@ -228,7 +182,7 @@ const Floors = () => {
     }));
   };
 
-  const handleUpdateChange = (e) => {
+  const handleUpdateChange = (e: any) => {
     const { name, value } = e.target;
     setUpdateFloorData((prev) => ({
       ...prev,
@@ -237,93 +191,83 @@ const Floors = () => {
   };
 
   const addRestroomToNew = () => {
-    setNewFloor((prev) => ({
+    setNewFloor((prev: any) => ({
       ...prev,
-      restrooms: [...prev.restrooms, ""],
+      restrooms: [...prev?.restrooms, ""],
     }));
   };
 
   const addTrashCanToNew = () => {
-    setNewFloor((prev) => ({
+    setNewFloor((prev: any) => ({
       ...prev,
       trashCans: [...prev.trashCans, ""],
     }));
   };
 
-  const removeRestroomFromNew = (index) => {
-    setNewFloor((prev) => ({
-      ...prev,
-      restrooms: prev.restrooms.filter((_, i) => i !== index),
-    }));
-  };
+  // const removeRestroomFromNew = (index) => {
+  //   setNewFloor((prev) => ({
+  //     ...prev,
+  //     restrooms: prev.restrooms.filter((_, i) => i !== index),
+  //   }));
+  // };
 
-  const removeTrashCanFromNew = (index) => {
-    setNewFloor((prev) => ({
-      ...prev,
-      trashCans: prev.trashCans.filter((_, i) => i !== index),
-    }));
-  };
-
-  const updateRestroomInNew = (index, value) => {
-    setNewFloor((prev) => ({
-      ...prev,
-      restrooms: prev.restrooms.map((item, i) => (i === index ? value : item)),
-    }));
-  };
-
-  const updateTrashCanInNew = (index, value) => {
-    setNewFloor((prev) => ({
-      ...prev,
-      trashCans: prev.trashCans.map((item, i) => (i === index ? value : item)),
-    }));
-  };
+  // const removeTrashCanFromNew = (index) => {
+  //   setNewFloor((prev) => ({
+  //     ...prev,
+  //     trashCans: prev.trashCans.filter((_, i) => i !== index),
+  //   }));
+  // };
 
   // Similar functions for update modal
   const addRestroomToUpdate = () => {
-    setUpdateFloorData((prev) => ({
+    setUpdateFloorData((prev: any) => ({
       ...prev,
       restrooms: [...prev.restrooms, ""],
     }));
   };
 
   const addTrashCanToUpdate = () => {
-    setUpdateFloorData((prev) => ({
+    setUpdateFloorData((prev: any) => ({
       ...prev,
       trashCans: [...prev.trashCans, ""],
     }));
   };
 
-  const removeRestroomFromUpdate = (index) => {
+  const removeRestroomFromUpdate = (index: number) => {
     setUpdateFloorData((prev) => ({
       ...prev,
       restrooms: prev.restrooms.filter((_, i) => i !== index),
     }));
   };
 
-  const removeTrashCanFromUpdate = (index) => {
+  const removeTrashCanFromUpdate = (index: number) => {
     setUpdateFloorData((prev) => ({
       ...prev,
       trashCans: prev.trashCans.filter((_, i) => i !== index),
     }));
   };
 
-  const updateRestroomInUpdate = (index, value) => {
-    setUpdateFloorData((prev) => ({
+  const updateRestroomInUpdate = (index: number, value: any) => {
+    setUpdateFloorData((prev: any) => ({
       ...prev,
-      restrooms: prev.restrooms.map((item, i) => (i === index ? value : item)),
+      restrooms: prev.restrooms.map((item: any, i: any) =>
+        i === index ? value : item
+      ),
     }));
   };
 
-  const updateTrashCanInUpdate = (index, value) => {
-    setUpdateFloorData((prev) => ({
+  const updateTrashCanInUpdate = (index: any, value: any) => {
+    setUpdateFloorData((prev: any) => ({
       ...prev,
-      trashCans: prev.trashCans.map((item, i) => (i === index ? value : item)),
+      trashCans: prev.trashCans.map((item: any, i: any) =>
+        i === index ? value : item
+      ),
     }));
   };
 
-  const handleSubmitFloor = (e) => {
+  const handleSubmitFloor = (e: any) => {
     e.preventDefault();
-    if (!newFloor.name || !newFloor.status) {
+    if (!newFloor.floorNumber || !newFloor.status) {
       showNotificationMessage(
         "error",
         "Vui lòng điền đầy đủ thông tin bắt buộc!"
@@ -331,25 +275,11 @@ const Floors = () => {
       return;
     }
 
-    const statusObj = sampleStatuses.find((s) => s.name === newFloor.status);
-    const floorToAdd = {
-      ...newFloor,
-      id: Date.now().toString(),
-      status: statusObj ? statusObj.label : newFloor.status,
-      statusValue: newFloor.status,
-      totalRestrooms: newFloor.restrooms.filter((r) => r.trim()).length,
-      totalTrashCans: newFloor.trashCans.filter((t) => t.trim()).length,
-      createdDate: new Date().toISOString().split("T")[0],
-    };
-
-    const updatedFloors = [...floors, floorToAdd];
-    setFloors(updatedFloors);
-    saveFloorsToLocalStorage(updatedFloors);
     handleClosePopup();
     showNotificationMessage("success", "Đã thêm tầng thành công!");
   };
 
-  const handleSubmitUpdate = (e) => {
+  const handleSubmitUpdate = (e: any) => {
     e.preventDefault();
     if (!updateFloorData.name || !updateFloorData.status) {
       showNotificationMessage(
@@ -359,25 +289,6 @@ const Floors = () => {
       return;
     }
 
-    const statusObj = sampleStatuses.find(
-      (s) => s.name === updateFloorData.status
-    );
-    const updatedFloors = floors.map((floor) =>
-      floor.id === selectedFloor.id
-        ? {
-            ...floor,
-            ...updateFloorData,
-            status: statusObj ? statusObj.label : updateFloorData.status,
-            statusValue: updateFloorData.status,
-            totalRestrooms: updateFloorData.restrooms.filter((r) => r.trim())
-              .length,
-            totalTrashCans: updateFloorData.trashCans.filter((t) => t.trim())
-              .length,
-          }
-        : floor
-    );
-    setFloors(updatedFloors);
-    saveFloorsToLocalStorage(updatedFloors);
     handleCloseUpdateModal();
     showNotificationMessage("success", "Đã cập nhật tầng thành công!");
   };
@@ -480,8 +391,12 @@ const Floors = () => {
                 cursor: "pointer",
                 transition: "background-color 0.2s",
               }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#E04B1F")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
+              onMouseEnter={(e: any) =>
+                (e.target.style.backgroundColor = "#E04B1F")
+              }
+              onMouseLeave={(e: any) =>
+                (e.target.style.backgroundColor = "#FF5B27")
+              }
             >
               <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
               Thêm tầng
@@ -589,7 +504,7 @@ const Floors = () => {
                 <input
                   type="text"
                   name="name"
-                  value={newFloor.name}
+                  value={newFloor.floorNumber}
                   onChange={handleInputChange}
                   placeholder="Nhập tên tầng"
                   style={{
@@ -617,7 +532,7 @@ const Floors = () => {
                 >
                   Nhà vệ sinh
                 </label>
-                {newFloor.restrooms.map((restroom, index) => (
+                {/* {newFloor.restrooms?.map((restroom: Restroom, index: number) => (
                   <div
                     key={index}
                     style={{ display: "flex", gap: "8px", marginBottom: "8px" }}
@@ -662,7 +577,7 @@ const Floors = () => {
                       <HiX style={{ width: "16px", height: "16px" }} />
                     </button>
                   </div>
-                ))}
+                ))} */}
                 <button
                   type="button"
                   onClick={addRestroomToNew}
@@ -696,7 +611,7 @@ const Floors = () => {
                 >
                   Thùng rác
                 </label>
-                {newFloor.trashCans.map((trashCan, index) => (
+                {/* {newFloor.trashCans.map((trashCan, index) => (
                   <div
                     key={index}
                     style={{ display: "flex", gap: "8px", marginBottom: "8px" }}
@@ -741,7 +656,7 @@ const Floors = () => {
                       <HiX style={{ width: "16px", height: "16px" }} />
                     </button>
                   </div>
-                ))}
+                ))} */}
                 <button
                   type="button"
                   onClick={addTrashCanToNew}
@@ -924,7 +839,7 @@ const Floors = () => {
                   color: "#111827",
                 }}
               >
-                {selectedFloor.name}
+                {selectedFloor.floorNumber}
               </div>
             </div>
 
@@ -941,22 +856,25 @@ const Floors = () => {
                 Nhà vệ sinh ({selectedFloor.restrooms?.length || 0})
               </label>
               <div style={{ maxHeight: "150px", overflowY: "auto" }}>
-                {selectedFloor.restrooms?.length > 0 ? (
-                  selectedFloor.restrooms.map((restroom, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        padding: "8px 12px",
-                        backgroundColor: "#f3f4f6",
-                        borderRadius: "6px",
-                        marginBottom: "4px",
-                        fontSize: "14px",
-                        color: "#374151",
-                      }}
-                    >
-                      {restroom}
-                    </div>
-                  ))
+                {selectedFloor?.restrooms &&
+                selectedFloor?.restrooms?.length > 0 ? (
+                  selectedFloor?.restrooms?.map(
+                    (restroom: Restroom, index: number) => (
+                      <div
+                        key={index}
+                        style={{
+                          padding: "8px 12px",
+                          backgroundColor: "#f3f4f6",
+                          borderRadius: "6px",
+                          marginBottom: "4px",
+                          fontSize: "14px",
+                          color: "#374151",
+                        }}
+                      >
+                        {restroom.restroomNumber}
+                      </div>
+                    )
+                  )
                 ) : (
                   <div
                     style={{
@@ -971,7 +889,7 @@ const Floors = () => {
               </div>
             </div>
 
-            <div style={{ marginBottom: "20px" }}>
+            {/* <div style={{ marginBottom: "20px" }}>
               <label
                 style={{
                   display: "block",
@@ -1012,7 +930,7 @@ const Floors = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
 
             <div style={{ marginBottom: "24px" }}>
               <label

@@ -1,5 +1,6 @@
 // Base API URL for the backend
-export const BASE_API_URL = "https://capstoneproject-mswt-su25.onrender.com/api";
+export const BASE_API_URL =
+  "https://capstoneproject-mswt-su25.onrender.com/api";
 
 export const API_URLS = {
   FLOOR: {

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { Restroom } from "@/config/models/restroom.model";
+import { useState } from "react";
 import {
   HiOutlineDotsVertical,
   HiOutlineEye,
@@ -7,44 +8,31 @@ import {
   HiChevronDown,
 } from "react-icons/hi";
 
-const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
-  const [openDropdown, setOpenDropdown] = useState(null);
+interface IAction {
+  action: string;
+  restroom: Restroom;
+}
 
-  // Debug log to check floors data
-  // console.log("FloorTable received floors:", floors);
-  // console.log("FloorTable floors length:", floors?.length);
+interface IProps {
+  restrooms: Restroom[];
+  onActionClick: (action: IAction) => void;
+  sortState: string;
+  onSortClick: () => void;
+}
 
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (openDropdown !== null) {
-        // Check if click is inside the dropdown or on the dropdown button
-        const isDropdownButton = event.target.closest("[data-dropdown-button]");
-        const isDropdownMenu = event.target.closest(
-          "[data-dropdown-container]"
-        );
+const RestroomTable = ({
+  restrooms,
+  onActionClick,
+  sortState,
+  onSortClick,
+}: IProps) => {
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-        // Only close if clicking outside both the button and menu
-        if (!isDropdownButton && !isDropdownMenu) {
-          setOpenDropdown(null);
-        }
-      }
-    };
+  // Debug log to check restrooms data
+  console.log("RestroomTable received restrooms:", restrooms);
+  console.log("RestroomTable restrooms length:", restrooms?.length);
 
-    if (openDropdown !== null) {
-      // Add slight delay to prevent immediate closing
-      const timeoutId = setTimeout(() => {
-        document.addEventListener("mousedown", handleClickOutside);
-      }, 50);
-
-      return () => {
-        clearTimeout(timeoutId);
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [openDropdown]);
-
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "hoạt động":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
@@ -55,14 +43,12 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
     }
   };
 
-  const handleDropdownToggle = (floorId) => {
-    console.log("🎯 Dropdown toggle for floor ID:", floorId);
-    setOpenDropdown(openDropdown === floorId ? null : floorId);
+  const handleDropdownToggle = (restroomId: string) => {
+    setOpenDropdown(openDropdown === restroomId ? null : restroomId);
   };
 
-  const handleActionSelect = (action, floor) => {
-    console.log("🔥 FloorTable - Action selected:", action, floor);
-    onActionClick({ action, floor });
+  const handleActionSelect = (action: string, restroom: Restroom) => {
+    onActionClick({ action, restroom } as IAction);
     setOpenDropdown(null);
   };
 
@@ -76,7 +62,7 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
         backgroundColor: "white",
         borderRadius: "12px",
         border: "1px solid #f0f0f0",
-        overflow: "visible",
+        overflow: "hidden",
         boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.06)",
       }}
     >
@@ -102,7 +88,7 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                 }}
                 onClick={onSortClick}
               >
-                Tầng
+                Phòng
                 <div
                   style={{
                     display: "flex",
@@ -136,7 +122,7 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                 color: "#374151",
               }}
             >
-              Tổng nhà vệ sinh
+              Khu vực
             </th>
             <th
               style={{
@@ -147,7 +133,7 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                 color: "#374151",
               }}
             >
-              Tổng thùng rác
+              Chi tiết
             </th>
             <th
               style={{
@@ -174,9 +160,9 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
           </tr>
         </thead>
         <tbody>
-          {floors.map((floor, index) => (
+          {restrooms?.map((restroom, index) => (
             <tr
-              key={floor.id}
+              key={restroom.restroomId}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -188,7 +174,7 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
-              {/* Floor Name Column */}
+              {/* Room Column */}
               <td
                 style={{
                   padding: "16px 24px",
@@ -197,10 +183,10 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                   color: "#111827",
                 }}
               >
-                {floor.name}
+                {restroom.restroomNumber}
               </td>
 
-              {/* Total Restrooms Column */}
+              {/* Area Column */}
               <td
                 style={{
                   padding: "16px 24px",
@@ -208,18 +194,22 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                   color: "#6b7280",
                 }}
               >
-                {floor.totalRestrooms} phòng
+                {restroom.area?.areaName}
               </td>
 
-              {/* Total Trash Cans Column */}
+              {/* Details Column */}
               <td
                 style={{
                   padding: "16px 24px",
                   fontSize: "14px",
                   color: "#6b7280",
+                  maxWidth: "200px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {floor.totalTrashCans} thùng
+                {restroom.description}
               </td>
 
               {/* Status Column */}
@@ -231,10 +221,10 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                     fontSize: "12px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getStatusColor(floor.status),
+                    ...getStatusColor(restroom.status),
                   }}
                 >
-                  {floor.status}
+                  {restroom.status}
                 </span>
               </td>
 
@@ -244,21 +234,10 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                   padding: "16px 24px",
                   textAlign: "center",
                   position: "relative",
-                  overflow: "visible",
                 }}
               >
                 <button
-                  data-dropdown-button="true"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    console.log(
-                      "🔥 Button clicked for floor:",
-                      floor.id,
-                      floor.name
-                    );
-                    handleDropdownToggle(floor.id);
-                  }}
+                  onClick={() => handleDropdownToggle(restroom.restroomId)}
                   style={{
                     color: "#6b7280",
                     background: "transparent",
@@ -268,11 +247,11 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e: any) => {
                     e.target.style.color = "#374151";
                     e.target.style.backgroundColor = "#f3f4f6";
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={(e: any) => {
                     e.target.style.color = "#6b7280";
                     e.target.style.backgroundColor = "transparent";
                   }}
@@ -283,45 +262,41 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                 </button>
 
                 {/* Dropdown Menu */}
-                {openDropdown === floor.id && (
+                {openDropdown === restroom.restroomId && (
                   <div
-                    data-dropdown-container="true"
                     style={{
                       position: "absolute",
-                      top: "100%",
-                      right: "0px",
+                      bottom: "50%",
+                      right: "8px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
                       borderRadius: "8px",
-                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                      zIndex: 1000,
-                      minWidth: "160px",
-                      marginTop: "4px",
+                      boxShadow:
+                        "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                      zIndex: 10,
+                      minWidth: "140px",
                     }}
                   >
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleActionSelect("view", floor);
-                      }}
+                      onClick={() => handleActionSelect("view", restroom)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
+                        border: "none",
+                        backgroundColor: "transparent",
                         textAlign: "left",
                         fontSize: "14px",
                         color: "#374151",
-                        backgroundColor: "transparent",
-                        border: "none",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
-                        transition: "background-color 0.2s",
+                        borderRadius: "8px 8px 0 0",
                       }}
-                      onMouseEnter={(e) =>
+                      onMouseEnter={(e: any) =>
                         (e.target.style.backgroundColor = "#f9fafb")
                       }
-                      onMouseLeave={(e) =>
+                      onMouseLeave={(e: any) =>
                         (e.target.style.backgroundColor = "transparent")
                       }
                     >
@@ -329,29 +304,26 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
                       Xem chi tiết
                     </button>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleActionSelect("update", floor);
-                      }}
+                      onClick={() => handleActionSelect("update", restroom)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
+                        border: "none",
+                        backgroundColor: "transparent",
                         textAlign: "left",
                         fontSize: "14px",
                         color: "#374151",
-                        backgroundColor: "transparent",
-                        border: "none",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
-                        transition: "background-color 0.2s",
+                        borderRadius: "0 0 8px 8px",
                         borderTop: "1px solid #f3f4f6",
                       }}
-                      onMouseEnter={(e) =>
+                      onMouseEnter={(e: any) =>
                         (e.target.style.backgroundColor = "#f9fafb")
                       }
-                      onMouseLeave={(e) =>
+                      onMouseLeave={(e: any) =>
                         (e.target.style.backgroundColor = "transparent")
                       }
                     >
@@ -367,8 +339,23 @@ const FloorTable = ({ floors, onActionClick, sortState, onSortClick }) => {
           ))}
         </tbody>
       </table>
+
+      {/* Click outside to close dropdown */}
+      {openDropdown && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 5,
+          }}
+          onClick={() => setOpenDropdown(null)}
+        />
+      )}
     </div>
   );
 };
 
-export default FloorTable;
+export default RestroomTable;

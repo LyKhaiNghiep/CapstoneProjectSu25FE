@@ -1,7 +1,11 @@
 import useSWR from "swr";
 import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
-import { Restroom, RestroomCreateRequest, RestroomUpdateRequest } from "@/config/models/restroom.model";
+import {
+  Restroom,
+  RestroomCreateRequest,
+  RestroomUpdateRequest,
+} from "@/config/models/restroom.model";
 import { IBaseResponse } from "@/config/models/types";
 
 export function useRestrooms() {
@@ -27,7 +31,10 @@ export function useRestrooms() {
     }
   };
 
-  const updateRestroom = async (id: string, updatedData: RestroomUpdateRequest) => {
+  const updateRestroom = async (
+    id: string,
+    updatedData: RestroomUpdateRequest
+  ) => {
     try {
       const response = await swrFetcher(API_URLS.RESTROOM.UPDATE(id), {
         method: "PUT",
@@ -64,33 +71,5 @@ export function useRestrooms() {
     updateRestroom,
     deleteRestroom,
     mutate,
-  };
-}
-
-// Hook to fetch areas for dropdown
-export function useAreas() {
-  const { data, error, isLoading } = useSWR<IBaseResponse<any>>(
-    API_URLS.AREA.GET_ALL,
-    swrFetcher
-  );
-
-  return {
-    areas: data?.$values ?? [],
-    isLoading,
-    error,
-  };
-}
-
-// Hook to fetch floors for dropdown
-export function useFloors() {
-  const { data, error, isLoading } = useSWR<IBaseResponse<any>>(
-    API_URLS.FLOOR.GET_ALL,
-    swrFetcher
-  );
-
-  return {
-    floors: data?.$values ?? [],
-    isLoading,
-    error,
   };
 }
