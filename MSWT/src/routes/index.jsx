@@ -10,8 +10,11 @@ import Shifts from "../pages/Shifts";
 import Floors from "../pages/Floors";
 import UserManagement from "../pages/UserManagement";
 import ReportManagement from "../pages/ReportManagement";
+import TrashBinList from "../pages/TrashBinList";
 import NotFound from "../pages/NotFound";
 import { useAuth } from "../contexts/AuthContext";
+import Notifications from "../pages/Notifications";
+import Areas from "../pages/Areas";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -78,6 +81,15 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "trash",
+        element: (
+          <ProtectedRoute>
+            <TrashBinList />
+          </ProtectedRoute>
+        ),
+      },
+      
+      {
         path: "profile",
         element: (
           <ProtectedRoute>
@@ -98,6 +110,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <ReportManagement />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "notifications",
+        element: (
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "areas",
+        element: (
+          <ProtectedRoute>
+            <Areas />
           </ProtectedRoute>
         ),
       },

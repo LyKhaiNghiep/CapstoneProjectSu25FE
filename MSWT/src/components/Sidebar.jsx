@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
   HiOutlineChartBar,
@@ -10,11 +11,14 @@ import {
   HiOutlineCalendar,
   HiOutlineClock,
   HiOutlineLogout,
+  HiOutlineBell,
 } from "react-icons/hi";
+import { HiOutlineX } from "react-icons/hi";
 
 const Sidebar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
@@ -29,7 +33,7 @@ const Sidebar = () => {
       icon: HiOutlineChartBar,
     },
     {
-      title: "Danh sách người dùng",
+      title: "Danh sách nhân viên",
       path: "/user-management",
       icon: HiOutlineUsers,
     },
@@ -39,15 +43,15 @@ const Sidebar = () => {
       icon: HiOutlineTrash,
     },
     {
-      title: "Cảm biến",
-      path: "/sensors",
-      icon: HiOutlineCog,
-    },
-    {
       title: "Các tầng",
       path: "/floors",
       icon: HiOutlineOfficeBuilding,
     },
+          {
+        title: "Khu vực",
+        path: "/areas",
+        icon: HiOutlineOfficeBuilding,
+      },
     {
       title: "Nhà vệ sinh",
       path: "/restrooms",
@@ -80,18 +84,90 @@ const Sidebar = () => {
         zIndex: 1000,
       }}
     >
-      {/* Header */}
-      <div style={{ padding: "32px 24px" }}>
-        <h1
+      {/* Header với MSWT và Icon thông báo */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "24px 20px",
+        borderBottom: "2px solid #f1f5f9",
+        backgroundColor: "white"
+      }}>
+        {/* MSWT Logo */}
+        <div 
+          onClick={() => navigate('/dashboard')}
           style={{
-            fontSize: "20px",
-            fontWeight: "bold",
-            color: "black",
-            margin: 0,
+            fontSize: "28px",
+            fontWeight: "800",
+            color: "#FF5B27",
+            cursor: "pointer",
+            letterSpacing: "1px",
+            textShadow: "0 2px 4px rgba(255, 91, 39, 0.2)",
+            transition: "all 0.3s ease"
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.transform = "scale(1.05)";
+            e.target.style.textShadow = "0 4px 8px rgba(255, 91, 39, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = "scale(1)";
+            e.target.style.textShadow = "0 2px 4px rgba(255, 91, 39, 0.2)";
           }}
         >
           MSWT
-        </h1>
+        </div>
+
+        {/* Icon thông báo */}
+        <div 
+          onClick={() => navigate('/notifications')}
+          style={{
+            position: "relative",
+            padding: "8px",
+            backgroundColor: "#ffffff",
+            borderRadius: "12px",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            border: "2px solid transparent"
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = "#FF5B27";
+            e.target.style.borderColor = "#FF5B27";
+            e.target.style.transform = "scale(1.1)";
+            e.target.style.boxShadow = "0 4px 12px rgba(255, 91, 39, 0.3)";
+            // Change icon color to white on hover
+            const icon = e.target.querySelector('svg');
+            if (icon) icon.style.color = "white";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = "#ffffff";
+            e.target.style.borderColor = "transparent";
+            e.target.style.transform = "scale(1)";
+            e.target.style.boxShadow = "none";
+            // Reset icon color
+            const icon = e.target.querySelector('svg');
+            if (icon) icon.style.color = "#FF5B27";
+          }}
+        >
+          <HiOutlineBell 
+            style={{ 
+              width: "24px", 
+              height: "24px", 
+              color: "#FF5B27",
+              transition: "color 0.3s ease"
+            }} 
+          />
+          {/* Badge cho số thông báo chưa đọc */}
+          <div style={{
+            position: "absolute",
+            top: "4px",
+            right: "4px",
+            width: "8px",
+            height: "8px",
+            backgroundColor: "#ef4444",
+            borderRadius: "50%",
+            border: "2px solid white"
+          }} />
+        </div>
       </div>
 
       {/* Navigation */}

@@ -12,6 +12,10 @@ const UserTable = ({ users, onActionClick }) => {
     switch (status.toLowerCase()) {
       case "đang làm việc":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
+      case "đang kích hoạt":
+        return { backgroundColor: "#dbeafe", color: "#1d4ed8" };
+      case "đang trống lịch":
+        return { backgroundColor: "#ede9fe", color: "#7c3aed" };
       case "nghỉ phép":
         return { backgroundColor: "#fef3c7", color: "#d97706" };
       case "nghỉ việc":
@@ -40,13 +44,14 @@ const UserTable = ({ users, onActionClick }) => {
         backgroundColor: "white",
         borderRadius: "12px",
         border: "1px solid #f0f0f0",
-        overflow: "hidden",
+        overflow: "auto",
+        maxHeight: "350px",
         boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.06)",
       }}
     >
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ backgroundColor: "#FEF6F4" }}>
+        <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
+          <tr style={{ backgroundColor: "#FEF6F4"  ,borderBottom: "2px solid #e5e7eb" }}>
             <th
               style={{
                 padding: "16px 24px",
@@ -91,6 +96,7 @@ const UserTable = ({ users, onActionClick }) => {
             >
               Số điện thoại
             </th>
+
             <th
               style={{
                 padding: "16px 24px",
@@ -182,6 +188,8 @@ const UserTable = ({ users, onActionClick }) => {
               >
                 {user.phone}
               </td>
+
+
 
               {/* Status Column */}
               <td style={{ padding: "16px 24px" }}>
