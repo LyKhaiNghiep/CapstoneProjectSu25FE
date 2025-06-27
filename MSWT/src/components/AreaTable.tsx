@@ -158,7 +158,7 @@ const AreaTable = ({
         <tbody style={{ borderTop: "2px solid transparent" }}>
           {areas.map((area, index) => (
             <tr
-              key={area.id}
+              key={area.areaId}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -190,7 +190,9 @@ const AreaTable = ({
                   color: "#6b7280",
                 }}
               >
-                Tầng {area.floor?.floorNumber}
+                {area.floorNumber === 0
+                  ? "Tầng trệt"
+                  : `Tầng ${area.floorNumber}`}
               </td>
 
               {/* Start Room Column */}

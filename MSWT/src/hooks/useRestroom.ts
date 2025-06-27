@@ -9,7 +9,7 @@ import {
 import { IBaseResponse } from "@/config/models/types";
 
 export function useRestrooms() {
-  const { data, error, isLoading, mutate } = useSWR<IBaseResponse<Restroom>>(
+  const { data, error, isLoading, mutate } = useSWR<Restroom[]>(
     API_URLS.RESTROOM.GET_ALL,
     swrFetcher
   );
@@ -64,7 +64,7 @@ export function useRestrooms() {
   };
 
   return {
-    restrooms: data?.$values ?? [],
+    restrooms: data ?? [],
     isLoading,
     error,
     createRestroom,

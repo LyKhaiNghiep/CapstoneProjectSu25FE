@@ -6,13 +6,13 @@ import { Floor } from "../config/models/floor.model";
 
 // Hook to fetch floors for dropdown
 export function useFloors() {
-  const { data, error, isLoading } = useSWR<IBaseResponse<Floor>>(
+  const { data, error, isLoading } = useSWR<Floor[]>(
     API_URLS.FLOOR.GET_ALL,
     swrFetcher
   );
 
   return {
-    floors: data?.$values ?? [],
+    floors: data ?? [],
     isLoading,
     error,
   };

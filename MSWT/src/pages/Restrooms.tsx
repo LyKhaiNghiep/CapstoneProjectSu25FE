@@ -5,6 +5,8 @@ import { HiOutlinePlus, HiOutlineSearch, HiX } from "react-icons/hi";
 import Notification from "../components/Notification";
 import Pagination from "../components/Pagination";
 import RestroomTable from "../components/RestroomTable";
+import { useFloors } from "../hooks/useFloor";
+import { useAreas } from "../hooks/useArea";
 
 const Restrooms = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,6 +33,8 @@ const Restrooms = () => {
   });
 
   const { restrooms } = useRestrooms();
+  const { floors } = useFloors();
+  const { areas } = useAreas();
   const itemsPerPage = 5;
 
   // Sample data for dropdowns
@@ -461,9 +465,11 @@ const Restrooms = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">Chọn tầng</option>
-                  {sampleFloors.map((floor) => (
-                    <option key={floor.id} value={floor.name}>
-                      {floor.name}
+                  {floors?.map((floor) => (
+                    <option key={floor.floorId} value={floor.floorId}>
+                      {floor.floorNumber === 0
+                        ? "Tầng trệt"
+                        : `Tầng ${floor.floorNumber}`}
                     </option>
                   ))}
                 </select>
@@ -499,9 +505,9 @@ const Restrooms = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">Chọn khu vực</option>
-                  {sampleAreas.map((area) => (
-                    <option key={area.id} value={area.name}>
-                      {area.name}
+                  {areas?.map((area) => (
+                    <option key={area.areaId} value={area.areaId}>
+                      {area.areaName}
                     </option>
                   ))}
                 </select>
@@ -814,7 +820,9 @@ const Restrooms = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedRestroom.area?.floor?.floorNumber}
+                    {selectedRestroom.area?.floorNumber === 0
+                      ? "Tầng trệt"
+                      : `Tầng ${selectedRestroom.area?.floorNumber}`}
                   </p>
                 </div>
 
@@ -1068,9 +1076,11 @@ const Restrooms = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">Chọn tầng</option>
-                  {sampleFloors.map((floor) => (
-                    <option key={floor.id} value={floor.name}>
-                      {floor.name}
+                  {floors?.map((floor) => (
+                    <option key={floor.floorId} value={floor.floorId}>
+                      {floor.floorNumber === 0
+                        ? "Tầng trệt"
+                        : `Tầng ${floor.floorNumber}`}
                     </option>
                   ))}
                 </select>
@@ -1106,9 +1116,9 @@ const Restrooms = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">Chọn khu vực</option>
-                  {sampleAreas.map((area) => (
-                    <option key={area.id} value={area.name}>
-                      {area.name}
+                  {areas?.map((area) => (
+                    <option key={area.areaId} value={area.areaId}>
+                      {area.areaName}
                     </option>
                   ))}
                 </select>

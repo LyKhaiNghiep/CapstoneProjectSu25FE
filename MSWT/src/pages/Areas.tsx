@@ -1,4 +1,5 @@
-import { Area, Floor } from "@/config/models/restroom.model";
+import { Area } from "@/config/models/restroom.model";
+import { Floor } from "@/config/models/floor.model";
 import { useAreas } from "../hooks/useArea";
 import { useState } from "react";
 import {
@@ -22,14 +23,13 @@ const Areas = () => {
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
   const [updateAreaData, setUpdateAreaData] = useState<Area>({
     areaName: "",
-    floor: undefined,
+    floorNumber: 0,
     roomBegin: "",
     roomEnd: "",
     description: "",
     status: "",
     areaId: "",
     floorId: "",
-    id: "",
   });
   const [newArea, setNewArea] = useState<ICreateAreaRequest>({
     areaName: "",
@@ -58,14 +58,13 @@ const Areas = () => {
       setSelectedArea(area);
       setUpdateAreaData({
         areaName: area.areaName,
-        floor: area.floor,
+        floorNumber: area.floorNumber,
         roomBegin: area.roomBegin,
         roomEnd: area.roomEnd,
         description: area.description,
         status: area.status,
         areaId: area.areaId,
         floorId: area.floorId,
-        id: area.id,
       });
       setShowUpdateAreaModal(true);
     } else if (action === "delete") {
@@ -85,14 +84,13 @@ const Areas = () => {
     setSelectedArea(null);
     setUpdateAreaData({
       areaName: "",
-      floor: undefined,
+      floorNumber: 0,
       roomBegin: "",
       roomEnd: "",
       description: "",
       status: "",
       areaId: "",
       floorId: "",
-      id: "",
     });
   };
 
@@ -192,12 +190,7 @@ const Areas = () => {
     // Search filtering
     if (!searchTerm) return true;
 
-    return (
-      area.areaName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.roomBegin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.roomEnd.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return area.areaName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   // Tính toán pagination
@@ -604,7 +597,9 @@ const Areas = () => {
                   <option value="">Chọn tầng</option>
                   {floors?.map((floor: Floor) => (
                     <option key={floor.floorId} value={floor.floorId}>
-                      Tầng {floor.floorNumber}
+                      {floor.floorNumber === 0
+                        ? "Tầng trệt"
+                        : `Tầng ${floor.floorNumber}`}
                     </option>
                   ))}
                 </select>
@@ -893,7 +888,7 @@ const Areas = () => {
                 </label>
                 <input
                   type="text"
-                  name="name"
+                  name="areaName"
                   value={updateAreaData.areaName}
                   onChange={handleUpdateChange}
                   required
@@ -925,11 +920,11 @@ const Areas = () => {
                 </label>
                 <input
                   type="number"
-                  name="floor"
-                  value={updateAreaData.floor?.floorNumber}
+                  name="floorNumber"
+                  value={updateAreaData.floorNumber}
                   onChange={handleUpdateChange}
                   required
-                  min="1"
+                  min="0"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -961,7 +956,7 @@ const Areas = () => {
                   </label>
                   <input
                     type="text"
-                    name="startRoom"
+                    name="roomBegin"
                     value={updateAreaData.roomBegin}
                     onChange={handleUpdateChange}
                     required
@@ -992,7 +987,7 @@ const Areas = () => {
                   </label>
                   <input
                     type="text"
-                    name="endRoom"
+                    name="roomEnd"
                     value={updateAreaData.roomEnd}
                     onChange={handleUpdateChange}
                     required
@@ -1234,7 +1229,9 @@ const Areas = () => {
                     {selectedArea.areaName}
                   </h4>
                   <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
-                    Tầng {selectedArea.floor?.floorNumber}
+                    {selectedArea.floorNumber === 0
+                      ? "Tầng trệt"
+                      : `Tầng ${selectedArea.floorNumber}`}
                   </p>
                 </div>
               </div>
