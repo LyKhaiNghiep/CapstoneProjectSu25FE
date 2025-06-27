@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { HiOutlineSearch, HiOutlinePlus, HiX } from "react-icons/hi";
 import UserTable from "../components/UserTable";
 import Pagination from "../components/Pagination";
+import useUsers from "../hooks/useUsers";
+import Notification from "../components/Notification";
+import ApiTestDebug from "../components/ApiTestDebug";
+import QuickApiTest from "../components/QuickApiTest";
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,193 +33,44 @@ const UserManagement = () => {
     avatar: "",
     avatarFile: null
   });
+  const [notification, setNotification] = useState({ show: false, message: "", type: "" });
 
   const itemsPerPage = 5; // Số user hiển thị mỗi trang
 
-  // Sample user data matching the image - Dữ liệu mặc định
-  const defaultUsers = [
-    {
-      id: 1,
-      name: "Thịnh",
-      email: "thinh@company.com",
-      position: "Công nhân",
-      phone: "08123455986",
-      address: "123 Đường ABC, Quận 1, TP.HCM",
-      location: "Khu A",
-      floor: "Tầng 1",
-      status: "Đang làm việc",
-      avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
-      createdDate: "2024-01-15"
-    },
-    {
-      id: 2,
-      name: "Nghiệp",
-      email: "nghiep@company.com",
-      position: "Giám sát viên",
-      phone: "01257896658",
-      address: "456 Đường XYZ, Quận 2, TP.HCM",
-      location: "Khu B",
-      floor: "Tầng 2",
-      status: "Nghỉ phép",
-      avatar: "https://i.pinimg.com/originals/88/0d/57/880d5790254f68ce92fe285cd255bb4d.gif",
-      createdDate: "2024-02-10"
-    },
-    {
-      id: 3,
-      name: "Khang",
-      email: "khang@company.com",
-      position: "Công nhân",
-      phone: "01023554445",
-      address: "789 Đường DEF, Quận 3, TP.HCM",
-      location: "Khu A",
-      floor: "Tầng 1",
-      status: "Nghỉ việc",
-      avatar: "https://i.pinimg.com/originals/74/e3/0f/74e30f31b38afa752f79f7ff0315ce37.gif",
-      createdDate: "2024-01-20"
-    },
-    {
-      id: 4,
-      name: "Minh",
-      email: "minh@company.com",
-      position: "Công nhân",
-      phone: "09876543210",
-      address: "321 Đường GHI, Quận 4, TP.HCM",
-      location: "Khu C",
-      floor: "Tầng 3",
-      status: "Đang làm việc",
-      avatar: "https://i.pinimg.com/originals/2c/b5/b7/2cb5b7bfa9506a980435078b0d41379d.gif",
-      createdDate: "2024-03-05"
-    },
-    {
-      id: 5,
-      name: "Lan",
-      email: "lan@company.com",
-      position: "Quản lý",
-      phone: "01588999777",
-      address: "654 Đường JKL, Quận 5, TP.HCM",
-      location: "Văn phòng",
-      floor: "Tầng 4",
-      status: "Đang làm việc",
-      avatar: "https://i.pinimg.com/originals/97/16/5e/97165e191052892894cb886b4a8c0971.gif",
-      createdDate: "2024-02-28"
-    },
-    {
-      id: 6,
-      name: "Hạnh",
-      email: "hanh@company.com",
-      position: "Công nhân",
-      phone: "0987654321",
-      address: "111 Đường MNO, Quận 6, TP.HCM",
-      location: "Khu B",
-      floor: "Tầng 2",
-      status: "Đang kích hoạt",
-      avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
-      createdDate: "2024-03-10"
-    },
-    {
-      id: 7,
-      name: "Tuấn",
-      email: "tuan@company.com",
-      position: "Giám sát viên",
-      phone: "0123456789",
-      address: "222 Đường PQR, Quận 7, TP.HCM",
-      location: "Khu D",
-      floor: "Tầng 1",
-      status: "Đang trống lịch",
-      avatar: "https://i.pinimg.com/originals/88/0d/57/880d5790254f68ce92fe285cd255bb4d.gif",
-      createdDate: "2024-03-15"
-    },
-    {
-      id: 8,
-      name: "Mai",
-      email: "mai@company.com",
-      position: "Công nhân",
-      phone: "0369852147",
-      address: "333 Đường STU, Quận 8, TP.HCM",
-      location: "Khu A",
-      floor: "Tầng 3",
-      status: "Đang kích hoạt",
-      avatar: "https://i.pinimg.com/originals/97/16/5e/97165e191052892894cb886b4a8c0971.gif",
-      createdDate: "2024-03-20"
-    },
-    {
-      id: 9,
-      name: "Hoàng",
-      email: "hoang@company.com",
-      position: "Quản lý",
-      phone: "0741852963",
-      address: "444 Đường VWX, Quận 9, TP.HCM",
-      location: "Văn phòng",
-      floor: "Tầng 5",
-      status: "Đang làm việc",
-      avatar: "https://i.pinimg.com/originals/74/e3/0f/74e30f31b38afa752f79f7ff0315ce37.gif",
-      createdDate: "2024-03-25"
-    },
-    {
-      id: 10,
-      name: "Linh",
-      email: "linh@company.com",
-      position: "Công nhân",
-      phone: "0159753486",
-      address: "555 Đường YZ, Quận 10, TP.HCM",
-      location: "Khu C",
-      floor: "Tầng 2",
-      status: "Nghỉ việc",
-      avatar: "https://i.pinimg.com/originals/2c/b5/b7/2cb5b7bfa9506a980435078b0d41379d.gif",
-      createdDate: "2024-03-30"
-    }
-  ];
+  // Use the custom hook for API calls
+  const {
+    users: apiUsers,
+    loading,
+    error,
+    pagination,
+    fetchUsers,
+    createUser: apiCreateUser,
+    updateUser: apiUpdateUser,
+    deleteUser: apiDeleteUser,
+    searchUsers
+  } = useUsers();
 
+  // Use API users directly
   const [users, setUsers] = useState([]);
 
-  // LocalStorage functions
-  const saveUsersToLocalStorage = (usersData) => {
-    try {
-      localStorage.setItem('userManagement_users', JSON.stringify(usersData));
-      console.log('✅ Đã lưu dữ liệu vào LocalStorage');
-    } catch (error) {
-      console.error('❌ Lỗi khi lưu vào LocalStorage:', error);
-    }
+  // Show notification helper
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: "", type: "" });
+    }, 3000);
   };
 
-  const loadUsersFromLocalStorage = () => {
-    try {
-      const savedUsers = localStorage.getItem('userManagement_users');
-      if (savedUsers) {
-        const parsedUsers = JSON.parse(savedUsers);
-        console.log('✅ Đã tải dữ liệu từ LocalStorage:', parsedUsers.length, 'users');
-        return parsedUsers;
-      }
-    } catch (error) {
-      console.error('❌ Lỗi khi tải từ LocalStorage:', error);
-    }
-    return null;
-  };
+
 
   // Load dữ liệu khi component mount
   useEffect(() => {
-    const savedUsers = loadUsersFromLocalStorage();
-    if (savedUsers && savedUsers.length > 0) {
-      // Migrate old data - add missing fields if they don't exist
-      const migratedUsers = savedUsers.map(user => ({
-        ...user,
-        email: user.email || `${user.name.toLowerCase()}@company.com`,
-        address: user.address || "Chưa cập nhật địa chỉ",
-        location: user.location || "Chưa cập nhật",
-        floor: user.floor || "Chưa cập nhật",
-        createdDate: user.createdDate || "2024-01-01"
-      }));
-      setUsers(migratedUsers);
-      // Save migrated data back to localStorage
-      if (JSON.stringify(migratedUsers) !== JSON.stringify(savedUsers)) {
-        saveUsersToLocalStorage(migratedUsers);
-      }
-    } else {
-      // Nếu chưa có dữ liệu trong LocalStorage, sử dụng dữ liệu mặc định và lưu vào LocalStorage
-      setUsers(defaultUsers);
-      saveUsersToLocalStorage(defaultUsers);
+    // Use API users directly
+    if (apiUsers && apiUsers.length >= 0) {
+      setUsers(apiUsers);
+      console.log('✅ Đã tải dữ liệu từ API:', apiUsers.length, 'users');
     }
-  }, []);
+  }, [apiUsers]);
 
   const handleActionClick = ({ action, user }) => {
     if (action === 'view') {
@@ -264,21 +119,23 @@ const UserManagement = () => {
     }));
   };
 
-  const handleSubmitUpdate = (e) => {
+  const handleSubmitUpdate = async (e) => {
     e.preventDefault();
-    const updatedUsers = users.map(user => 
-      user.id === selectedUser.id 
-        ? { 
-            ...user, 
-            status: updateUserData.status,
-            resignationReason: updateUserData.status === "Nghỉ việc" ? updateUserData.resignationReason : undefined
-          }
-        : user
-    );
-    setUsers(updatedUsers);
-    saveUsersToLocalStorage(updatedUsers);
-    handleCloseUpdateModal();
-    alert("✅ Đã cập nhật trạng thái thành công!");
+    try {
+      const updateData = {
+        status: updateUserData.status,
+        resignationReason: updateUserData.status === "Nghỉ việc" ? updateUserData.resignationReason : undefined
+      };
+
+      // Update via API
+      await apiUpdateUser(selectedUser.id, updateData);
+      showNotification("✅ Đã cập nhật trạng thái thành công!");
+      
+      handleCloseUpdateModal();
+    } catch (error) {
+      console.error('Error updating user:', error);
+      showNotification("❌ Có lỗi xảy ra khi cập nhật!", "error");
+    }
   };
 
   const handleAddUser = () => {
@@ -319,49 +176,34 @@ const UserManagement = () => {
     }
   };
 
-  const handleSubmitUser = (e) => {
+  const handleSubmitUser = async (e) => {
     e.preventDefault();
     if (newUser.name && newUser.username && newUser.password && newUser.email && newUser.position && newUser.phone && newUser.address) {
-      const userToAdd = {
-        ...newUser,
-        id: Date.now(), // Sử dụng timestamp để đảm bảo ID unique
-        avatar: newUser.avatar || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
-        createdDate: new Date().toISOString().split('T')[0] // Thêm ngày tạo hiện tại
-      };
-      // Remove avatarFile from the user object since it's just for preview
-      delete userToAdd.avatarFile;
-      
-      const updatedUsers = [...users, userToAdd];
-      setUsers(updatedUsers);
-      
-      // Lưu vào LocalStorage
-      saveUsersToLocalStorage(updatedUsers);
-      
-      handleClosePopup();
-      
-      // Thông báo thành công
-      alert("✅ Đã thêm nhân viên thành công !");
-    } else {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
-    }
-  };
-
-  
-
-  // Clear LocalStorage function (for demo/testing)
-  const clearLocalStorage = () => {
-    if (window.confirm('🗑️ Bạn có chắc muốn xóa tất cả dữ liệu đã lưu và reset về dữ liệu mới?')) {
       try {
-        localStorage.removeItem('userManagement_users');
-        setUsers(defaultUsers);
-        saveUsersToLocalStorage(defaultUsers);
-        setCurrentPage(1); // Reset về trang 1
-        alert('✅ Đã xóa dữ liệu LocalStorage và reset về dữ liệu mặc định (10 users)!');
+        const userToAdd = {
+          ...newUser,
+          avatar: newUser.avatar || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
+          createdDate: new Date().toISOString().split('T')[0]
+        };
+        // Remove avatarFile from the user object since it's just for preview
+        delete userToAdd.avatarFile;
+        
+        // Create user via API
+        const createdUser = await apiCreateUser(userToAdd);
+        showNotification("✅ Đã thêm nhân viên thành công!");
+        console.log('Created user via API:', createdUser);
+        
+        handleClosePopup();
       } catch (error) {
-        console.error('❌ Lỗi khi xóa LocalStorage:', error);
+        console.error('Error creating user:', error);
+        showNotification("❌ Có lỗi xảy ra khi thêm nhân viên!", "error");
       }
+    } else {
+      showNotification("❌ Vui lòng điền đầy đủ thông tin bắt buộc!", "error");
     }
   };
+
+
 
   // Filter users based on active tab and search term
   const filteredUsers = users.filter(user => {
@@ -395,25 +237,111 @@ const UserManagement = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
-  // Debug pagination
-  console.log('=== PAGINATION DEBUG ===');
-  console.log('Current page:', currentPage);
-  console.log('Items per page:', itemsPerPage);
-  console.log('Total users:', filteredUsers.length);
-  console.log('Total pages:', totalPages);
-  console.log('Start index:', startIndex);
-  console.log('End index:', endIndex);
-  console.log('Current users for this page:', currentUsers);
-  console.log('========================');
+
 
   // Reset về trang 1 khi search
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
+  const handleSearchChange = async (e) => {
+    const searchValue = e.target.value;
+    setSearchTerm(searchValue);
     setCurrentPage(1);
+
+    // If search term is empty, fetch all users
+    if (!searchValue.trim()) {
+      try {
+        await fetchUsers();
+      } catch (error) {
+        console.log('API search failed, using local filter');
+      }
+      return;
+    }
+
+    // Try API search first
+    try {
+      await searchUsers({ 
+        search: searchValue,
+        role: activeTab !== 'all' ? activeTab : undefined 
+      });
+    } catch (error) {
+      console.log('API search failed, using local filter');
+      // Fallback to local search - this will be handled by filteredUsers below
+    }
   };
 
   return (
     <div style={{ backgroundColor: "#ffffff", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {/* Notification */}
+      {notification.show && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification({ show: false, message: "", type: "" })}
+        />
+      )}
+
+      {/* Loading Indicator */}
+      {loading && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.1)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            padding: "20px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+          }}>
+            <div style={{
+              width: "40px",
+              height: "40px",
+              border: "4px solid #f3f3f3",
+              borderTop: "4px solid #FF5B27",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto"
+            }}></div>
+            <p style={{ marginTop: "10px", textAlign: "center" }}>Đang tải...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Display */}
+      {error && (
+        <div style={{
+          backgroundColor: "#fee2e2",
+          border: "1px solid #fecaca",
+          color: "#dc2626",
+          padding: "12px",
+          margin: "16px 32px",
+          borderRadius: "6px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between"
+        }}>
+          <span>⚠️ {error}</span>
+          <button 
+            onClick={() => fetchUsers()}
+            style={{
+              backgroundColor: "#dc2626",
+              color: "white",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "12px"
+            }}
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
       <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
@@ -439,9 +367,14 @@ const UserManagement = () => {
         <div style={{ marginBottom: "20px" }}>
           <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
             <button
-              onClick={() => {
+              onClick={async () => {
                 setActiveTab("all");
                 setCurrentPage(1);
+                try {
+                  await fetchUsers();
+                } catch (error) {
+                  console.log('Failed to fetch users for tab change');
+                }
               }}
               style={{
                 padding: "12px 24px",
@@ -468,9 +401,14 @@ const UserManagement = () => {
               Tất cả
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
                 setActiveTab("worker");
                 setCurrentPage(1);
+                try {
+                  await searchUsers({ role: "worker" });
+                } catch (error) {
+                  console.log('Failed to filter workers');
+                }
               }}
               style={{
                 padding: "12px 24px",
@@ -497,9 +435,14 @@ const UserManagement = () => {
               Công nhân
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
                 setActiveTab("supervisor");
                 setCurrentPage(1);
+                try {
+                  await searchUsers({ role: "supervisor" });
+                } catch (error) {
+                  console.log('Failed to filter supervisors');
+                }
               }}
               style={{
                 padding: "12px 24px",
@@ -526,9 +469,14 @@ const UserManagement = () => {
               Giám sát viên
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
                 setActiveTab("manager");
                 setCurrentPage(1);
+                try {
+                  await searchUsers({ role: "manager" });
+                } catch (error) {
+                  console.log('Failed to filter managers');
+                }
               }}
               style={{
                 padding: "12px 24px",
@@ -1550,6 +1498,10 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Debug Components - only in development */}
+      {import.meta.env.DEV && <QuickApiTest />}
+      {import.meta.env.DEV && <ApiTestDebug />}
     </div>
   );
 };

@@ -11,6 +11,7 @@ import {
   HiOutlineTrendingDown,
   HiOutlineCog
 } from "react-icons/hi";
+import UserRoleInfo from '../components/UserRoleInfo';
 
 const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -427,6 +428,8 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      
 
       {/* Quick Actions */}
       <div style={{

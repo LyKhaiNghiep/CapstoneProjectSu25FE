@@ -264,7 +264,7 @@ const Sidebar = () => {
                 fontSize: "16px",
               }}
             >
-              {user?.username?.charAt(0).toUpperCase() || 'A'}
+              {user?.username?.charAt(0).toUpperCase() || user?.fullName?.charAt(0).toUpperCase() || 'U'}
             </span>
           </div>
           <div style={{ marginLeft: "16px" }}>
@@ -277,19 +277,33 @@ const Sidebar = () => {
                 marginBottom: "2px",
               }}
             >
-              {user?.name || 'Administrator'}
+              {user?.fullName || user?.username || 'User'}
             </p>
             <p
               style={{
                 fontSize: "12px",
                 color: "#6b7280",
                 margin: 0,
+                marginBottom: "2px",
               }}
             >
-              {user?.role || 'admin'}
+              {user?.position || user?.role || 'User'}
             </p>
+            {user?.email && (
+              <p
+                style={{
+                  fontSize: "10px",
+                  color: "#9ca3af",
+                  margin: 0,
+                }}
+              >
+                {user.email}
+              </p>
+            )}
           </div>
         </div>
+
+       
         
         {/* Logout Button */}
         <button

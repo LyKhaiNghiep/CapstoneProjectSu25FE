@@ -173,25 +173,9 @@ const Notifications = () => {
               Quản lý tất cả thông báo của hệ thống
             </p>
           </div>
-          <div style={{
-            backgroundColor: "white",
-            padding: "16px 20px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px"
-          }}>
-            <HiOutlineBell style={{ width: "24px", height: "24px", color: "#FF5B27" }} />
-            <div>
-              <div style={{ fontSize: "18px", fontWeight: "600", color: "#111827" }}>
-                {unreadCount}
-              </div>
-              <div style={{ fontSize: "14px", color: "#6b7280" }}>
-                Chưa đọc
-              </div>
-            </div>
-          </div>
+          
+            
+          
         </div>
       </div>
 

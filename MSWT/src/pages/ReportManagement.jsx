@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { HiOutlinePlus, HiX } from "react-icons/hi";
 import ReportTable from "../components/ReportTable";
 import Pagination from "../components/Pagination";
+import { useReports, useReportsWithRole, createReport, updateReport, deleteReport, PRIORITY_MAPPING } from "../hooks/useReport";
+import { useAuth } from "../contexts/AuthContext";
 
 const ReportManagement = () => {
   const [priorityFilter, setPriorityFilter] = useState(""); // Filter by priority
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("assigned"); // "assigned", "created", or "supervisor"
+  const [activeTab, setActiveTab] = useState("all"); // "all", "supervisor", "worker", "mine"
   const [showAddReportPopup, setShowAddReportPopup] = useState(false);
   const [showViewReportModal, setShowViewReportModal] = useState(false);
   const [showUpdateReportModal, setShowUpdateReportModal] = useState(false);
@@ -26,273 +28,50 @@ const ReportManagement = () => {
   });
 
   const itemsPerPage = 5; // Số báo cáo hiển thị mỗi trang
-  const currentUser = "Alex Morgan"; // User hiện tại - có thể lấy từ context/auth
+  const { user } = useAuth(); // Get current user from auth context
+  const currentUser = user?.username || "Alex Morgan"; // Fallback
 
-  // Sample report data - Dữ liệu báo cáo mặc định
-  const defaultReports = [
-    {
-      id: 1,
-      title: "Lỗi cảm biến tầng 1",
-      reportType: "Sensor error",
-      location: "Floor 1",
-      description: "Cảm biến nhiệt độ không hoạt động",
-      status: "Đã duyệt",
-      priority: "Cao",
-      reportedBy: "Nguyễn Văn A",
-      contactInfo: "0123456789",
-      createdDate: "2024-02-24",
-      timeCreated: "14:30",
-      createdBy: "Nguyễn Văn A",
-      assignedTo: "Alex Morgan",
-      imageUrl: null
-    },
-    {
-      id: 2,
-      title: "Yêu cầu vệ sinh toilet",
-      reportType: "Restroom cleaning",
-      location: "Floor 3",
-      description: "Toilet cần được vệ sinh",
-      status: "Đang duyệt",
-      priority: "Trung bình",
-      reportedBy: "Trần Thị B",
-      contactInfo: "0987654321",
-      createdDate: "2024-04-26",
-      timeCreated: "09:15",
-      createdBy: "Trần Thị B",
-      assignedTo: "Alex Morgan",
-      imageUrl: null
-    },
-    {
-      id: 3,
-      title: "Bảo trì điều hòa",
-      reportType: "Equipment maintenance",
-      location: "Floor 2",
-      description: "Máy điều hòa cần bảo trì định kỳ",
-      status: "Hoàn thành",
-      priority: "Thấp",
-      reportedBy: "Alex Morgan",
-      contactInfo: "0369852147",
-      createdDate: "2024-03-15",
-      timeCreated: "16:45",
-      createdBy: "Alex Morgan",
-      assignedTo: "Lê Văn C",
-      imageUrl: null
-    },
-    {
-      id: 4,
-      title: "Vấn đề an toàn đèn khẩn cấp",
-      reportType: "Safety issue",
-      location: "Floor 4",
-      description: "Đèn khẩn cấp không sáng",
-      status: "Đã duyệt",
-      priority: "Cao",
-      reportedBy: "Phạm Thị D",
-      contactInfo: "0741852963",
-      createdDate: "2024-03-20",
-      timeCreated: "11:20",
-      createdBy: "Phạm Thị D",
-      assignedTo: "Alex Morgan",
-      imageUrl: null
-    },
-    {
-      id: 5,
-      title: "Sự cố mạng internet",
-      reportType: "Network issue",
-      location: "Floor 1",
-      description: "Mạng internet chậm tại khu vực làm việc",
-      status: "Đang duyệt",
-      priority: "Trung bình",
-      reportedBy: "Alex Morgan",
-      contactInfo: "0159753486",
-      createdDate: "2024-03-25",
-      timeCreated: "13:10",
-      createdBy: "Alex Morgan",
-      assignedTo: "Hoàng Văn E",
-      imageUrl: null
-    },
-    {
-      id: 6,
-      title: "Làm sạch thảm phòng họp",
-      reportType: "Cleaning request",
-      location: "Floor 5",
-      description: "Cần vệ sinh thảm tại phòng họp",
-      status: "Hoàn thành",
-      priority: "Thấp",
-      reportedBy: "Võ Thị F",
-      contactInfo: "0852741963",
-      createdDate: "2024-03-28",
-      timeCreated: "10:30",
-      createdBy: "Võ Thị F",
-      assignedTo: "Alex Morgan",
-      imageUrl: null
-    },
-    {
-      id: 7,
-      title: "Camera an ninh hỏng",
-      reportType: "Security concern",
-      location: "Floor 2",
-      description: "Camera an ninh không hoạt động",
-      status: "Đã duyệt",
-      priority: "Cao",
-      reportedBy: "Alex Morgan",
-      contactInfo: "0963852741",
-      createdDate: "2024-03-30",
-      timeCreated: "08:45",
-      createdBy: "Alex Morgan",
-      assignedTo: "Đặng Văn G",
-      imageUrl: null
-    },
-    {
-      id: 8,
-      title: "Rò rỉ nước toilet",
-      reportType: "Water leakage",
-      location: "Floor 3",
-      description: "Rò rỉ nước tại toilet nam",
-      status: "Đang duyệt",
-      priority: "Cao",
-      reportedBy: "Bùi Thị H",
-      contactInfo: "0741963852",
-      createdDate: "2024-04-01",
-      timeCreated: "15:20",
-      createdBy: "Bùi Thị H",
-      assignedTo: "Alex Morgan",
-      imageUrl: null
-    },
-    {
-      id: 9,
-      title: "Sửa chữa máy photocopy",
-      reportType: "Equipment repair",
-      location: "Floor 4",
-      description: "Máy photocopy bị kẹt giấy",
-      status: "Hoàn thành",
-      priority: "Trung bình",
-      reportedBy: "Alex Morgan",
-      contactInfo: "0852963741",
-      createdDate: "2024-04-03",
-      timeCreated: "12:15",
-      createdBy: "Alex Morgan",
-      assignedTo: "Ngô Văn I",
-      imageUrl: null
-    },
-    {
-      id: 10,
-      title: "Thay bóng đèn hành lang",
-      reportType: "Maintenance request",
-      location: "Floor 1",
-      description: "Cần thay bóng đèn hành lang",
-      status: "Đã duyệt",
-      priority: "Thấp",
-      reportedBy: "Lý Thị K",
-      contactInfo: "0963741852",
-      createdDate: "2024-04-05",
-      timeCreated: "14:00",
-      createdBy: "Lý Thị K",
-      assignedTo: "Alex Morgan",
-      imageUrl: null
-    },
-    {
-      id: 11,
-      title: "Kiểm tra an toàn khu vực làm việc",
-      reportType: "Safety inspection",
-      location: "Floor 2",
-      description: "Kiểm tra định kỳ các thiết bị an toàn và lối thoát hiểm",
-      status: "Hoàn thành",
-      priority: "Cao",
-      reportedBy: "Giám sát viên A",
-      contactInfo: "0901234567",
-      createdDate: "2024-04-06",
-      timeCreated: "08:00",
-      createdBy: "Giám sát viên A",
-      assignedTo: "Nguyễn Văn A",
-      imageUrl: null
-    },
-    {
-      id: 12,
-      title: "Đánh giá hiệu suất vệ sinh tầng 3",
-      reportType: "Performance review",
-      location: "Floor 3",
-      description: "Đánh giá chất lượng công việc vệ sinh và đề xuất cải thiện",
-      status: "Đang duyệt",
-      priority: "Trung bình",
-      reportedBy: "Giám sát viên B",
-      contactInfo: "0912345678",
-      createdDate: "2024-04-07",
-      timeCreated: "10:30",
-      createdBy: "Giám sát viên B",
-      assignedTo: "Trần Thị B",
-      imageUrl: null
-    },
-    {
-      id: 13,
-      title: "Báo cáo tuần vệ sinh khu vực chung",
-      reportType: "Weekly report",
-      location: "All Floors",
-      description: "Tổng kết công việc vệ sinh tuần qua và kế hoạch tuần tới",
-      status: "Đã duyệt",
-      priority: "Thấp",
-      reportedBy: "Giám sát viên C",
-      contactInfo: "0923456789",
-      createdDate: "2024-04-08",
-      timeCreated: "16:00",
-      createdBy: "Giám sát viên C",
-      assignedTo: "Alex Morgan",
-      imageUrl: null
-    }
-  ];
+  // API hooks - now using single call to get all reports with role info
+  const { reports: allReports, isLoading: allLoading, isError: allError, refresh: refreshAll } = useReports();
+  const { reports: reportsWithRole, isLoading: roleLoading, isError: roleError, refresh: refreshWithRole } = useReportsWithRole();
 
-  const [reports, setReports] = useState([]);
-
-  // LocalStorage functions
-  const saveReportsToLocalStorage = (reportsData) => {
-    try {
-      localStorage.setItem('reportManagement_reports', JSON.stringify(reportsData));
-      console.log('✅ Đã lưu báo cáo vào LocalStorage');
-    } catch (error) {
-      console.error('❌ Lỗi khi lưu báo cáo vào LocalStorage:', error);
+  // Get reports based on active tab
+  const getReportsForTab = () => {
+    switch (activeTab) {
+      case "all":
+        return { reports: allReports, isLoading: allLoading, isError: allError };
+      case "supervisor":
+        // Filter reports where roleName is "Supervisor"
+        const supervisorReports = reportsWithRole.filter(report => 
+          report.roleName === "Supervisor" || report.roleName === "supervisor"
+        );
+        return { reports: supervisorReports, isLoading: roleLoading, isError: roleError };
+      case "worker":
+        // Filter reports where roleName is "Worker" 
+        const workerReports = reportsWithRole.filter(report => 
+          report.roleName === "Worker" || report.roleName === "worker"
+        );
+        return { reports: workerReports, isLoading: roleLoading, isError: roleError };
+      case "mine":
+        // Filter reports created by current leader specifically
+        console.log('🔍 Filtering current leader reports - User:', user?.username);
+        console.log('🔍 Reports with role data:', reportsWithRole.map(r => ({ 
+          roleName: r.roleName, 
+          userName: r.userName, 
+          createdBy: r.createdBy 
+        })));
+        const myLeaderReports = reportsWithRole.filter(report => 
+          (report.roleName === "Leader" || report.roleName === "leader") &&
+          (report.userName === user?.username || report.createdBy === user?.username)
+        );
+        console.log('🔍 My leader reports:', myLeaderReports);
+        return { reports: myLeaderReports, isLoading: roleLoading, isError: roleError };
+      default:
+        return { reports: [], isLoading: false, isError: false };
     }
   };
 
-  const loadReportsFromLocalStorage = () => {
-    try {
-      const savedReports = localStorage.getItem('reportManagement_reports');
-      if (savedReports) {
-        const parsedReports = JSON.parse(savedReports);
-        console.log('✅ Đã tải báo cáo từ LocalStorage:', parsedReports.length, 'reports');
-        return parsedReports;
-      }
-    } catch (error) {
-      console.error('❌ Lỗi khi tải báo cáo từ LocalStorage:', error);
-    }
-    return null;
-  };
-
-  // Load dữ liệu khi component mount
-  useEffect(() => {
-    const savedReports = loadReportsFromLocalStorage();
-    if (savedReports && savedReports.length > 0) {
-      // Migrate old data - add missing fields if they don't exist
-      const migratedReports = savedReports.map(report => ({
-        ...report,
-        title: report.title || `Báo cáo #${report.id}`,
-        priority: report.priority || "Trung bình",
-        reportedBy: report.reportedBy || "Không xác định",
-        contactInfo: report.contactInfo || "Chưa cập nhật",
-        timeCreated: report.timeCreated || "00:00",
-        createdBy: report.createdBy || report.reportedBy || "Không xác định",
-        assignedTo: report.assignedTo || currentUser,
-        imageUrl: report.imageUrl || null // Migrate image field
-      }));
-      setReports(migratedReports);
-      // Save migrated data back to localStorage
-      if (JSON.stringify(migratedReports) !== JSON.stringify(savedReports)) {
-        saveReportsToLocalStorage(migratedReports);
-      }
-    } else {
-      // Nếu chưa có dữ liệu trong LocalStorage, sử dụng dữ liệu mặc định
-      setReports(defaultReports);
-      saveReportsToLocalStorage(defaultReports);
-    }
-  }, []);
+  const { reports, isLoading, isError } = getReportsForTab();
 
   const handleActionClick = ({ action, report }) => {
     if (action === 'view') {
@@ -333,15 +112,25 @@ const ReportManagement = () => {
 
   const handleSubmitUpdate = (e) => {
     e.preventDefault();
-    const updatedReports = reports.map(report => 
-      report.id === selectedReport.id 
-        ? { ...report, status: updateReportData.status }
-        : report
-    );
-    setReports(updatedReports);
-    saveReportsToLocalStorage(updatedReports);
+    if (selectedReport && updateReportData.status) {
+      // Call API to update report
+      updateReport(selectedReport.id, {
+        status: updateReportData.status,
+        reportType: updateReportData.reportType,
+        location: updateReportData.location,
+      })
+      .then(() => {
+        // Refresh all tabs data
+        refreshAll();
+        refreshWithRole();
     handleCloseUpdateModal();
     alert("✅ Đã cập nhật trạng thái báo cáo thành công!");
+      })
+      .catch((error) => {
+        console.error("Error updating report:", error);
+        alert("❌ Có lỗi xảy ra khi cập nhật báo cáo!");
+      });
+    }
   };
 
   const handleAddReport = () => {
@@ -395,32 +184,43 @@ const ReportManagement = () => {
 
   const handleSubmitReport = (e) => {
     e.preventDefault();
-    if (newReport.title && newReport.description && newReport.reportedTo) {
-      const reportToAdd = {
-        ...newReport,
-        id: Date.now(),
-        reportType: newReport.title, // Sử dụng title làm reportType cho hiển thị
-        location: "Floor 1", // Mặc định
-        contactInfo: "Chưa cập nhật",
-        status: "Đang duyệt", // Mặc định khi tạo mới
-        reportedBy: currentUser, // Người tạo báo cáo
-        assignedTo: newReport.reportedTo, // Người được báo cáo
-        createdDate: new Date().toISOString().split('T')[0],
-        timeCreated: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-        createdBy: currentUser,
-        imageUrl: newReport.imagePreview // Lưu base64 string hình ảnh
+    
+    if (newReport.title && newReport.description) {
+      // Prepare data for Leader API format
+      const reportData = {
+        description: newReport.description,
+        reportName: newReport.title,
+        image: newReport.imagePreview || "", // Base64 string or empty string
+        priority: PRIORITY_MAPPING[newReport.priority] || 2, // Map to number (default: Medium)
+        reportType: 1, // Default report type
       };
-      
-      const updatedReports = [...reports, reportToAdd];
-      setReports(updatedReports);
-      
-      // Lưu vào LocalStorage
-      saveReportsToLocalStorage(updatedReports);
-      
-      handleClosePopup();
-      
-      // Thông báo thành công
-      alert("✅ Đã tạo báo cáo thành công!");
+
+      console.log('🔄 Creating report with data:', reportData);
+
+      // Call API to create report
+      createReport(reportData)
+        .then(() => {
+          // Refresh all tabs data
+          refreshAll();
+          refreshWithRole();
+          
+          // Reset form
+          setNewReport({
+            title: "",
+            description: "",
+            priority: "Trung bình",
+            reportedTo: "",
+            image: null,
+            imagePreview: null
+          });
+          
+          handleClosePopup();
+          alert("✅ Đã thêm báo cáo mới thành công!");
+        })
+        .catch((error) => {
+          console.error("Error creating report:", error);
+          alert("❌ Có lỗi xảy ra khi tạo báo cáo: " + error.message);
+        });
     } else {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
     }
@@ -428,22 +228,11 @@ const ReportManagement = () => {
 
   // Filter reports based on active tab and priority filter
   const filteredReports = reports.filter(report => {
-    // Tab filtering
-    let tabFilter;
-    if (activeTab === "assigned") {
-      tabFilter = report.assignedTo === currentUser;
-    } else if (activeTab === "created") {
-      tabFilter = report.createdBy === currentUser;
-    } else if (activeTab === "supervisor") {
-      tabFilter = report.reportedBy && report.reportedBy.includes("Giám sát viên");
-    }
-    
-    if (!tabFilter) return false;
-    
     // Priority filtering
-    if (!priorityFilter) return true;
-    
-    return report.priority === priorityFilter;
+    if (priorityFilter && report.priority !== priorityFilter) {
+      return false;
+    }
+    return true;
   });
 
   // Tính toán pagination
@@ -452,6 +241,29 @@ const ReportManagement = () => {
   const endIndex = startIndex + itemsPerPage;
   const currentReports = filteredReports.slice(startIndex, endIndex);
 
+  // Calculate statistics for each tab
+  const getTabCount = (tabType) => {
+    switch (tabType) {
+      case "all":
+        return allReports.length;
+      case "supervisor":
+        return reportsWithRole.filter(report => 
+          report.roleName === "Supervisor" || report.roleName === "supervisor"
+        ).length;
+      case "worker":
+        return reportsWithRole.filter(report => 
+          report.roleName === "Worker" || report.roleName === "worker"
+        ).length;
+      case "mine":
+        return reportsWithRole.filter(report => 
+          (report.roleName === "Leader" || report.roleName === "leader") &&
+          (report.userName === user?.username || report.createdBy === user?.username)
+        ).length;
+      default:
+        return 0;
+    }
+  };
+
   // Reset về trang 1 khi filter priority
   const handlePriorityFilterChange = (e) => {
     setPriorityFilter(e.target.value);
@@ -459,6 +271,15 @@ const ReportManagement = () => {
   };
 
   return (
+    <>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     <div style={{ backgroundColor: "#ffffff", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
@@ -486,7 +307,7 @@ const ReportManagement = () => {
           <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
             <button
               onClick={() => {
-                setActiveTab("assigned");
+                  setActiveTab("all");
                 setCurrentPage(1);
               }}
               style={{
@@ -496,26 +317,39 @@ const ReportManagement = () => {
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
-                borderBottom: activeTab === "assigned" ? "2px solid #FF5B27" : "2px solid transparent",
-                color: activeTab === "assigned" ? "#FF5B27" : "#6b7280",
+                  borderBottom: activeTab === "all" ? "2px solid #FF5B27" : "2px solid transparent",
+                  color: activeTab === "all" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
               }}
               onMouseEnter={(e) => {
-                if (activeTab !== "assigned") {
+                  if (activeTab !== "all") {
                   e.target.style.color = "#374151";
                 }
               }}
               onMouseLeave={(e) => {
-                if (activeTab !== "assigned") {
+                  if (activeTab !== "all") {
                   e.target.style.color = "#6b7280";
                 }
               }}
             >
-              Báo cáo của nhân viên
+                Báo cáo tổng
+                <span style={{
+                  backgroundColor: activeTab === "all" ? "#FF5B27" : "#e5e7eb",
+                  color: activeTab === "all" ? "white" : "#6b7280",
+                  fontSize: "12px",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontWeight: "600"
+                }}>
+                  {getTabCount("all")}
+                </span>
             </button>
             <button
               onClick={() => {
-                setActiveTab("created");
+                  setActiveTab("supervisor");
                 setCurrentPage(1);
               }}
               style={{
@@ -525,26 +359,39 @@ const ReportManagement = () => {
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
-                borderBottom: activeTab === "created" ? "2px solid #FF5B27" : "2px solid transparent",
-                color: activeTab === "created" ? "#FF5B27" : "#6b7280",
+                  borderBottom: activeTab === "supervisor" ? "2px solid #FF5B27" : "2px solid transparent",
+                  color: activeTab === "supervisor" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
               }}
               onMouseEnter={(e) => {
-                if (activeTab !== "created") {
+                  if (activeTab !== "supervisor") {
                   e.target.style.color = "#374151";
                 }
               }}
               onMouseLeave={(e) => {
-                if (activeTab !== "created") {
+                  if (activeTab !== "supervisor") {
                   e.target.style.color = "#6b7280";
                 }
               }}
             >
-              Báo cáo của tôi
+                Báo cáo giám sát viên
+                <span style={{
+                  backgroundColor: activeTab === "supervisor" ? "#FF5B27" : "#e5e7eb",
+                  color: activeTab === "supervisor" ? "white" : "#6b7280",
+                  fontSize: "12px",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontWeight: "600"
+                }}>
+                  {getTabCount("supervisor")}
+                </span>
             </button>
             <button
               onClick={() => {
-                setActiveTab("supervisor");
+                  setActiveTab("worker");
                 setCurrentPage(1);
               }}
               style={{
@@ -554,22 +401,77 @@ const ReportManagement = () => {
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
-                borderBottom: activeTab === "supervisor" ? "2px solid #FF5B27" : "2px solid transparent",
-                color: activeTab === "supervisor" ? "#FF5B27" : "#6b7280",
+                  borderBottom: activeTab === "worker" ? "2px solid #FF5B27" : "2px solid transparent",
+                  color: activeTab === "worker" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
               }}
               onMouseEnter={(e) => {
-                if (activeTab !== "supervisor") {
+                  if (activeTab !== "worker") {
                   e.target.style.color = "#374151";
                 }
               }}
               onMouseLeave={(e) => {
-                if (activeTab !== "supervisor") {
+                  if (activeTab !== "worker") {
                   e.target.style.color = "#6b7280";
                 }
               }}
             >
-              Báo cáo của giám sát viên
+                Báo cáo công nhân
+                <span style={{
+                  backgroundColor: activeTab === "worker" ? "#FF5B27" : "#e5e7eb",
+                  color: activeTab === "worker" ? "white" : "#6b7280",
+                  fontSize: "12px",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontWeight: "600"
+                }}>
+                  {getTabCount("worker")}
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("mine");
+                  setCurrentPage(1);
+                }}
+                style={{
+                  padding: "12px 24px",
+                  border: "none",
+                  backgroundColor: "transparent",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  borderBottom: activeTab === "mine" ? "2px solid #FF5B27" : "2px solid transparent",
+                  color: activeTab === "mine" ? "#FF5B27" : "#6b7280",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== "mine") {
+                    e.target.style.color = "#374151";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== "mine") {
+                    e.target.style.color = "#6b7280";
+                  }
+                }}
+              >
+                Báo cáo của tôi
+                <span style={{
+                  backgroundColor: activeTab === "mine" ? "#FF5B27" : "#e5e7eb",
+                  color: activeTab === "mine" ? "white" : "#6b7280",
+                  fontSize: "12px",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontWeight: "600"
+                }}>
+                  {getTabCount("mine")}
+                </span>
             </button>
           </div>
         </div>
@@ -588,6 +490,7 @@ const ReportManagement = () => {
             <select
               value={priorityFilter}
               onChange={handlePriorityFilterChange}
+                disabled={isLoading}
               style={{
                 width: "30%",
                 padding: "12px 16px",
@@ -596,8 +499,8 @@ const ReportManagement = () => {
                 fontSize: "14px",
                 outline: "none",
                 transition: "border-color 0.2s",
-                backgroundColor: "white",
-                cursor: "pointer",
+                  backgroundColor: isLoading ? "#f9fafb" : "white",
+                  cursor: isLoading ? "not-allowed" : "pointer",
               }}
               onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
               onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
@@ -614,19 +517,19 @@ const ReportManagement = () => {
             {/* Add Report Button */}
             <button
               onClick={handleAddReport}
+                disabled={isLoading}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                backgroundColor: "#FF5B27",
+                  backgroundColor: isLoading ? "#9ca3af" : "#FF5B27",
                 color: "white",
                 padding: "12px 20px",
                 border: "none",
                 borderRadius: "8px",
                 fontSize: "14px",
                 fontWeight: "500",
-                cursor: "pointer",
-                transition: "background-color 0.2s",
+                  cursor: isLoading ? "not-allowed" : "pointer",
               }}
               onMouseEnter={(e) => (e.target.style.backgroundColor = "#E04B1F")}
               onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
@@ -640,7 +543,78 @@ const ReportManagement = () => {
 
       {/* Report Table Container */}
       <div style={{ flex: "0 0 auto" }}>
+          {isLoading ? (
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              padding: "60px",
+              color: "#6b7280"
+            }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  border: "4px solid #f3f4f6",
+                  borderTop: "4px solid #FF5B27",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  margin: "0 auto 16px"
+                }} />
+                <p>Đang tải danh sách báo cáo...</p>
+              </div>
+            </div>
+          ) : isError ? (
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              padding: "60px",
+              color: "#dc2626"
+            }}>
+              <div style={{ textAlign: "center" }}>
+                <svg style={{ width: "48px", height: "48px", margin: "0 auto 16px", color: "#dc2626" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <p>Có lỗi xảy ra khi tải dữ liệu</p>
+                <button
+                  onClick={() => {
+                    refreshAll();
+                    refreshWithRole();
+                  }}
+                  style={{
+                    marginTop: "12px",
+                    padding: "8px 16px",
+                    border: "1px solid #dc2626",
+                    borderRadius: "6px",
+                    backgroundColor: "white",
+                    color: "#dc2626",
+                    cursor: "pointer",
+                    fontSize: "14px"
+                  }}
+                >
+                  Thử lại
+                </button>
+              </div>
+            </div>
+          ) : filteredReports.length === 0 ? (
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "center", 
+              alignItems: "center", 
+              padding: "60px",
+              color: "#6b7280"
+            }}>
+              <div style={{ textAlign: "center" }}>
+                <svg style={{ width: "48px", height: "48px", margin: "0 auto 16px", color: "#9ca3af" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p>Không có báo cáo nào</p>
+              </div>
+            </div>
+          ) : (
         <ReportTable reports={currentReports} onActionClick={handleActionClick} />
+          )}
       </div>
 
       {/* Pagination */}
@@ -1450,6 +1424,7 @@ const ReportManagement = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 
