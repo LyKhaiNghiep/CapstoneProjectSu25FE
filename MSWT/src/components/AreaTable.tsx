@@ -9,9 +9,6 @@ import {
 
 interface IProps {
   areas: Area[];
-  currentPage?: number;
-  itemsPerPage?: number;
-  onPageChange?: (page: number) => void;
   onActionClick: (action: IAction) => void;
 }
 
@@ -22,16 +19,9 @@ interface IAction {
 
 const AreaTable = ({
   areas,
-  currentPage = 1,
-  itemsPerPage = 10,
-  onPageChange,
   onActionClick,
 }: IProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const totalPages = Math.ceil(areas.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentAreas = areas.slice(startIndex, endIndex);
   console.log("areas", areas);
   const getStatusColor = (status: string) => {
     switch (status) {

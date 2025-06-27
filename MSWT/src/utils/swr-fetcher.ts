@@ -89,7 +89,8 @@ export const swrFetcher = async (url: string, options?: RequestInit) => {
         method: options.method || 'GET',
         data: options.body ? JSON.parse(options.body as string) : undefined,
         headers: {
-          ...options.headers,
+          ...swrAxios.defaults.headers.common,
+          ...(options.headers as Record<string, string>),
         },
       });
     } else {
