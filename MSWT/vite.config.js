@@ -14,9 +14,15 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['react-icons'],
+          utils: ['axios', 'swr'],
+        },
       },
     },
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     port: 3000,
