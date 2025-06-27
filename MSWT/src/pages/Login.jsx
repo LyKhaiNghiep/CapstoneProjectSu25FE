@@ -92,7 +92,7 @@ const Login = () => {
               className="text-xl font-medium"
               style={{ color: '#374151' }}
             >
-              Đăng nhập hệ thống MSWT
+              Đăng nhập 
             </h1>
             <p style={{ color: '#6B7280', fontSize: '14px', marginTop: '8px' }}>
               Quản lý vệ sinh và bảo trì
@@ -193,26 +193,6 @@ const Login = () => {
             </button>
           </form>
 
-          {/* Register Link */}
-          <div className="text-center mt-6">
-            <p style={{ color: '#6B7280', fontSize: '14px' }}>
-              Chưa có tài khoản?{' '}
-              <button
-                type="button"
-                onClick={() => navigate('/register')}
-                style={{
-                  color: '#F97316',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  fontSize: '14px'
-                }}
-              >
-                Đăng ký ngay
-              </button>
-            </p>
-          </div>
 
           {/* API Info */}
           <div 
@@ -221,12 +201,7 @@ const Login = () => {
               borderTop: '1px solid #F3F4F6'
             }}
           >
-            <p style={{ color: '#6B7280', fontSize: '12px' }}>
-              🌐 Kết nối với API: {import.meta.env.VITE_API_URL || 'Default'}
-            </p>
-            <p style={{ color: '#6B7280', fontSize: '10px', marginTop: '4px' }}>
-              Roles: Leader, Manager, Supervisor, Worker
-            </p>
+            
           </div>
         </div>
       </div>
