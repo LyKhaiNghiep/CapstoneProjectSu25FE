@@ -1,7 +1,6 @@
 import { Floor } from "./floor.model";
 
 export interface Area {
-  id: string;
   areaId: string;
   floorId: string;
   description: string;
@@ -9,7 +8,8 @@ export interface Area {
   roomBegin: string;
   roomEnd: string;
   areaName: string;
-  floor?: Floor;
+  floorNumber: number;
+  floor?: Floor; // Keep this for backward compatibility if needed
 }
 
 export interface Schedule {

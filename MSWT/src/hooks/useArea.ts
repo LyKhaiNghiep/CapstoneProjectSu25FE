@@ -7,7 +7,7 @@ import { ICreateAreaRequest } from "@/config/models/area.model";
 
 // Hook to fetch areas for dropdown
 export function useAreas() {
-  const { data, error, isLoading, mutate } = useSWR<IBaseResponse<Area>>(
+  const { data, error, isLoading, mutate } = useSWR<Area[]>(
     API_URLS.AREA.GET_ALL,
     swrFetcher
   );
@@ -30,7 +30,7 @@ export function useAreas() {
   };
 
   return {
-    areas: data?.$values ?? [],
+    areas: data ?? [],
     isLoading,
     error,
     createAsync,
