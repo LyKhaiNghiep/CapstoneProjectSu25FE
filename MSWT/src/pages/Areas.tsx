@@ -108,10 +108,6 @@ const Areas = () => {
     alert("✅ Đã cập nhật khu vực thành công!");
   };
 
-  const handleAddArea = () => {
-    setShowAddAreaPopup(true);
-  };
-
   const handleClosePopup = () => {
     setShowAddAreaPopup(false);
     setNewArea({

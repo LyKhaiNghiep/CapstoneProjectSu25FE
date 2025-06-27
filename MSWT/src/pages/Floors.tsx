@@ -35,11 +35,6 @@ const Floors = () => {
 
   const itemsPerPage = 5;
 
-  const sampleStatuses = [
-    { id: "1", name: "active", label: "Hoạt động" },
-    { id: "2", name: "maintenance", label: "Bảo trì" },
-  ];
-
   // Sample data for dropdowns (will be replaced with API data)
   const availableRestrooms = [
     { id: "1", name: "Nhà vệ sinh #1" },

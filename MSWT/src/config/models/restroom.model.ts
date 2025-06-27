@@ -1,5 +1,7 @@
 import { Floor } from "./floor.model";
 
+export type { Floor };
+
 export interface Area {
   areaId: string;
   floorId: string;
