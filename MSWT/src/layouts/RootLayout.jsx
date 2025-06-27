@@ -24,9 +24,9 @@ const RootLayout = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // If authenticated and on login page, redirect to restrooms
+  // If authenticated and on login page, redirect to dashboard
   if (isAuthenticated && location.pathname === '/login') {
-    return <Navigate to="/restrooms" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // If on public page (login/register), show without layout

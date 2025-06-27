@@ -12,24 +12,8 @@ import UserManagement from "../pages/UserManagement";
 import ReportManagement from "../pages/ReportManagement";
 import TrashBinList from "../pages/TrashBinList";
 import NotFound from "../pages/NotFound";
-import { useAuth } from "../contexts/AuthContext";
 import Notifications from "../pages/Notifications";
 import Areas from "../pages/Areas";
-
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return <div>Loading...</div>; // Or your loading component
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
 
 export const router = createBrowserRouter([
   {
@@ -38,7 +22,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/login" replace />,
+        element: <Navigate to="/dashboard" replace />,
       },
       {
         path: "login",
@@ -50,84 +34,43 @@ export const router = createBrowserRouter([
       },
       {
         path: "dashboard",
-        element: (
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        ),
+        element: <Dashboard />,
       },
       {
         path: "restrooms",
-        element: (
-          <ProtectedRoute>
-            <Restrooms />
-          </ProtectedRoute>
-        ),
+        element: <Restrooms />,
       },
       {
         path: "shifts",
-        element: (
-          <ProtectedRoute>
-            <Shifts />
-          </ProtectedRoute>
-        ),
+        element: <Shifts />,
       },
       {
         path: "floors",
-        element: (
-          <ProtectedRoute>
-            <Floors />
-          </ProtectedRoute>
-        ),
+        element: <Floors />,
       },
       {
         path: "trash",
-        element: (
-          <ProtectedRoute>
-            <TrashBinList />
-          </ProtectedRoute>
-        ),
+        element: <TrashBinList />,
       },
-      
       {
         path: "profile",
-        element: (
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        ),
+        element: <Profile />,
       },
       {
         path: "user-management",
-        element: (
-          <ProtectedRoute>
-            <UserManagement />
-          </ProtectedRoute>
-        ),
+        element: <UserManagement />,
       },
       {
         path: "report-management",
-        element: (
-          <ProtectedRoute>
-            <ReportManagement />
-          </ProtectedRoute>
-        ),
+        element: <ReportManagement />,
       },
       {
         path: "notifications",
-        element: (
-          <ProtectedRoute>
-            <Notifications />
-          </ProtectedRoute>
-        ),
+        element: <Notifications />,
       },
       {
         path: "areas",
-        element: (
-          <ProtectedRoute>
-            <Areas />
-          </ProtectedRoute>
-        ),
+        element: <Areas />,
       },
       {
         path: "*",

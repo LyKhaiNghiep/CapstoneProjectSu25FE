@@ -3,6 +3,19 @@ export const BASE_API_URL =
   "https://capstoneproject-mswt-su25.onrender.com/api";
 
 export const API_URLS = {
+  // User management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong userService.js
+  // Backend xử lý authentication trực tiếp trong login endpoint
+  USER: {
+    GET_ALL: `users`,
+    GET_BY_ID: (id: string) => `users/${id}`,
+    CREATE: `users`,
+    UPDATE: (id: string) => `users/${id}`,
+    DELETE: (id: string) => `users/${id}`,
+    LOGIN: `users/login`, // Backend xử lý login và trả về token
+    REGISTER: `users/register`, // Backend xử lý register
+  },
+
+  // Floor management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useFloor.ts
   FLOOR: {
     GET_ALL: `floors`,
     GET_BY_ID: (id: string) => `floors/${id}`,
@@ -10,6 +23,8 @@ export const API_URLS = {
     UPDATE: (id: string) => `floors/${id}`,
     DELETE: (id: string) => `floors/${id}`,
   },
+
+  // Area management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useArea.ts
   AREA: {
     GET_ALL: `areas`,
     GET_BY_ID: (id: string) => `areas/${id}`,
@@ -17,6 +32,8 @@ export const API_URLS = {
     UPDATE: (id: string) => `areas/${id}`,
     DELETE: (id: string) => `areas/${id}`,
   },
+
+  // Restroom management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useRestroom.ts
   RESTROOM: {
     GET_ALL: `restrooms`,
     GET_BY_ID: (id: string) => `restrooms/${id}`,
@@ -24,31 +41,24 @@ export const API_URLS = {
     UPDATE: (id: string) => `restrooms/${id}`,
     DELETE: (id: string) => `restrooms/${id}`,
   },
-  USER: {
-    GET_ALL: `users`,
-    GET_BY_ID: (id: string) => `users/${id}`,
-    CREATE: `users`,
-    UPDATE: (id: string) => `users/${id}`,
-    DELETE: (id: string) => `users/${id}`,
-  },
-  AUTH: {
-    LOGIN: `auth/login`,
-    REGISTER: `auth/register`,
-    LOGOUT: `auth/logout`,
-    REFRESH: `auth/refresh`,
-  },
-  REPORT: {
-    GET_ALL: `reports`,
-    GET_BY_ID: (id: string) => `reports/${id}`,
-    CREATE: `reports`,
-    UPDATE: (id: string) => `reports/${id}`,
-    DELETE: (id: string) => `reports/${id}`,
-  },
+
+  // Schedule management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useRestroom.ts
   SCHEDULE: {
     GET_ALL: `schedules`,
     GET_BY_ID: (id: string) => `schedules/${id}`,
     CREATE: `schedules`,
     UPDATE: (id: string) => `schedules/${id}`,
     DELETE: (id: string) => `schedules/${id}`,
+  },
+
+  // Report management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong ReportManagement.jsx
+  REPORT: {
+    GET_ALL: `reports`, // GET /api/reports - Báo cáo tổng
+    GET_WITH_ROLE: `reports/with-role`, // GET /api/reports/with-role - Filter theo role
+    GET_BY_ID: (id: string) => `reports/${id}`,
+    CREATE: `reports`,
+    CREATE_LEADER: `reports/leader`, // POST /api/reports/leader - Tạo báo cáo cho Leader
+    UPDATE: (id: string) => `reports/${id}`,
+    DELETE: (id: string) => `reports/${id}`,
   },
 };
