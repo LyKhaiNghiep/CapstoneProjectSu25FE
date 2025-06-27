@@ -6,7 +6,6 @@ import {
   RestroomCreateRequest,
   RestroomUpdateRequest,
 } from "@/config/models/restroom.model";
-import { IBaseResponse } from "@/config/models/types";
 
 export function useRestrooms() {
   const { data, error, isLoading, mutate } = useSWR<Restroom[]>(

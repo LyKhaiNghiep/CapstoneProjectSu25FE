@@ -1,4 +1,3 @@
-import { IBaseResponse } from "@/config/models/types";
 import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";

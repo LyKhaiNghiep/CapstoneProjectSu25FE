@@ -37,22 +37,6 @@ const Restrooms = () => {
   const { areas } = useAreas();
   const itemsPerPage = 5;
 
-  // Sample data for dropdowns
-  const sampleAreas = [
-    { id: "1", name: "Khu A" },
-    { id: "2", name: "Khu B" },
-    { id: "3", name: "Khu C" },
-    { id: "4", name: "Khu D" },
-  ];
-
-  const sampleFloors = [
-    { id: "1", name: "Tầng 1" },
-    { id: "2", name: "Tầng 2" },
-    { id: "3", name: "Tầng 3" },
-    { id: "4", name: "Tầng 4" },
-    { id: "5", name: "Tầng 5" },
-  ];
-
   const sampleStatuses = [
     { id: "1", name: "Hoạt động" },
     { id: "2", name: "Bảo trì" },
