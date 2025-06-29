@@ -2,7 +2,10 @@ import { Area } from "@/config/models/restroom.model";
 import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
-import { ICreateAreaRequest } from "@/config/models/area.model";
+import {
+  ICreateAreaRequest,
+  IUpdateAreaRequest,
+} from "@/config/models/area.model";
 
 // Hook to fetch areas for dropdown
 export function useAreas() {
@@ -28,10 +31,41 @@ export function useAreas() {
     }
   };
 
+  const deleteAsync = async (id: string) => {
+    try {
+      await swrFetcher(API_URLS.AREA.DELETE(id), {
+        method: "DELETE",
+      });
+      mutate();
+    } catch (error) {
+      console.error("Error deleting floor:", error);
+      throw error;
+    }
+  };
+
+  const updateAsync = async (id: string, request: IUpdateAreaRequest) => {
+    try {
+      const response = await swrFetcher(API_URLS.AREA.UPDATE(id), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request),
+      });
+      mutate();
+      return response;
+    } catch (error) {
+      console.error("Error updating area:", error);
+      throw error;
+    }
+  };
+
   return {
     areas: data ?? [],
     isLoading,
     error,
     createAsync,
+    deleteAsync,
+    updateAsync,
   };
 }

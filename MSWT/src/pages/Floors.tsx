@@ -56,15 +56,15 @@ const Floors = () => {
     { id: "7", name: "Thùng #54" },
   ];
 
-  const { floors } = useFloors();
+  const { floors, createAsync, deleteAsync } = useFloors();
 
   if (floors.length === 0) return null;
 
-  const handleActionClick = ({
+  const handleActionClick = async ({
     action,
     floor,
   }: {
-    action: string;
+    action: "view" | "update" | "delete";
     floor: Floor;
   }) => {
     console.log("🚀 Floors - handleActionClick called:", { action, floor });
@@ -73,13 +73,12 @@ const Floors = () => {
       setShowViewFloorModal(true);
     } else if (action === "update") {
       setSelectedFloor(floor);
-      // setUpdateFloorData({
-      //   name: floor.name,
-      //   restrooms: floor.restrooms || [],
-      //   trashCans: floor.trashCans || [],
-      //   status: floor.statusValue,
-      // });
       setShowUpdateFloorModal(true);
+    } else if (action === "delete") {
+      if (window.confirm("Bạn có chắc muốn xóa tầng này?")) {
+        await deleteAsync(floor.floorId);
+        alert("✅ Đã xóa tầng thành công!");
+      }
     }
   };
 
@@ -185,34 +184,6 @@ const Floors = () => {
     }));
   };
 
-  const addRestroomToNew = () => {
-    setNewFloor((prev: any) => ({
-      ...prev,
-      restrooms: [...prev?.restrooms, ""],
-    }));
-  };
-
-  const addTrashCanToNew = () => {
-    setNewFloor((prev: any) => ({
-      ...prev,
-      trashCans: [...prev.trashCans, ""],
-    }));
-  };
-
-  // const removeRestroomFromNew = (index) => {
-  //   setNewFloor((prev) => ({
-  //     ...prev,
-  //     restrooms: prev.restrooms.filter((_, i) => i !== index),
-  //   }));
-  // };
-
-  // const removeTrashCanFromNew = (index) => {
-  //   setNewFloor((prev) => ({
-  //     ...prev,
-  //     trashCans: prev.trashCans.filter((_, i) => i !== index),
-  //   }));
-  // };
-
   // Similar functions for update modal
   const addRestroomToUpdate = () => {
     setUpdateFloorData((prev: any) => ({
@@ -260,7 +231,7 @@ const Floors = () => {
     }));
   };
 
-  const handleSubmitFloor = (e: any) => {
+  const handleSubmitFloor = async (e: any) => {
     e.preventDefault();
     if (!newFloor.floorNumber || !newFloor.status) {
       showNotificationMessage(
@@ -269,6 +240,8 @@ const Floors = () => {
       );
       return;
     }
+
+    await createAsync(newFloor);
 
     handleClosePopup();
     showNotificationMessage("success", "Đã thêm tầng thành công!");
@@ -494,14 +467,14 @@ const Floors = () => {
                     marginBottom: "8px",
                   }}
                 >
-                  Tên tầng *
+                  Số tầng *
                 </label>
                 <input
-                  type="text"
-                  name="name"
+                  type="number"
+                  name="floorNumber"
                   value={newFloor.floorNumber}
                   onChange={handleInputChange}
-                  placeholder="Nhập tên tầng"
+                  placeholder="Nhập số tầng"
                   style={{
                     width: "100%",
                     padding: "12px 16px",
@@ -525,73 +498,25 @@ const Floors = () => {
                     marginBottom: "8px",
                   }}
                 >
-                  Nhà vệ sinh
+                  Số nhà vệ sinh *
                 </label>
-                {/* {newFloor.restrooms?.map((restroom: Restroom, index: number) => (
-                  <div
-                    key={index}
-                    style={{ display: "flex", gap: "8px", marginBottom: "8px" }}
-                  >
-                    <select
-                      value={restroom}
-                      onChange={(e) =>
-                        updateRestroomInNew(index, e.target.value)
-                      }
-                      style={{
-                        flex: 1,
-                        padding: "12px 16px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "8px",
-                        fontSize: "14px",
-                        outline: "none",
-                        backgroundColor: "white",
-                      }}
-                    >
-                      <option value="">Chọn nhà vệ sinh</option>
-                      {availableRestrooms.map((restroomOption) => (
-                        <option
-                          key={restroomOption.id}
-                          value={restroomOption.name}
-                        >
-                          {restroomOption.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => removeRestroomFromNew(index)}
-                      style={{
-                        padding: "12px",
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <HiX style={{ width: "16px", height: "16px" }} />
-                    </button>
-                  </div>
-                ))} */}
-                <button
-                  type="button"
-                  onClick={addRestroomToNew}
+                <input
+                  type="number"
+                  name="numberOfRestroom"
+                  value={newFloor.numberOfRestroom}
+                  onChange={handleInputChange}
+                  placeholder="Nhập số nhà vệ sinh"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
+                    width: "100%",
                     padding: "12px 16px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#374151",
                     border: "1px solid #d1d5db",
                     borderRadius: "8px",
-                    cursor: "pointer",
                     fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
                   }}
-                >
-                  <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
-                  Thêm nhà vệ sinh
-                </button>
+                  required
+                />
               </div>
 
               <div style={{ marginBottom: "20px" }}>
@@ -604,73 +529,25 @@ const Floors = () => {
                     marginBottom: "8px",
                   }}
                 >
-                  Thùng rác
+                  Số thùng rác *
                 </label>
-                {/* {newFloor.trashCans.map((trashCan, index) => (
-                  <div
-                    key={index}
-                    style={{ display: "flex", gap: "8px", marginBottom: "8px" }}
-                  >
-                    <select
-                      value={trashCan}
-                      onChange={(e) =>
-                        updateTrashCanInNew(index, e.target.value)
-                      }
-                      style={{
-                        flex: 1,
-                        padding: "12px 16px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "8px",
-                        fontSize: "14px",
-                        outline: "none",
-                        backgroundColor: "white",
-                      }}
-                    >
-                      <option value="">Chọn thùng rác</option>
-                      {availableTrashCans.map((trashCanOption) => (
-                        <option
-                          key={trashCanOption.id}
-                          value={trashCanOption.name}
-                        >
-                          {trashCanOption.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => removeTrashCanFromNew(index)}
-                      style={{
-                        padding: "12px",
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <HiX style={{ width: "16px", height: "16px" }} />
-                    </button>
-                  </div>
-                ))} */}
-                <button
-                  type="button"
-                  onClick={addTrashCanToNew}
+                <input
+                  type="number"
+                  name="numberOfBin"
+                  value={newFloor.numberOfBin}
+                  onChange={handleInputChange}
+                  placeholder="Nhập số thùng rác"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
+                    width: "100%",
                     padding: "12px 16px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#374151",
                     border: "1px solid #d1d5db",
                     borderRadius: "8px",
-                    cursor: "pointer",
                     fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
                   }}
-                >
-                  <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
-                  Thêm thùng rác
-                </button>
+                  required
+                />
               </div>
 
               <div style={{ marginBottom: "24px" }}>
@@ -700,8 +577,8 @@ const Floors = () => {
                   }}
                   required
                 >
-                  <option value="active">Hoạt động</option>
-                  <option value="maintenance">Bảo trì</option>
+                  <option value="Hoạt động">Hoạt động</option>
+                  <option value="Bảo trì">Bảo trì</option>
                 </select>
               </div>
 

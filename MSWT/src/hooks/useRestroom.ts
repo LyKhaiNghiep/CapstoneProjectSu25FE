@@ -13,7 +13,7 @@ export function useRestrooms() {
     swrFetcher
   );
 
-  const createRestroom = async (newRestroom: RestroomCreateRequest) => {
+  const createAsync = async (newRestroom: RestroomCreateRequest) => {
     try {
       const response = await swrFetcher(API_URLS.RESTROOM.CREATE, {
         method: "POST",
@@ -30,7 +30,7 @@ export function useRestrooms() {
     }
   };
 
-  const updateRestroom = async (
+  const updateAsync = async (
     id: string,
     updatedData: RestroomUpdateRequest
   ) => {
@@ -50,7 +50,7 @@ export function useRestrooms() {
     }
   };
 
-  const deleteRestroom = async (id: string) => {
+  const deleteAsync = async (id: string) => {
     try {
       await swrFetcher(API_URLS.RESTROOM.DELETE(id), {
         method: "DELETE",
@@ -66,9 +66,9 @@ export function useRestrooms() {
     restrooms: data ?? [],
     isLoading,
     error,
-    createRestroom,
-    updateRestroom,
-    deleteRestroom,
+    createAsync,
+    updateAsync,
+    deleteAsync,
     mutate,
   };
 }

@@ -41,10 +41,10 @@ const Areas = () => {
   });
 
   const itemsPerPage = 5; // Số khu vực hiển thị mỗi trang
-  const { areas, createAsync } = useAreas();
+  const { areas, createAsync, deleteAsync, updateAsync } = useAreas();
   const { floors } = useFloors();
 
-  const handleActionClick = ({
+  const handleActionClick = async ({
     action,
     area,
   }: {
@@ -56,6 +56,7 @@ const Areas = () => {
       setShowViewAreaModal(true);
     } else if (action === "edit") {
       setSelectedArea(area);
+
       setUpdateAreaData({
         areaName: area.areaName,
         floorNumber: area.floorNumber,
@@ -69,6 +70,7 @@ const Areas = () => {
       setShowUpdateAreaModal(true);
     } else if (action === "delete") {
       if (window.confirm("Bạn có chắc muốn xóa khu vực này?")) {
+        await deleteAsync(area.areaId);
         alert("✅ Đã xóa khu vực thành công!");
       }
     }
@@ -102,9 +104,18 @@ const Areas = () => {
     }));
   };
 
-  const handleSubmitUpdate = (e: any) => {
+  const handleSubmitUpdate = async (e: any) => {
     e.preventDefault();
     handleCloseUpdateModal();
+
+    await updateAsync(updateAreaData.areaId, {
+      areaName: updateAreaData.areaName,
+      roomBegin: updateAreaData.roomBegin,
+      roomEnd: updateAreaData.roomEnd,
+      description: updateAreaData.description,
+      status: updateAreaData.status,
+    });
+
     alert("✅ Đã cập nhật khu vực thành công!");
   };
 

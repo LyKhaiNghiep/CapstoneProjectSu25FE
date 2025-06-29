@@ -6,3 +6,11 @@ export interface ICreateAreaRequest {
   roomEnd: string;
   areaName: string;
 }
+
+export interface IUpdateAreaRequest {
+  description: string;
+  status: string;
+  roomBegin: string;
+  roomEnd: string;
+  areaName: string;
+}

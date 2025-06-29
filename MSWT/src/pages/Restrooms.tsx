@@ -7,6 +7,7 @@ import Pagination from "../components/Pagination";
 import RestroomTable from "../components/RestroomTable";
 import { useFloors } from "../hooks/useFloor";
 import { useAreas } from "../hooks/useArea";
+import { IActionType } from "@/config/models/types";
 
 const Restrooms = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,7 +33,7 @@ const Restrooms = () => {
     message: "",
   });
 
-  const { restrooms } = useRestrooms();
+  const { restrooms, createAsync, updateAsync, deleteAsync } = useRestrooms();
   const { floors } = useFloors();
   const { areas } = useAreas();
   const itemsPerPage = 5;
@@ -42,11 +43,11 @@ const Restrooms = () => {
     { id: "2", name: "Bảo trì" },
   ];
 
-  const handleActionClick = ({
+  const handleActionClick = async ({
     action,
     restroom,
   }: {
-    action: string;
+    action: IActionType;
     restroom: Restroom;
   }) => {
     if (action === "view") {
@@ -56,6 +57,11 @@ const Restrooms = () => {
       setSelectedRestroom(restroom);
       setUpdateRestroomData(restroom);
       setShowUpdateRestroomModal(true);
+    } else if (action === "delete") {
+      if (window.confirm("Bạn có chắc muốn xóa tầng này?")) {
+        await deleteAsync(restroom.restroomId);
+        alert("✅ Đã xóa tầng thành công!");
+      }
     }
   };
 

@@ -6,6 +6,7 @@ import {
   HiOutlinePencil,
   HiChevronUp,
   HiChevronDown,
+  HiOutlineTrash,
 } from "react-icons/hi";
 
 interface IAction {
@@ -331,6 +332,35 @@ const RestroomTable = ({
                         style={{ width: "16px", height: "16px" }}
                       />
                       Cập nhật
+                    </button>
+                    <button
+                      onClick={() => handleActionSelect("delete", restroom)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        border: "none",
+                        backgroundColor: "transparent",
+                        textAlign: "left",
+                        fontSize: "14px",
+                        color: "#dc2626",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        borderRadius: "0 0 8px 8px",
+                        borderTop: "1px solid #f3f4f6",
+                      }}
+                      onMouseEnter={(e: any) =>
+                        (e.target.style.backgroundColor = "#fef2f2")
+                      }
+                      onMouseLeave={(e: any) =>
+                        (e.target.style.backgroundColor = "transparent")
+                      }
+                    >
+                      <HiOutlineTrash
+                        style={{ width: "16px", height: "16px" }}
+                      />
+                      Xóa
                     </button>
                   </div>
                 )}
