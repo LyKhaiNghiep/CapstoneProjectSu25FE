@@ -58,8 +58,8 @@ const Sidebar = () => {
       icon: HiOutlineHome,
     },
     {
-      title: "Lịch làm việc",
-      path: "/schedule",
+      title: "Lịch trình",
+      path: "/schedules",
       icon: HiOutlineCalendar,
     },
     {
