@@ -14,6 +14,7 @@ import TrashBinList from "../pages/TrashBinList";
 import NotFound from "../pages/NotFound";
 import Notifications from "../pages/Notifications";
 import Areas from "../pages/Areas";
+import Schedules from "../pages/Schedules";
 
 export const router = createBrowserRouter([
   {
@@ -71,6 +72,10 @@ export const router = createBrowserRouter([
       {
         path: "areas",
         element: <Areas />,
+      },
+      {
+        path: "schedules",
+        element: <Schedules />,
       },
       {
         path: "*",
