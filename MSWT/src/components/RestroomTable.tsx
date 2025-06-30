@@ -1,4 +1,5 @@
 import { Restroom } from "@/config/models/restroom.model";
+import { IActionType } from "@/config/models/types";
 import { useState } from "react";
 import {
   HiOutlineDotsVertical,
@@ -10,7 +11,7 @@ import {
 } from "react-icons/hi";
 
 interface IAction {
-  action: string;
+  action: IActionType;
   restroom: Restroom;
 }
 
@@ -48,8 +49,8 @@ const RestroomTable = ({
     setOpenDropdown(openDropdown === restroomId ? null : restroomId);
   };
 
-  const handleActionSelect = (action: string, restroom: Restroom) => {
-    onActionClick({ action, restroom } as IAction);
+  const handleActionSelect = (action: IActionType, restroom: Restroom) => {
+    onActionClick({ action, restroom });
     setOpenDropdown(null);
   };
 

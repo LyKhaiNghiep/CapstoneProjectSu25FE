@@ -1,4 +1,8 @@
-import { Floor, ICreateFloorRequest } from "@/config/models/floor.model";
+import {
+  Floor,
+  ICreateFloorRequest,
+  IUpdateFloorRequest,
+} from "@/config/models/floor.model";
 import { Restroom } from "@/config/models/restroom.model";
 import { useState } from "react";
 import { HiOutlinePlus, HiOutlineSearch, HiX } from "react-icons/hi";
@@ -15,11 +19,11 @@ const Floors = () => {
   const [showUpdateFloorModal, setShowUpdateFloorModal] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<Floor | null>(null);
   const [sortState, setSortState] = useState("default");
-  const [updateFloorData, setUpdateFloorData] = useState({
-    name: "",
-    restrooms: [],
-    trashCans: [],
-    status: "",
+  const [updateFloorData, setUpdateFloorData] = useState<IUpdateFloorRequest>({
+    floorNumber: 0,
+    numberOfBin: 0,
+    numberOfRestroom: 0,
+    status: "Hoạt động",
   });
   const [newFloor, setNewFloor] = useState<ICreateFloorRequest>({
     floorNumber: 0,
@@ -35,28 +39,7 @@ const Floors = () => {
 
   const itemsPerPage = 5;
 
-  // Sample data for dropdowns (will be replaced with API data)
-  const availableRestrooms = [
-    { id: "1", name: "Nhà vệ sinh #1" },
-    { id: "2", name: "Nhà vệ sinh #2" },
-    { id: "3", name: "Nhà vệ sinh #3" },
-    { id: "4", name: "Nhà vệ sinh #4" },
-    { id: "5", name: "Nhà vệ sinh #5" },
-    { id: "6", name: "Nhà vệ sinh #23" },
-    { id: "7", name: "Nhà vệ sinh #5454" },
-  ];
-
-  const availableTrashCans = [
-    { id: "1", name: "Thùng rác #1" },
-    { id: "2", name: "Thùng rác #2" },
-    { id: "3", name: "Thùng rác #3" },
-    { id: "4", name: "Thùng rác #4" },
-    { id: "5", name: "Thùng rác #5" },
-    { id: "6", name: "Thùng #23" },
-    { id: "7", name: "Thùng #54" },
-  ];
-
-  const { floors, createAsync, deleteAsync } = useFloors();
+  const { floors, createAsync, updateAsync, deleteAsync } = useFloors();
 
   if (floors.length === 0) return null;
 
@@ -73,6 +56,12 @@ const Floors = () => {
       setShowViewFloorModal(true);
     } else if (action === "update") {
       setSelectedFloor(floor);
+      setUpdateFloorData({
+        floorNumber: floor.floorNumber,
+        numberOfBin: floor.numberOfBin,
+        numberOfRestroom: floor.numberOfRestroom,
+        status: floor.status,
+      });
       setShowUpdateFloorModal(true);
     } else if (action === "delete") {
       if (window.confirm("Bạn có chắc muốn xóa tầng này?")) {
@@ -151,10 +140,10 @@ const Floors = () => {
     setShowUpdateFloorModal(false);
     setSelectedFloor(null);
     setUpdateFloorData({
-      name: "",
-      restrooms: [],
-      trashCans: [],
-      status: "",
+      floorNumber: 0,
+      numberOfBin: 0,
+      numberOfRestroom: 0,
+      status: "Hoạt động",
     });
   };
 
@@ -184,53 +173,6 @@ const Floors = () => {
     }));
   };
 
-  // Similar functions for update modal
-  const addRestroomToUpdate = () => {
-    setUpdateFloorData((prev: any) => ({
-      ...prev,
-      restrooms: [...prev.restrooms, ""],
-    }));
-  };
-
-  const addTrashCanToUpdate = () => {
-    setUpdateFloorData((prev: any) => ({
-      ...prev,
-      trashCans: [...prev.trashCans, ""],
-    }));
-  };
-
-  const removeRestroomFromUpdate = (index: number) => {
-    setUpdateFloorData((prev) => ({
-      ...prev,
-      restrooms: prev.restrooms.filter((_, i) => i !== index),
-    }));
-  };
-
-  const removeTrashCanFromUpdate = (index: number) => {
-    setUpdateFloorData((prev) => ({
-      ...prev,
-      trashCans: prev.trashCans.filter((_, i) => i !== index),
-    }));
-  };
-
-  const updateRestroomInUpdate = (index: number, value: any) => {
-    setUpdateFloorData((prev: any) => ({
-      ...prev,
-      restrooms: prev.restrooms.map((item: any, i: any) =>
-        i === index ? value : item
-      ),
-    }));
-  };
-
-  const updateTrashCanInUpdate = (index: any, value: any) => {
-    setUpdateFloorData((prev: any) => ({
-      ...prev,
-      trashCans: prev.trashCans.map((item: any, i: any) =>
-        i === index ? value : item
-      ),
-    }));
-  };
-
   const handleSubmitFloor = async (e: any) => {
     e.preventDefault();
     if (!newFloor.floorNumber || !newFloor.status) {
@@ -247,15 +189,17 @@ const Floors = () => {
     showNotificationMessage("success", "Đã thêm tầng thành công!");
   };
 
-  const handleSubmitUpdate = (e: any) => {
+  const handleSubmitUpdate = async (e: any) => {
     e.preventDefault();
-    if (!updateFloorData.name || !updateFloorData.status) {
+    if (!updateFloorData.status) {
       showNotificationMessage(
         "error",
         "Vui lòng điền đầy đủ thông tin bắt buộc!"
       );
       return;
     }
+
+    await updateAsync(selectedFloor?.floorId!, updateFloorData);
 
     handleCloseUpdateModal();
     showNotificationMessage("success", "Đã cập nhật tầng thành công!");
@@ -897,7 +841,7 @@ const Floors = () => {
                   margin: 0,
                 }}
               >
-                Cập nhật tầng
+                Thêm tầng mới
               </h2>
               <button
                 onClick={handleCloseUpdateModal}
@@ -925,14 +869,14 @@ const Floors = () => {
                     marginBottom: "8px",
                   }}
                 >
-                  Tên tầng *
+                  Số tầng *
                 </label>
                 <input
-                  type="text"
-                  name="name"
-                  value={updateFloorData.name}
+                  type="number"
+                  name="floorNumber"
+                  value={updateFloorData.floorNumber}
                   onChange={handleUpdateChange}
-                  placeholder="Nhập tên tầng"
+                  placeholder="Nhập số tầng"
                   style={{
                     width: "100%",
                     padding: "12px 16px",
@@ -956,73 +900,25 @@ const Floors = () => {
                     marginBottom: "8px",
                   }}
                 >
-                  Nhà vệ sinh
+                  Số nhà vệ sinh *
                 </label>
-                {updateFloorData.restrooms.map((restroom, index) => (
-                  <div
-                    key={index}
-                    style={{ display: "flex", gap: "8px", marginBottom: "8px" }}
-                  >
-                    <select
-                      value={restroom}
-                      onChange={(e) =>
-                        updateRestroomInUpdate(index, e.target.value)
-                      }
-                      style={{
-                        flex: 1,
-                        padding: "12px 16px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "8px",
-                        fontSize: "14px",
-                        outline: "none",
-                        backgroundColor: "white",
-                      }}
-                    >
-                      <option value="">Chọn nhà vệ sinh</option>
-                      {availableRestrooms.map((restroomOption) => (
-                        <option
-                          key={restroomOption.id}
-                          value={restroomOption.name}
-                        >
-                          {restroomOption.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => removeRestroomFromUpdate(index)}
-                      style={{
-                        padding: "12px",
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <HiX style={{ width: "16px", height: "16px" }} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addRestroomToUpdate}
+                <input
+                  type="number"
+                  name="numberOfRestroom"
+                  value={updateFloorData.numberOfRestroom}
+                  onChange={handleUpdateChange}
+                  placeholder="Nhập số nhà vệ sinh"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
+                    width: "100%",
                     padding: "12px 16px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#374151",
                     border: "1px solid #d1d5db",
                     borderRadius: "8px",
-                    cursor: "pointer",
                     fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
                   }}
-                >
-                  <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
-                  Thêm nhà vệ sinh
-                </button>
+                  required
+                />
               </div>
 
               <div style={{ marginBottom: "20px" }}>
@@ -1035,73 +931,25 @@ const Floors = () => {
                     marginBottom: "8px",
                   }}
                 >
-                  Thùng rác
+                  Số thùng rác *
                 </label>
-                {updateFloorData.trashCans.map((trashCan, index) => (
-                  <div
-                    key={index}
-                    style={{ display: "flex", gap: "8px", marginBottom: "8px" }}
-                  >
-                    <select
-                      value={trashCan}
-                      onChange={(e) =>
-                        updateTrashCanInUpdate(index, e.target.value)
-                      }
-                      style={{
-                        flex: 1,
-                        padding: "12px 16px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "8px",
-                        fontSize: "14px",
-                        outline: "none",
-                        backgroundColor: "white",
-                      }}
-                    >
-                      <option value="">Chọn thùng rác</option>
-                      {availableTrashCans.map((trashCanOption) => (
-                        <option
-                          key={trashCanOption.id}
-                          value={trashCanOption.name}
-                        >
-                          {trashCanOption.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => removeTrashCanFromUpdate(index)}
-                      style={{
-                        padding: "12px",
-                        backgroundColor: "#ef4444",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <HiX style={{ width: "16px", height: "16px" }} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addTrashCanToUpdate}
+                <input
+                  type="number"
+                  name="numberOfBin"
+                  value={updateFloorData.numberOfBin}
+                  onChange={handleUpdateChange}
+                  placeholder="Nhập số thùng rác"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
+                    width: "100%",
                     padding: "12px 16px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#374151",
                     border: "1px solid #d1d5db",
                     borderRadius: "8px",
-                    cursor: "pointer",
                     fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
                   }}
-                >
-                  <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
-                  Thêm thùng rác
-                </button>
+                  required
+                />
               </div>
 
               <div style={{ marginBottom: "24px" }}>
@@ -1131,8 +979,8 @@ const Floors = () => {
                   }}
                   required
                 >
-                  <option value="active">Hoạt động</option>
-                  <option value="maintenance">Bảo trì</option>
+                  <option value="Hoạt động">Hoạt động</option>
+                  <option value="Bảo trì">Bảo trì</option>
                 </select>
               </div>
 
@@ -1172,7 +1020,7 @@ const Floors = () => {
                     cursor: "pointer",
                   }}
                 >
-                  Lưu
+                  Cập nhật
                 </button>
               </div>
             </form>

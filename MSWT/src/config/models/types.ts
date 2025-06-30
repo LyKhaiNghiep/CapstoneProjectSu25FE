@@ -67,3 +67,7 @@ export interface IQueryParams {
 }
 
 export type IActionType = "view" | "update" | "delete";
+
+export type IError = {
+  message: string;
+};

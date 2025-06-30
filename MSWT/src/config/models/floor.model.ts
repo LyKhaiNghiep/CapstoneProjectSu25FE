@@ -7,6 +7,13 @@ export interface ICreateFloorRequest {
   floorNumber: number;
 }
 
+export interface IUpdateFloorRequest {
+  numberOfRestroom: number;
+  numberOfBin: number;
+  status: string;
+  floorNumber: number;
+}
+
 export interface Floor {
   floorId: string;
   floorNumber: number;

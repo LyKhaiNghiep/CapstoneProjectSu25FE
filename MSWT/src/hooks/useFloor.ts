@@ -1,7 +1,11 @@
 import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
-import { Floor, ICreateFloorRequest } from "../config/models/floor.model";
+import {
+  Floor,
+  ICreateFloorRequest,
+  IUpdateFloorRequest,
+} from "../config/models/floor.model";
 
 // Hook to fetch floors for dropdown
 export function useFloors() {
@@ -27,6 +31,23 @@ export function useFloors() {
     }
   };
 
+  const updateAsync = async (id: string, request: IUpdateFloorRequest) => {
+    try {
+      const response = await swrFetcher(API_URLS.FLOOR.UPDATE(id), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request),
+      });
+      mutate();
+      return response;
+    } catch (error) {
+      console.error("Error updating area:", error);
+      throw error;
+    }
+  };
+
   const deleteAsync = async (id: string) => {
     try {
       await swrFetcher(API_URLS.FLOOR.DELETE(id), {
@@ -44,6 +65,7 @@ export function useFloors() {
     isLoading,
     error,
     createAsync,
+    updateAsync,
     deleteAsync,
   };
 }
