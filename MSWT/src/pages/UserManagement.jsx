@@ -1499,11 +1499,9 @@ const UserManagement = () => {
         </div>
       )}
 
-      {/* Debug Components - only in development */}
-      {import.meta.env.DEV && <QuickApiTest />}
-      {import.meta.env.DEV && <ApiTestDebug />}
+     
     </div>
-  );
+  );  
 };
 
 export default UserManagement; 

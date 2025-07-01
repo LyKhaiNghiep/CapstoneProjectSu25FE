@@ -51,6 +51,43 @@ export const API_URLS = {
     DELETE: (id: string) => `schedules/${id}`,
   },
 
+  // Schedule Details management endpoints
+  SCHEDULE_DETAILS: {
+    GET_ALL: `scheduledetails`,
+    GET_BY_ID: (id: string) => `scheduledetails/${id}`,
+    GET_BY_SCHEDULE_ID: (scheduleId: string) => `scheduledetails/schedule/${scheduleId}`,
+    CREATE: `scheduledetails`,
+    UPDATE: (id: string) => `scheduledetails/${id}`,
+    DELETE: (id: string) => `scheduledetails/${id}`,
+  },
+
+  // Shifts management endpoints
+  SHIFTS: {
+    GET_ALL: `shifts`,
+    GET_BY_ID: (id: string) => `shifts/${id}`,
+    CREATE: `shifts`,
+    UPDATE: (id: string) => `shifts/${id}`,
+    DELETE: (id: string) => `shifts/${id}`,
+  },
+
+  // Assignments management endpoints
+  ASSIGNMENTS: {
+    GET_ALL: `assignments`, // Correct plural form from Swagger
+    GET_BY_ID: (id: string) => `assignments/${id}`,
+    CREATE: `assignments`,
+    UPDATE: (id: string) => `assignments/${id}`,
+    DELETE: (id: string) => `assignments/${id}`,
+  },
+
+  // TrashBin management endpoints
+  TRASHBIN: {
+    GET_ALL: `trashbins`,
+    GET_BY_ID: (id: string) => `trashbins/${id}`,
+    CREATE: `trashbins`,
+    UPDATE: (id: string) => `trashbins/${id}`,
+    DELETE: (id: string) => `trashbins/${id}`,
+  },
+
   // Report management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong ReportManagement.jsx
   REPORT: {
     GET_ALL: `reports`, // GET /api/reports - Báo cáo tổng
