@@ -1,4 +1,8 @@
-import { Restroom } from "../config/models/restroom.model";
+import {
+  Restroom,
+  RestroomCreateRequest,
+  RestroomUpdateRequest,
+} from "../config/models/restroom.model";
 import { useRestrooms } from "../hooks/useRestroom";
 import { useState } from "react";
 import { HiOutlinePlus, HiOutlineSearch, HiX } from "react-icons/hi";
@@ -7,6 +11,7 @@ import Pagination from "../components/Pagination";
 import RestroomTable from "../components/RestroomTable";
 import { useFloors } from "../hooks/useFloor";
 import { useAreas } from "../hooks/useArea";
+import { IActionType, IError } from "@/config/models/types";
 
 const Restrooms = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,12 +23,13 @@ const Restrooms = () => {
     null
   );
   const [sortState, setSortState] = useState("default"); // "asc", "desc", or "default"
-  const [updateRestroomData, setUpdateRestroomData] = useState<Restroom>();
-  const [newRestroom, setNewRestroom] = useState({
-    floorNumber: "",
-    areaName: "",
+  const [updateRestroomData, setUpdateRestroomData] =
+    useState<RestroomUpdateRequest>();
+  const [newRestroom, setNewRestroom] = useState<RestroomCreateRequest>({
     restroomNumber: "",
+    areaId: "",
     description: "",
+    floorId: "",
     status: "Hoạt động",
   });
   const [notification, setNotification] = useState({
@@ -32,7 +38,8 @@ const Restrooms = () => {
     message: "",
   });
 
-  const { restrooms } = useRestrooms();
+  const { restrooms, isLoading, createAsync, updateAsync, deleteAsync } =
+    useRestrooms();
   const { floors } = useFloors();
   const { areas } = useAreas();
   const itemsPerPage = 5;
@@ -42,11 +49,11 @@ const Restrooms = () => {
     { id: "2", name: "Bảo trì" },
   ];
 
-  const handleActionClick = ({
+  const handleActionClick = async ({
     action,
     restroom,
   }: {
-    action: string;
+    action: IActionType;
     restroom: Restroom;
   }) => {
     if (action === "view") {
@@ -56,6 +63,11 @@ const Restrooms = () => {
       setSelectedRestroom(restroom);
       setUpdateRestroomData(restroom);
       setShowUpdateRestroomModal(true);
+    } else if (action === "delete") {
+      if (window.confirm("Bạn có chắc muốn xóa tầng này?")) {
+        await deleteAsync(restroom.restroomId);
+        alert("✅ Đã xóa tầng thành công!");
+      }
     }
   };
 
@@ -78,20 +90,9 @@ const Restrooms = () => {
     }));
   };
 
-  const handleSubmitUpdate = (e: any) => {
+  const handleSubmitUpdate = async (e: any) => {
     e.preventDefault();
-    // TODO: will add update logic here
-    // const updatedRestrooms = restrooms.map((restroom: Restroom) =>
-    //   restroom.restroomId === selectedRestroom?.restroomId
-    //     ? {
-    //         ...restroom,
-    //         ...updateRestroomData,
-    //         room: `Nhà vệ sinh ${updateRestroomData?.restroomNumber}`,
-    //         area: updateRestroomData?.areaId,
-    //         details: updateRestroomData?.description || restroom.description,
-    //       }
-    //     : restroom
-    // );
+    await updateAsync(selectedRestroom?.restroomId!, updateRestroomData!);
     handleCloseUpdateModal();
     showNotificationMessage("success", "Đã cập nhật nhà vệ sinh thành công!");
   };
@@ -103,9 +104,9 @@ const Restrooms = () => {
   const handleClosePopup = () => {
     setShowAddRestroomPopup(false);
     setNewRestroom({
-      floorNumber: "",
-      areaName: "",
       restroomNumber: "",
+      areaId: "",
+      floorId: "",
       description: "",
       status: "Hoạt động",
     });
@@ -119,28 +120,22 @@ const Restrooms = () => {
     }));
   };
 
-  const handleSubmitRestroom = (e: any) => {
+  const handleSubmitRestroom = async (e: any) => {
     e.preventDefault();
     if (
-      newRestroom.floorNumber &&
-      newRestroom.areaName &&
+      newRestroom.areaId &&
       newRestroom.restroomNumber &&
+      newRestroom.floorId &&
       newRestroom.status
     ) {
-      // TODO: will add restroom logic here
-      // const restroomToAdd = {
-      //   ...newRestroom,
-      //   id: Date.now().toString(),
-      //   room: `Nhà vệ sinh ${newRestroom.restroomNumber}`,
-      //   area: newRestroom.areaName,
-      //   details:
-      //     newRestroom.description ||
-      //     `Nhà vệ sinh ${newRestroom.restroomNumber} tại ${newRestroom.areaName}`,
-      //   createdDate: new Date().toISOString().split("T")[0],
-      // };
+      try {
+        await createAsync(newRestroom);
 
-      handleClosePopup();
-      showNotificationMessage("success", "Đã thêm nhà vệ sinh thành công!");
+        handleClosePopup();
+        showNotificationMessage("success", "Đã thêm nhà vệ sinh thành công!");
+      } catch (error) {
+        showNotificationMessage("error", (error as IError).message);
+      }
     } else {
       showNotificationMessage(
         "error",
@@ -432,8 +427,8 @@ const Restrooms = () => {
                   Tầng *
                 </label>
                 <select
-                  name="floorNumber"
-                  value={newRestroom.floorNumber}
+                  name="floorId"
+                  value={newRestroom.floorId}
                   onChange={handleInputChange}
                   required
                   style={{
@@ -472,8 +467,8 @@ const Restrooms = () => {
                   Khu vực *
                 </label>
                 <select
-                  name="areaName"
-                  value={newRestroom.areaName}
+                  name="areaId"
+                  value={newRestroom.areaId}
                   onChange={handleInputChange}
                   required
                   style={{
@@ -1043,7 +1038,7 @@ const Restrooms = () => {
                   Tầng *
                 </label>
                 <select
-                  name="floorNumber"
+                  name="floorId"
                   value={updateRestroomData?.floorId}
                   onChange={handleUpdateChange}
                   required
@@ -1083,7 +1078,7 @@ const Restrooms = () => {
                   Khu vực *
                 </label>
                 <select
-                  name="areaName"
+                  name="areaId"
                   value={updateRestroomData?.areaId}
                   onChange={handleUpdateChange}
                   required

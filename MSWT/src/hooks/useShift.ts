@@ -1,22 +1,18 @@
-import { Area } from "@/config/models/restroom.model";
+import { IShiftRequest, Shift } from "@/config/models/shift.mode";
+import useSWR from "swr";
 import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
-import useSWR from "swr";
-import {
-  ICreateAreaRequest,
-  IUpdateAreaRequest,
-} from "@/config/models/area.model";
 
 // Hook to fetch areas for dropdown
-export function useAreas() {
-  const { data, error, isLoading, mutate } = useSWR<Area[]>(
-    API_URLS.AREA.GET_ALL,
+export function useShifts() {
+  const { data, error, isLoading, mutate } = useSWR<Shift[]>(
+    API_URLS.SHIFT.GET_ALL,
     swrFetcher
   );
 
-  const createAsync = async (request: ICreateAreaRequest) => {
+  const createAsync = async (request: IShiftRequest) => {
     try {
-      const response = await swrFetcher(API_URLS.AREA.CREATE, {
+      const response = await swrFetcher(API_URLS.SHIFT.CREATE, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -33,7 +29,7 @@ export function useAreas() {
 
   const deleteAsync = async (id: string) => {
     try {
-      await swrFetcher(API_URLS.AREA.DELETE(id), {
+      await swrFetcher(API_URLS.SHIFT.DELETE(id), {
         method: "DELETE",
       });
       mutate();
@@ -43,9 +39,9 @@ export function useAreas() {
     }
   };
 
-  const updateAsync = async (id: string, request: IUpdateAreaRequest) => {
+  const updateAsync = async (id: string, request: IShiftRequest) => {
     try {
-      const response = await swrFetcher(API_URLS.AREA.UPDATE(id), {
+      const response = await swrFetcher(API_URLS.SHIFT.UPDATE(id), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -61,7 +57,7 @@ export function useAreas() {
   };
 
   return {
-    areas: data ?? [],
+    shifts: data ?? [],
     isLoading,
     error,
     createAsync,

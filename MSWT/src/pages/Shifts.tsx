@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
-import { HiOutlineSearch, HiOutlinePlus, HiX } from "react-icons/hi";
-import ShiftTable from "../components/ShiftTable";
-import Pagination from "../components/Pagination";
+import { IShiftRequest, Shift } from "@/config/models/shift.mode";
+import { IActionType } from "@/config/models/types";
+import { useShifts } from "@/hooks/useShift";
+import { useState } from "react";
+import { HiOutlinePlus, HiOutlineSearch, HiX } from "react-icons/hi";
 import Notification from "../components/Notification";
+import Pagination from "../components/Pagination";
+import ShiftTable from "../components/ShiftTable";
 
 const Shifts = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -10,19 +13,19 @@ const Shifts = () => {
   const [showAddShiftPopup, setShowAddShiftPopup] = useState(false);
   const [showViewShiftModal, setShowViewShiftModal] = useState(false);
   const [showUpdateShiftModal, setShowUpdateShiftModal] = useState(false);
-  const [selectedShift, setSelectedShift] = useState(null);
-  const [sortState, setSortState] = useState("default"); // "asc", "desc", or "default"
-  const [updateShiftData, setUpdateShiftData] = useState({
-    name: "",
+  const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+  const [sortState, setSortState] = useState<"asc" | "desc" | "default">(
+    "default"
+  ); // "asc", "desc", or "default"
+  const [updateShiftData, setUpdateShiftData] = useState<IShiftRequest>({
+    shiftName: "",
     startTime: "",
     endTime: "",
-    status: "",
   });
-  const [newShift, setNewShift] = useState({
-    name: "",
+  const [newShift, setNewShift] = useState<IShiftRequest>({
+    shiftName: "",
     startTime: "",
     endTime: "",
-    status: "active",
   });
   const [notification, setNotification] = useState({
     isVisible: false,
@@ -31,141 +34,32 @@ const Shifts = () => {
   });
 
   const itemsPerPage = 5;
+  const { shifts, createAsync, updateAsync, deleteAsync } = useShifts();
 
-  // Sample data for statuses
-  const sampleStatuses = [
-    { id: "1", name: "active", label: "Hoạt động" },
-    { id: "2", name: "inactive", label: "Tạm dừng" },
-  ];
-
-  // Default shift data
-  const defaultShifts = [
-    {
-      id: "1",
-      name: "1",
-      startTime: "07:30",
-      endTime: "14:20",
-      status: "Hoạt động",
-      statusValue: "active",
-      createdDate: "2024-01-15",
-    },
-    {
-      id: "2",
-      name: "2",
-      startTime: "16:00",
-      endTime: "20:00",
-      status: "Tạm dừng",
-      statusValue: "inactive",
-      createdDate: "2024-02-10",
-    },
-  ];
-
-  const [shifts, setShifts] = useState([]);
-
-  // LocalStorage functions
-  const saveShiftsToLocalStorage = (shiftData) => {
-    try {
-      localStorage.setItem("shiftManagement_shifts", JSON.stringify(shiftData));
-      console.log("Đã lưu dữ liệu vào LocalStorage");
-    } catch (error) {
-      console.error("❌ Lỗi khi lưu vào LocalStorage:", error);
-    }
-  };
-
-  // Helper function to convert Vietnamese time format to HH:MM
-  const convertVietnameseTimeToHHMM = (timeStr) => {
-    // Remove Vietnamese time indicators
-    let cleanTime = timeStr.replace(/\s*(sáng|chiều|tối)\s*/g, "").trim();
-
-    // Handle different time formats and ensure HH:MM format
-    if (cleanTime.includes(":")) {
-      const [hours, minutes] = cleanTime.split(":");
-      const paddedHours = hours.padStart(2, "0");
-      const paddedMinutes = minutes ? minutes.padStart(2, "0") : "00";
-      return `${paddedHours}:${paddedMinutes}`;
-    }
-
-    // If no colon, assume it's just hours
-    const paddedHours = cleanTime.padStart(2, "0");
-    return `${paddedHours}:00`;
-  };
-
-  const loadShiftsFromLocalStorage = () => {
-    try {
-      const savedShifts = localStorage.getItem("shiftManagement_shifts");
-      if (savedShifts) {
-        const parsedShifts = JSON.parse(savedShifts);
-
-        // Migrate old time format to new 24-hour format
-        const migratedShifts = parsedShifts.map((shift) => {
-          let startTime = shift.startTime;
-          let endTime = shift.endTime;
-
-          // Convert old Vietnamese format to 24-hour format
-          if (
-            startTime &&
-            (startTime.includes("sáng") ||
-              startTime.includes("chiều") ||
-              startTime.includes("tối"))
-          ) {
-            startTime = convertVietnameseTimeToHHMM(startTime);
-          }
-          if (
-            endTime &&
-            (endTime.includes("sáng") ||
-              endTime.includes("chiều") ||
-              endTime.includes("tối"))
-          ) {
-            endTime = convertVietnameseTimeToHHMM(endTime);
-          }
-
-          return {
-            ...shift,
-            startTime,
-            endTime,
-          };
-        });
-
-        // Save the migrated data back to localStorage
-        saveShiftsToLocalStorage(migratedShifts);
-
-        console.log(
-          "✅ Đã tải và chuyển đổi dữ liệu từ LocalStorage:",
-          migratedShifts.length,
-          "shifts"
-        );
-        return migratedShifts;
-      }
-    } catch (error) {
-      console.error("❌ Lỗi khi tải từ LocalStorage:", error);
-    }
-    return null;
-  };
-
-  // Load data when component mounts
-  useEffect(() => {
-    const savedShifts = loadShiftsFromLocalStorage();
-    if (savedShifts && savedShifts.length > 0) {
-      setShifts(savedShifts);
-    } else {
-      setShifts(defaultShifts);
-      saveShiftsToLocalStorage(defaultShifts);
-    }
-  }, []);
-
-  const handleActionClick = ({ action, shift }) => {
+  const handleActionClick = async ({
+    action,
+    shift,
+  }: {
+    action: IActionType;
+    shift: Shift;
+  }) => {
     if (action === "view") {
       setSelectedShift(shift);
       setShowViewShiftModal(true);
     } else if (action === "update") {
       setSelectedShift(shift);
       setUpdateShiftData({
-        name: shift.name,
+        shiftName: shift.shiftName,
         startTime: shift.startTime,
         endTime: shift.endTime,
-        status: shift.statusValue,
       });
       setShowUpdateShiftModal(true);
+    } else if (action === "delete") {
+      const confirmed = window.confirm("Bạn có chắc chắn muốn xóa ca làm này?");
+      if (confirmed) {
+        await deleteAsync(shift.shiftId);
+        showNotificationMessage("success", "Đã xóa ca làm thành công!");
+      }
     }
   };
 
@@ -178,31 +72,32 @@ const Shifts = () => {
     setShowUpdateShiftModal(false);
     setSelectedShift(null);
     setUpdateShiftData({
-      name: "",
+      shiftName: "",
       startTime: "",
       endTime: "",
-      status: "",
     });
   };
 
   // Time validation function
-  const validateTimeInput = (value) => {
+  const validateTimeInput = (value: any) => {
     // Remove any non-digit characters except colon
     let cleanValue = value.replace(/[^\d:]/g, "");
 
-    // Limit to HH:MM format
-    if (cleanValue.length > 5) {
-      cleanValue = cleanValue.substring(0, 5);
+    // Limit to HH:MM:SS format
+    if (cleanValue.length > 8) {
+      cleanValue = cleanValue.substring(0, 8);
     }
 
-    // Auto-add colon after 2 digits
+    // Auto-add colons after 2 and 5 digits
     if (cleanValue.length === 2 && !cleanValue.includes(":")) {
+      cleanValue += ":";
+    } else if (cleanValue.length === 5 && cleanValue.split(":").length === 2) {
       cleanValue += ":";
     }
 
     // Validate the time format
     if (cleanValue.includes(":")) {
-      let [hours, minutes] = cleanValue.split(":");
+      let [hours, minutes, seconds] = cleanValue.split(":");
 
       // Validate hours (00-23)
       if (hours && parseInt(hours) > 23) {
@@ -214,12 +109,17 @@ const Shifts = () => {
         minutes = "59";
       }
 
+      // Validate seconds (00-59)
+      if (seconds && parseInt(seconds) > 59) {
+        seconds = "59";
+      }
+
       // Ensure two digits for hours
       if (hours && hours.length === 1) {
         hours = "0" + hours;
       }
 
-      // Ensure two digits for minutes when complete
+      // Ensure two digits for minutes
       if (minutes !== undefined) {
         if (minutes.length === 1) {
           minutes = "0" + minutes;
@@ -228,18 +128,28 @@ const Shifts = () => {
         }
       }
 
-      cleanValue = hours + ":" + (minutes || "");
+      // Ensure two digits for seconds
+      if (seconds !== undefined) {
+        if (seconds.length === 1) {
+          seconds = "0" + seconds;
+        } else if (seconds.length === 0) {
+          seconds = "00";
+        }
+      }
+
+      cleanValue = hours + ":" + (minutes || "00") + ":" + (seconds || "00");
     } else if (cleanValue.length === 1 || cleanValue.length === 2) {
       // If only hours are entered, pad with zero if needed
       if (cleanValue.length === 1) {
         cleanValue = "0" + cleanValue;
       }
+      cleanValue += ":00:00";
     }
 
     return cleanValue;
   };
 
-  const handleUpdateChange = (e) => {
+  const handleUpdateChange = (e: any) => {
     const { name, value } = e.target;
 
     if (name === "startTime" || name === "endTime") {
@@ -256,15 +166,14 @@ const Shifts = () => {
     }
   };
 
-  const handleSubmitUpdate = (e) => {
+  const handleSubmitUpdate = async (e: any) => {
     e.preventDefault();
 
     // Validate required fields
     if (
-      !updateShiftData.name ||
+      !updateShiftData.shiftName ||
       !updateShiftData.startTime ||
-      !updateShiftData.endTime ||
-      !updateShiftData.status
+      !updateShiftData.endTime
     ) {
       showNotificationMessage(
         "error",
@@ -274,37 +183,23 @@ const Shifts = () => {
     }
 
     // Validate time format (24-hour format with leading zeros)
-    const timePattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    const timePattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/;
     if (!timePattern.test(updateShiftData.startTime)) {
       showNotificationMessage(
         "error",
-        "Thời gian bắt đầu không hợp lệ! Vui lòng nhập theo định dạng HH:MM"
+        "Thời gian bắt đầu không hợp lệ! Vui lòng nhập theo định dạng HH:MM:SS"
       );
       return;
     }
     if (!timePattern.test(updateShiftData.endTime)) {
       showNotificationMessage(
         "error",
-        "Thời gian kết thúc không hợp lệ! Vui lòng nhập theo định dạng HH:MM"
+        "Thời gian kết thúc không hợp lệ! Vui lòng nhập theo định dạng HH:MM:SS"
       );
       return;
     }
 
-    const statusObj = sampleStatuses.find(
-      (s) => s.name === updateShiftData.status
-    );
-    const updatedShifts = shifts.map((shift) =>
-      shift.id === selectedShift.id
-        ? {
-            ...shift,
-            ...updateShiftData,
-            status: statusObj ? statusObj.label : updateShiftData.status,
-            statusValue: updateShiftData.status,
-          }
-        : shift
-    );
-    setShifts(updatedShifts);
-    saveShiftsToLocalStorage(updatedShifts);
+    await updateAsync(selectedShift!.shiftId, updateShiftData);
     handleCloseUpdateModal();
     showNotificationMessage("success", "Đã cập nhật ca làm thành công!");
   };
@@ -316,40 +211,26 @@ const Shifts = () => {
   const handleClosePopup = () => {
     setShowAddShiftPopup(false);
     setNewShift({
-      name: "",
+      shiftName: "",
       startTime: "",
       endTime: "",
-      status: "active",
     });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     const { name, value } = e.target;
 
-    if (name === "startTime" || name === "endTime") {
-      const validatedTime = validateTimeInput(value);
-      setNewShift((prev) => ({
-        ...prev,
-        [name]: validatedTime,
-      }));
-    } else {
-      setNewShift((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setNewShift((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmitShift = (e) => {
+  const handleSubmitShift = async (e: any) => {
     e.preventDefault();
 
     // Validate required fields
-    if (
-      !newShift.name ||
-      !newShift.startTime ||
-      !newShift.endTime ||
-      !newShift.status
-    ) {
+    if (!newShift.shiftName || !newShift.startTime || !newShift.endTime) {
       showNotificationMessage(
         "error",
         "Vui lòng điền đầy đủ thông tin bắt buộc!"
@@ -358,39 +239,27 @@ const Shifts = () => {
     }
 
     // Validate time format (24-hour format with leading zeros)
-    const timePattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    const timePattern = /^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/;
     if (!timePattern.test(newShift.startTime)) {
       showNotificationMessage(
         "error",
-        "Thời gian bắt đầu không hợp lệ! Vui lòng nhập theo định dạng HH:MM"
+        "Thời gian bắt đầu không hợp lệ! Vui lòng nhập theo định dạng HH:MM:SS"
       );
       return;
     }
     if (!timePattern.test(newShift.endTime)) {
       showNotificationMessage(
         "error",
-        "Thời gian kết thúc không hợp lệ! Vui lòng nhập theo định dạng HH:MM"
+        "Thời gian kết thúc không hợp lệ! Vui lòng nhập theo định dạng HH:MM:SS"
       );
       return;
     }
-
-    const statusObj = sampleStatuses.find((s) => s.name === newShift.status);
-    const shiftToAdd = {
-      ...newShift,
-      id: Date.now().toString(),
-      status: statusObj ? statusObj.label : newShift.status,
-      statusValue: newShift.status,
-      createdDate: new Date().toISOString().split("T")[0],
-    };
-
-    const updatedShifts = [...shifts, shiftToAdd];
-    setShifts(updatedShifts);
-    saveShiftsToLocalStorage(updatedShifts);
+    await createAsync(newShift);
     handleClosePopup();
     showNotificationMessage("success", "Đã thêm ca làm thành công!");
   };
 
-  const showNotificationMessage = (type, message) => {
+  const showNotificationMessage = (type: string, message: string) => {
     setNotification({
       isVisible: true,
       type,
@@ -407,22 +276,22 @@ const Shifts = () => {
 
   const filteredShifts = shifts.filter(
     (shift) =>
-      shift.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shift.shiftName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shift.startTime.toLowerCase().includes(searchTerm.toLowerCase()) ||
       shift.endTime.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Sort filtered shifts based on sort state
-  const sortedShifts = [...filteredShifts].sort((a, b) => {
+  const sortedShifts = [...filteredShifts].sort((a: any, b: any) => {
     if (sortState === "default") {
       // Sort by creation date (newest first)
-      return new Date(b.createdDate) - new Date(a.createdDate);
+      return new Date(b.startTime);
     } else if (sortState === "asc") {
       // Sort by shift name A-Z
-      return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+      return a.shiftName.toLowerCase().localeCompare(b.shiftName.toLowerCase());
     } else if (sortState === "desc") {
       // Sort by shift name Z-A
-      return b.name.toLowerCase().localeCompare(a.name.toLowerCase());
+      return b.shiftName.toLowerCase().localeCompare(a.shiftName.toLowerCase());
     }
     return 0;
   });
@@ -444,7 +313,7 @@ const Shifts = () => {
   const currentShifts = sortedShifts.slice(startIndex, endIndex);
 
   // Reset to page 1 when searching
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: any) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
@@ -546,8 +415,12 @@ const Shifts = () => {
                 cursor: "pointer",
                 transition: "background-color 0.2s",
               }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#E04B1F")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
+              onMouseEnter={(e: any) =>
+                (e.target.style.backgroundColor = "#E04B1F")
+              }
+              onMouseLeave={(e: any) =>
+                (e.target.style.backgroundColor = "#FF5B27")
+              }
             >
               <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
               Thêm ca làm
@@ -635,10 +508,10 @@ const Shifts = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) =>
+                onMouseEnter={(e: any) =>
                   (e.target.style.backgroundColor = "#f3f4f6")
                 }
-                onMouseLeave={(e) =>
+                onMouseLeave={(e: any) =>
                   (e.target.style.backgroundColor = "transparent")
                 }
               >
@@ -662,11 +535,11 @@ const Shifts = () => {
                 </label>
                 <input
                   type="text"
-                  name="name"
-                  value={newShift.name}
+                  name="shiftName"
+                  value={newShift.shiftName}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter slot name"
+                  placeholder="Enter shift name"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -699,7 +572,7 @@ const Shifts = () => {
                   value={newShift.startTime}
                   onChange={handleInputChange}
                   required
-                  placeholder="HH:MM"
+                  placeholder="HH:MM:SS"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -732,7 +605,7 @@ const Shifts = () => {
                   value={newShift.endTime}
                   onChange={handleInputChange}
                   required
-                  placeholder="HH:MM"
+                  placeholder="HH:MM:SS"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -745,43 +618,6 @@ const Shifts = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
-              </div>
-
-              <div style={{ marginBottom: "24px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Trạng thái *
-                </label>
-                <select
-                  name="status"
-                  value={newShift.status}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  {sampleStatuses.map((status) => (
-                    <option key={status.id} value={status.name}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* Buttons */}
@@ -806,10 +642,10 @@ const Shifts = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) =>
+                  onMouseEnter={(e: any) =>
                     (e.target.style.backgroundColor = "#f9fafb")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor = "white")
                   }
                 >
@@ -828,10 +664,10 @@ const Shifts = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) =>
+                  onMouseEnter={(e: any) =>
                     (e.target.style.backgroundColor = "#E04B1F")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor = "#FF5B27")
                   }
                 >
@@ -903,10 +739,10 @@ const Shifts = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) =>
+                onMouseEnter={(e: any) =>
                   (e.target.style.backgroundColor = "#f3f4f6")
                 }
-                onMouseLeave={(e) =>
+                onMouseLeave={(e: any) =>
                   (e.target.style.backgroundColor = "transparent")
                 }
               >
@@ -944,33 +780,7 @@ const Shifts = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedShift.name}
-                  </p>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Ngày tạo
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    {selectedShift.createdDate
-                      ? new Date(selectedShift.createdDate).toLocaleDateString(
-                          "vi-VN"
-                        )
-                      : "Chưa cập nhật"}
+                    {selectedShift.shiftName}
                   </p>
                 </div>
 
@@ -1080,10 +890,12 @@ const Shifts = () => {
                   cursor: "pointer",
                   transition: "background-color 0.2s",
                 }}
-                onMouseEnter={(e) =>
+                onMouseEnter={(e: any) =>
                   (e.target.style.backgroundColor = "#f9fafb")
                 }
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "white")}
+                onMouseLeave={(e: any) =>
+                  (e.target.style.backgroundColor = "white")
+                }
               >
                 Đóng
               </button>
@@ -1152,10 +964,10 @@ const Shifts = () => {
                   borderRadius: "4px",
                   color: "#6b7280",
                 }}
-                onMouseEnter={(e) =>
+                onMouseEnter={(e: any) =>
                   (e.target.style.backgroundColor = "#f3f4f6")
                 }
-                onMouseLeave={(e) =>
+                onMouseLeave={(e: any) =>
                   (e.target.style.backgroundColor = "transparent")
                 }
               >
@@ -1179,8 +991,8 @@ const Shifts = () => {
                 </label>
                 <input
                   type="text"
-                  name="name"
-                  value={updateShiftData.name}
+                  name="shiftName"
+                  value={updateShiftData.shiftName}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1215,7 +1027,7 @@ const Shifts = () => {
                   value={updateShiftData.startTime}
                   onChange={handleUpdateChange}
                   required
-                  placeholder="HH:MM"
+                  placeholder="HH:MM:SS"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -1248,7 +1060,7 @@ const Shifts = () => {
                   value={updateShiftData.endTime}
                   onChange={handleUpdateChange}
                   required
-                  placeholder="HH:MM"
+                  placeholder="HH:MM:SS"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -1261,44 +1073,6 @@ const Shifts = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
-              </div>
-
-              <div style={{ marginBottom: "24px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Trạng thái *
-                </label>
-                <select
-                  name="status"
-                  value={updateShiftData.status}
-                  onChange={handleUpdateChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                    backgroundColor: "white",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  {sampleStatuses.map((status) => (
-                    <option key={status.id} value={status.name}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* Buttons */}
@@ -1323,10 +1097,10 @@ const Shifts = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) =>
+                  onMouseEnter={(e: any) =>
                     (e.target.style.backgroundColor = "#f9fafb")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor = "white")
                   }
                 >
@@ -1345,10 +1119,10 @@ const Shifts = () => {
                     cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
-                  onMouseEnter={(e) =>
+                  onMouseEnter={(e: any) =>
                     (e.target.style.backgroundColor = "#E04B1F")
                   }
-                  onMouseLeave={(e) =>
+                  onMouseLeave={(e: any) =>
                     (e.target.style.backgroundColor = "#FF5B27")
                   }
                 >

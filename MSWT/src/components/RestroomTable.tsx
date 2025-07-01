@@ -1,4 +1,5 @@
 import { Restroom } from "@/config/models/restroom.model";
+import { IActionType } from "@/config/models/types";
 import { useState } from "react";
 import {
   HiOutlineDotsVertical,
@@ -6,10 +7,11 @@ import {
   HiOutlinePencil,
   HiChevronUp,
   HiChevronDown,
+  HiOutlineTrash,
 } from "react-icons/hi";
 
 interface IAction {
-  action: string;
+  action: IActionType;
   restroom: Restroom;
 }
 
@@ -47,8 +49,8 @@ const RestroomTable = ({
     setOpenDropdown(openDropdown === restroomId ? null : restroomId);
   };
 
-  const handleActionSelect = (action: string, restroom: Restroom) => {
-    onActionClick({ action, restroom } as IAction);
+  const handleActionSelect = (action: IActionType, restroom: Restroom) => {
+    onActionClick({ action, restroom });
     setOpenDropdown(null);
   };
 
@@ -331,6 +333,35 @@ const RestroomTable = ({
                         style={{ width: "16px", height: "16px" }}
                       />
                       Cập nhật
+                    </button>
+                    <button
+                      onClick={() => handleActionSelect("delete", restroom)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        border: "none",
+                        backgroundColor: "transparent",
+                        textAlign: "left",
+                        fontSize: "14px",
+                        color: "#dc2626",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        borderRadius: "0 0 8px 8px",
+                        borderTop: "1px solid #f3f4f6",
+                      }}
+                      onMouseEnter={(e: any) =>
+                        (e.target.style.backgroundColor = "#fef2f2")
+                      }
+                      onMouseLeave={(e: any) =>
+                        (e.target.style.backgroundColor = "transparent")
+                      }
+                    >
+                      <HiOutlineTrash
+                        style={{ width: "16px", height: "16px" }}
+                      />
+                      Xóa
                     </button>
                   </div>
                 )}

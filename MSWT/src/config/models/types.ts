@@ -51,7 +51,7 @@ export enum EntityStatus {
 // User role enum
 export enum UserRole {
   ADMIN = "Admin",
-  MANAGER = "Manager", 
+  MANAGER = "Manager",
   SUPERVISOR = "Supervisor",
   WORKER = "Worker",
 }
@@ -62,6 +62,12 @@ export interface IQueryParams {
   limit?: number;
   search?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   filter?: Record<string, any>;
 }
+
+export type IActionType = "view" | "update" | "delete";
+
+export type IError = {
+  message: string;
+};

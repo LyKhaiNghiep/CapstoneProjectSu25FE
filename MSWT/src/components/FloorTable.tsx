@@ -6,11 +6,15 @@ import {
   HiOutlineDotsVertical,
   HiOutlineEye,
   HiOutlinePencil,
+  HiOutlineTrash,
 } from "react-icons/hi";
 
 interface FloorTableProps {
   floors: Floor[];
-  onActionClick: (params: { action: "view" | "update"; floor: Floor }) => void;
+  onActionClick: (params: {
+    action: "view" | "update" | "delete";
+    floor: Floor;
+  }) => void;
   sortState: string;
   onSortClick: () => void;
 }
@@ -23,11 +27,6 @@ const FloorTable: React.FC<FloorTableProps> = ({
 }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  // Debug log to check floors data
-  // console.log("FloorTable received floors:", floors);
-  // console.log("FloorTable floors length:", floors?.length);
-
-  // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: any) => {
       if (openDropdown !== null) {
@@ -73,7 +72,10 @@ const FloorTable: React.FC<FloorTableProps> = ({
     setOpenDropdown(openDropdown === floorId ? null : floorId);
   };
 
-  const handleActionSelect = (action: "view" | "update", floor: Floor) => {
+  const handleActionSelect = (
+    action: "view" | "update" | "delete",
+    floor: Floor
+  ) => {
     console.log("🔥 FloorTable - Action selected:", action, floor);
     onActionClick({ action, floor });
     setOpenDropdown(null);
@@ -372,6 +374,35 @@ const FloorTable: React.FC<FloorTableProps> = ({
                         style={{ width: "16px", height: "16px" }}
                       />
                       Cập nhật
+                    </button>
+                    <button
+                      onClick={() => handleActionSelect("delete", floor)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        border: "none",
+                        backgroundColor: "transparent",
+                        textAlign: "left",
+                        fontSize: "14px",
+                        color: "#dc2626",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        borderRadius: "0 0 8px 8px",
+                        borderTop: "1px solid #f3f4f6",
+                      }}
+                      onMouseEnter={(e: any) =>
+                        (e.target.style.backgroundColor = "#fef2f2")
+                      }
+                      onMouseLeave={(e: any) =>
+                        (e.target.style.backgroundColor = "transparent")
+                      }
+                    >
+                      <HiOutlineTrash
+                        style={{ width: "16px", height: "16px" }}
+                      />
+                      Xóa
                     </button>
                   </div>
                 )}

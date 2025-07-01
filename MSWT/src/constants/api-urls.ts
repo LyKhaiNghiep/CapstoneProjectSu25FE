@@ -33,6 +33,15 @@ export const API_URLS = {
     DELETE: (id: string) => `areas/${id}`,
   },
 
+  // Shift management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong shifts.ts
+  SHIFT: {
+    GET_ALL: `shifts`,
+    GET_BY_ID: (id: string) => `shifts/${id}`,
+    CREATE: `shifts`,
+    UPDATE: (id: string) => `shifts/${id}`,
+    DELETE: (id: string) => `shifts/${id}`,
+  },
+
   // Restroom management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useRestroom.ts
   RESTROOM: {
     GET_ALL: `restrooms`,

@@ -5,16 +5,31 @@ import {
   HiOutlinePencil,
   HiChevronUp,
   HiChevronDown,
+  HiOutlineTrash,
 } from "react-icons/hi";
+import { Shift } from "@/config/models/shift.mode";
+import { IActionType } from "@/config/models/types";
 
-const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
-  const [openDropdown, setOpenDropdown] = useState(null);
+interface ShiftTableProps {
+  shifts: Shift[];
+  onActionClick: (params: { action: IActionType; shift: Shift }) => void;
+  sortState: "asc" | "desc" | "default";
+  onSortClick: () => void;
+}
+
+const ShiftTable: React.FC<ShiftTableProps> = ({
+  shifts,
+  onActionClick,
+  sortState,
+  onSortClick,
+}) => {
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Debug log to check shifts data
   console.log("ShiftTable received shifts:", shifts);
   console.log("ShiftTable shifts length:", shifts?.length);
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "hoạt động":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
@@ -25,11 +40,11 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
     }
   };
 
-  const handleDropdownToggle = (shiftId) => {
+  const handleDropdownToggle = (shiftId: string) => {
     setOpenDropdown(openDropdown === shiftId ? null : shiftId);
   };
 
-  const handleActionSelect = (action, shift) => {
+  const handleActionSelect = (action: IActionType, shift: Shift) => {
     onActionClick({ action, shift });
     setOpenDropdown(null);
   };
@@ -144,7 +159,7 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
         <tbody>
           {shifts.map((shift, index) => (
             <tr
-              key={shift.id}
+              key={shift.shiftId}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -165,7 +180,7 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
                   color: "#111827",
                 }}
               >
-                {shift.name}
+                {shift.shiftName}
               </td>
 
               {/* Start Time Column */}
@@ -215,7 +230,7 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
                 }}
               >
                 <button
-                  onClick={() => handleDropdownToggle(shift.id)}
+                  onClick={() => handleDropdownToggle(shift.shiftId)}
                   style={{
                     color: "#6b7280",
                     background: "transparent",
@@ -225,11 +240,11 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
                     cursor: "pointer",
                     transition: "all 0.2s",
                   }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e: any) => {
                     e.target.style.color = "#374151";
                     e.target.style.backgroundColor = "#f3f4f6";
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={(e: any) => {
                     e.target.style.color = "#6b7280";
                     e.target.style.backgroundColor = "transparent";
                   }}
@@ -240,7 +255,7 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
                 </button>
 
                 {/* Dropdown Menu */}
-                {openDropdown === shift.id && (
+                {openDropdown === shift.shiftId && (
                   <div
                     style={{
                       position: "absolute",
@@ -271,10 +286,10 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
                         gap: "8px",
                         borderRadius: "8px 8px 0 0",
                       }}
-                      onMouseEnter={(e) =>
+                      onMouseEnter={(e: any) =>
                         (e.target.style.backgroundColor = "#f9fafb")
                       }
-                      onMouseLeave={(e) =>
+                      onMouseLeave={(e: any) =>
                         (e.target.style.backgroundColor = "transparent")
                       }
                     >
@@ -298,10 +313,10 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
                         borderRadius: "0 0 8px 8px",
                         borderTop: "1px solid #f3f4f6",
                       }}
-                      onMouseEnter={(e) =>
+                      onMouseEnter={(e: any) =>
                         (e.target.style.backgroundColor = "#f9fafb")
                       }
-                      onMouseLeave={(e) =>
+                      onMouseLeave={(e: any) =>
                         (e.target.style.backgroundColor = "transparent")
                       }
                     >
@@ -309,6 +324,35 @@ const ShiftTable = ({ shifts, onActionClick, sortState, onSortClick }) => {
                         style={{ width: "16px", height: "16px" }}
                       />
                       Cập nhật
+                    </button>
+                    <button
+                      onClick={() => handleActionSelect("delete", shift)}
+                      style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        border: "none",
+                        backgroundColor: "transparent",
+                        textAlign: "left",
+                        fontSize: "14px",
+                        color: "#dc2626",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        borderRadius: "0 0 8px 8px",
+                        borderTop: "1px solid #f3f4f6",
+                      }}
+                      onMouseEnter={(e: any) =>
+                        (e.target.style.backgroundColor = "#fef2f2")
+                      }
+                      onMouseLeave={(e: any) =>
+                        (e.target.style.backgroundColor = "transparent")
+                      }
+                    >
+                      <HiOutlineTrash
+                        style={{ width: "16px", height: "16px" }}
+                      />
+                      Xóa
                     </button>
                   </div>
                 )}
