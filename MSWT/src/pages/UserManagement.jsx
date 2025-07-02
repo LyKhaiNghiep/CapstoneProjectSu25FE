@@ -46,6 +46,7 @@ const UserManagement = () => {
     fetchUsers,
     createUser: apiCreateUser,
     updateUser: apiUpdateUser,
+    updateUserStatus: apiUpdateUserStatus,
     deleteUser: apiDeleteUser,
     searchUsers
   } = useUsers();
@@ -119,22 +120,73 @@ const UserManagement = () => {
     }));
   };
 
+  const mapStatusToRole = (status) => {
+    const statusToRoleMap = {
+      'Đang làm việc': 'Công nhân',
+      'Nghỉ việc': 'Nghỉ việc', 
+      'Tạm nghỉ': 'Tạm nghỉ'
+    };
+    return statusToRoleMap[status] || status;
+  };
+
+  const mapStatusToRoleId = (status) => {
+    const statusToRoleIdMap = {
+      'Đang làm việc': 'c2a66975-420d-4961-9edd-d5bdff89be58', // Worker roleId
+      'Công nhân': 'c2a66975-420d-4961-9edd-d5bdff89be58',
+      'Giám sát viên': '7dcd71ae-17c3-4e84-bb9f-dd96fa401976', // Supervisor roleId  
+      'Quản lý': '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37', // Manager roleId
+      'Quản trị viên': '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75' // Admin roleId
+    };
+    return statusToRoleIdMap[status] || 'c2a66975-420d-4961-9edd-d5bdff89be58'; // Default to worker
+  };
+
   const handleSubmitUpdate = async (e) => {
     e.preventDefault();
     try {
-      const updateData = {
-        status: updateUserData.status,
-        resignationReason: updateUserData.status === "Nghỉ việc" ? updateUserData.resignationReason : undefined
-      };
+      // Thử nhiều format khác nhau để tìm đúng API format
+      const formats = [
+        // Format 1: role string theo documentation  
+        { role: mapStatusToRole(updateUserData.status) },
+        // Format 2: roleId (có thể API cần roleId)
+        { roleId: mapStatusToRoleId(updateUserData.status) },
+        // Format 3: status field
+        { status: updateUserData.status },
+        // Format 4: role với roleId value
+        { role: mapStatusToRoleId(updateUserData.status) }
+      ];
 
-      // Update via API
-      await apiUpdateUser(selectedUser.id, updateData);
-      showNotification("✅ Đã cập nhật trạng thái thành công!");
+      console.log('🔍 User ID:', selectedUser.id);
+      console.log('🔍 Available formats to try:', formats);
+
+      let success = false;
+      let lastError = null;
+
+      // Thử từng format cho đến khi thành công
+      for (let i = 0; i < formats.length; i++) {
+        try {
+          console.log(`🔍 Trying format ${i + 1}:`, formats[i]);
+          await apiUpdateUserStatus(selectedUser.id, formats[i]);
+          console.log(`✅ Format ${i + 1} worked!`);
+          success = true;
+          break;
+        } catch (error) {
+          console.log(`❌ Format ${i + 1} failed:`, error.response?.data || error.message);
+          lastError = error;
+          continue;
+        }
+      }
+
+      if (success) {
+        showNotification("✅ Đã cập nhật trạng thái thành công!");
+        handleCloseUpdateModal();
+      } else {
+        throw lastError;
+      }
       
-      handleCloseUpdateModal();
     } catch (error) {
-      console.error('Error updating user:', error);
-      showNotification("❌ Có lỗi xảy ra khi cập nhật!", "error");
+      console.error('Error updating user status - all formats failed:', error);
+      console.error('Error details:', error.response?.data);
+      showNotification("❌ Có lỗi xảy ra khi cập nhật! Kiểm tra console để debug.", "error");
     }
   };
 

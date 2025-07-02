@@ -1,5 +1,5 @@
 import api from './api';
-import { API_URLS } from '../constants/api-urls';
+import { API_URLS, BASE_API_URL } from '../constants/api-urls';
 
 // User Service for API interactions
 export const userService = {
@@ -139,6 +139,27 @@ export const userService = {
       return response.data;
     } catch (error) {
       console.error('Error updating user:', error);
+      throw error;
+    }
+  },
+
+  // Update user status using specific API endpoint
+  async updateUserStatus(id, statusData) {
+    try {
+      const endpoint = API_URLS.USER.UPDATE_STATUS(id);
+      console.log('🚀 API Request Details:');
+      console.log('📍 Endpoint:', endpoint);
+      console.log('📦 Request Data:', statusData);
+      console.log('🔗 Full URL:', `${BASE_API_URL}/${endpoint}`);
+      
+      const response = await api.put(endpoint, statusData);
+      console.log('✅ API Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error updating user status:', error);
+      console.error('❌ Error Response:', error.response?.data);
+      console.error('❌ Error Status:', error.response?.status);
+      console.error('❌ Error Headers:', error.response?.headers);
       throw error;
     }
   },

@@ -80,7 +80,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
         <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
           <tr
             style={{
-              backgroundColor: "#f9fafb",
+              backgroundColor: "#FEF6F4",
               borderBottom: "2px solid #e5e7eb",
             }}
           >
@@ -324,7 +324,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   <div
                     style={{
                       position: "absolute",
-                      bottom: "-10%",
+                      bottom: "10%",
                       right: "8px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
@@ -361,57 +361,8 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                       <HiOutlineEye style={{ width: "16px", height: "16px" }} />
                       Xem chi tiết
                     </button>
-                    <button
-                      onClick={() => handleActionSelect("edit", schedule)}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                      onMouseEnter={(e: any) => {
-                        e.target.style.backgroundColor = "#f9fafb";
-                      }}
-                      onMouseLeave={(e: any) => {
-                        e.target.style.backgroundColor = "transparent";
-                      }}
-                    >
-                      <HiOutlinePencil style={{ width: "16px", height: "16px" }} />
-                      Chỉnh sửa
-                    </button>
-                    <button
-                      onClick={() => handleActionSelect("delete", schedule)}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        color: "#dc2626",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        borderRadius: "0 0 8px 8px",
-                      }}
-                      onMouseEnter={(e: any) => {
-                        e.target.style.backgroundColor = "#fef2f2";
-                      }}
-                      onMouseLeave={(e: any) => {
-                        e.target.style.backgroundColor = "transparent";
-                      }}
-                    >
-                      <HiOutlineTrash style={{ width: "16px", height: "16px" }} />
-                      Xóa
-                    </button>
+                    
+                   
                   </div>
                 )}
               </td>

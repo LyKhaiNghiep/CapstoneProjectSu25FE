@@ -8,7 +8,6 @@ import { useSchedules } from "../hooks/useSchedule";
 import { useAreas } from "../hooks/useArea";
 import { useRestrooms } from "../hooks/useRestroom";
 import { useShifts } from "../hooks/useShifts";
-import { useAssignments } from "../hooks/useAssignments";
 import { useTrashBins } from "../hooks/useTrashBins";
 import { Schedule, ICreateScheduleRequest } from "@/config/models/schedule.model";
 
@@ -27,9 +26,7 @@ const Schedules = () => {
 
   const { schedules, isLoading, error, createSchedule } = useSchedules();
   const { areas, isLoading: areasLoading, error: areasError } = useAreas();
-  const { restrooms, isLoading: restroomsLoading, error: restroomsError } = useRestrooms();
   const { shifts, isLoading: shiftsLoading, error: shiftsError } = useShifts();
-    const { assignments, isLoading: assignmentsLoading, error: assignmentsError } = useAssignments();
   
 
   const { trashBins } = useTrashBins();
@@ -48,7 +45,7 @@ const Schedules = () => {
     scheduleType: "cleaning",
     shiftId: "",
   });
-  const itemsPerPage = 10;
+  const itemsPerPage = 5; // Hiển thị 5 items mỗi trang
 
   const handleActionClick = ({
     action,
@@ -61,9 +58,8 @@ const Schedules = () => {
       setSelectedSchedule(schedule);
       setShowViewModal(true);
     } else if (action === "edit") {
-      // TODO: Implement edit functionality
-      showNotificationMessage("info", "Chức năng chỉnh sửa đang được phát triển");
-    
+      setSelectedSchedule(schedule);
+      setShowAddModal(true);
     }
   };
 
@@ -143,7 +139,7 @@ const Schedules = () => {
     });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const   handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewSchedule(prev => ({
       ...prev,
@@ -154,7 +150,7 @@ const Schedules = () => {
   const handleSubmitNewSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newSchedule.areaId || !newSchedule.scheduleName || !newSchedule.assignmentId || 
+    if (!newSchedule.areaId || !newSchedule.scheduleName ||
         !newSchedule.startDate || !newSchedule.endDate || !newSchedule.shiftId) {
       showNotificationMessage("error", "Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
@@ -176,33 +172,7 @@ const Schedules = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "50vh" 
-      }}>
-        <div>Đang tải dữ liệu...</div>
-      </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "50vh" 
-      }}>
-        <div style={{ color: "#dc2626" }}>
-          Lỗi khi tải dữ liệu: {error.message}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -215,12 +185,79 @@ const Schedules = () => {
       }}
     >
       {/* Notification */}
-      <Notification
-        type={notification.type}
-        message={notification.message}
-        isVisible={notification.isVisible}
-        onClose={hideNotification}
-      />
+      {notification.isVisible && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          isVisible={notification.isVisible}
+          onClose={hideNotification}
+        />
+      )}
+
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.1)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            padding: "20px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+          }}>
+            <div style={{
+              width: "40px",
+              height: "40px",
+              border: "4px solid #f3f3f3",
+              borderTop: "4px solid #FF5B27",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto"
+            }}></div>
+            <p style={{ marginTop: "10px", textAlign: "center" }}>Đang tải...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Display */}
+      {error && (
+        <div style={{
+          backgroundColor: "#fee2e2",
+          border: "1px solid #fecaca",
+          color: "#dc2626",
+          padding: "12px",
+          margin: "16px 32px",
+          borderRadius: "6px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between"
+        }}>
+          <span>⚠️ {error.message || error}</span>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: "#dc2626",
+              color: "white",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "12px"
+            }}
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
 
       <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
@@ -246,46 +283,93 @@ const Schedules = () => {
         {/* Tabs */}
         <div style={{ marginBottom: "20px" }}>
           <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
-            {[
-              { key: "all", label: "Tất cả" },
-              { key: "cleaning", label: "Hằng ngày" },
-              { key: "maintenance", label: "Đột xuất" },
-              
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => {
-                  setActiveTab(tab.key);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  padding: "12px 24px",
-                  border: "none",
-                  backgroundColor: "transparent",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  borderBottom:
-                    activeTab === tab.key
-                      ? "2px solid #FF5B27"
-                      : "2px solid transparent",
-                  color: activeTab === tab.key ? "#FF5B27" : "#6b7280",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e: any) => {
-                  if (activeTab !== tab.key) {
-                    e.target.style.color = "#374151";
-                  }
-                }}
-                onMouseLeave={(e: any) => {
-                  if (activeTab !== tab.key) {
-                    e.target.style.color = "#6b7280";
-                  }
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <button
+              onClick={() => {
+                setActiveTab("all");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "all" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "all" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e: any) => {
+                if (activeTab !== "all") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e: any) => {
+                if (activeTab !== "all") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Tất cả
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("cleaning");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "cleaning" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "cleaning" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e: any) => {
+                if (activeTab !== "cleaning") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e: any) => {
+                if (activeTab !== "cleaning") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Hằng ngày
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("maintenance");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "maintenance" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "maintenance" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e: any) => {
+                if (activeTab !== "maintenance") {
+                  e.target.style.color = "#374151";
+                }
+              }}
+              onMouseLeave={(e: any) => {
+                if (activeTab !== "maintenance") {
+                  e.target.style.color = "#6b7280";
+                }
+              }}
+            >
+              Đột xuất
+            </button>
           </div>
         </div>
 
@@ -295,86 +379,74 @@ const Schedules = () => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "20px",
+            marginBottom: "12px",
           }}
         >
-          <div style={{ position: "relative", width: "300px" }}>
-            <HiOutlineSearch
+          {/* Search Box */}
+          <div style={{ position: "relative", flex: "1" }}>
+            <div
               style={{
                 position: "absolute",
-                left: "12px",
+                left: "16px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 color: "#9ca3af",
-                width: "20px",
-                height: "20px",
               }}
-            />
+            >
+              <HiOutlineSearch style={{ width: "20px", height: "20px" }} />
+            </div>
             <input
               type="text"
-              placeholder="Tìm kiếm theo tên khu vực, nhà vệ sinh, ca làm việc, thùng rác..."
+              placeholder="Tìm lịch trình"
               value={searchTerm}
               onChange={handleSearchChange}
               style={{
-                width: "100%",
-                padding: "10px 10px 10px 40px",
+                width: "32%",
+                padding: "12px 16px 12px 48px",
                 border: "1px solid #d1d5db",
-                borderRadius: "8px",
+                borderRadius: "50px",
                 fontSize: "14px",
                 outline: "none",
                 transition: "border-color 0.2s",
               }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#FF5B27";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#d1d5db";
-              }}
+              onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
             />
           </div>
 
-          <button
-            onClick={handleAddSchedule}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              backgroundColor: "#FF5B27",
-              color: "white",
-              border: "none",
-              padding: "10px 16px",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e: any) => {
-              e.target.style.backgroundColor = "#E5501F";
-            }}
-            onMouseLeave={(e: any) => {
-              e.target.style.backgroundColor = "#FF5B27";
-            }}
-          >
-            <HiOutlinePlus style={{ width: "20px", height: "20px" }} />
-            Thêm lịch trình
-          </button>
+          {/* Action Buttons */}
+          <div style={{ display: "flex", gap: "12px", marginLeft: "24px" }}>
+            {/* Add Schedule Button */}
+            <button
+              onClick={handleAddSchedule}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backgroundColor: "#FF5B27",
+                color: "white",
+                padding: "12px 20px",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+              }}
+              onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#E04B1F")}
+              onMouseLeave={(e: any) => (e.target.style.backgroundColor = "#FF5B27")}
+            >
+              <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
+              Thêm lịch trình
+            </button>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-            marginBottom: "20px",
-          }}
-        >
-          
-        </div>
+
       </div>
 
-      {/* Table Container */}
-      <div style={{ flex: "1 1 auto", overflow: "auto" }}>
+      {/* Schedule Table Container */}
+      <div style={{ flex: "0 0 auto" }}>
         <ScheduleTable
           schedules={currentSchedules}
           onActionClick={handleActionClick}
@@ -382,15 +454,13 @@ const Schedules = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
-      )}
+      <div style={{ flex: "0 0 auto", padding: "16px 32px" }}>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      </div>
 
       {/* Schedule Details Modal */}
       <ScheduleDetailsModal
@@ -519,77 +589,7 @@ const Schedules = () => {
                   </select>
                 </div>
 
-                {/* Restroom */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                    Nhà vệ sinh
-                  </label>
-                  <select
-                    name="restroomId"
-                    value={newSchedule.restroomId}
-                    onChange={handleInputChange}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "6px",
-                      fontSize: "14px",
-                    }}
-                  >
-                    <option value="">Chọn nhà vệ sinh</option>
-                    {restroomsLoading ? (
-                      <option disabled>Đang tải dữ liệu nhà vệ sinh...</option>
-                    ) : restroomsError ? (
-                      <option disabled>Lỗi tải dữ liệu nhà vệ sinh</option>
-                    ) : restrooms && restrooms.length > 0 ? (
-                      restrooms.map((restroom) => (
-                        <option key={restroom.restroomId} value={restroom.restroomId}>
-                          Nhà vệ sinh {restroom.restroomNumber}
-                        </option>
-                      ))
-                    ) : (
-                      <option disabled>Không có dữ liệu nhà vệ sinh</option>
-                    )}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-                {/* Assignment */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                    Phân công *
-                  </label>
-                  <select
-                    name="assignmentId"
-                    value={newSchedule.assignmentId}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "6px",
-                      fontSize: "14px",
-                    }}
-                  >
-                    <option value="">Chọn phân công</option>
-                    {assignmentsLoading ? (
-                      <option disabled>Đang tải dữ liệu phân công...</option>
-                    ) : assignmentsError ? (
-                      <option disabled>Lỗi tải dữ liệu phân công</option>
-                    ) : assignments && assignments.length > 0 ? (
-                      assignments.map((assignment) => (
-                        <option key={assignment.assignmentId} value={assignment.assignmentId}>
-                          {assignment.assignmentName || assignment.description || `Assignment ${assignment.assignmentId.slice(0, 8)}`}
-                        </option>
-                      ))
-                    ) : (
-                      <option disabled>Không có dữ liệu phân công</option>
-                    )}
-                  </select>
-                </div>
-
+                
                 {/* Shift */}
                 <div>
                   <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>

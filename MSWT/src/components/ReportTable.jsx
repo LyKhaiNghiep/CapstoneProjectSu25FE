@@ -1,8 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { HiOutlineDotsVertical, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 
 const ReportTable = ({ reports, onActionClick }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
+  const tableRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is outside the table container
+      if (tableRef.current && !tableRef.current.contains(event.target)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      
+      // Also close dropdown on scroll
+      const handleScroll = () => setOpenDropdown(null);
+      window.addEventListener('scroll', handleScroll, true);
+      
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+      };
+    }
+  }, [openDropdown]);
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -17,17 +41,28 @@ const ReportTable = ({ reports, onActionClick }) => {
     }
   };
 
-  const handleDropdownToggle = (reportId) => {
-    setOpenDropdown(openDropdown === reportId ? null : reportId);
+  const handleDropdownToggle = (reportId, event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    // Close all other dropdowns first, then open this one if it wasn't already open
+    if (openDropdown === reportId) {
+      setOpenDropdown(null); // Close if clicking the same one
+    } else {
+      setOpenDropdown(reportId); // Open this one (closes others automatically)
+    }
   };
 
-  const handleActionSelect = (action, report) => {
+  const handleActionSelect = (action, report, event) => {
+    event.stopPropagation();
+    event.preventDefault();
     onActionClick({ action, report });
     setOpenDropdown(null);
   };
 
   return (
     <div
+      ref={tableRef}
       style={{
         marginLeft: "32px",
         marginRight: "32px",
@@ -113,9 +148,18 @@ const ReportTable = ({ reports, onActionClick }) => {
           </tr>
         </thead>
         <tbody style={{ borderTop: "2px solid transparent" }}>
-          {reports.map((report, index) => (
+          {reports.map((report, index) => {
+            // Ensure unique key - use a combination of id and index as fallback
+            const uniqueKey = report.id || `report-${index}`;
+            
+            // Debug log to check for duplicate keys
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Report ${index}: ID=${report.id}, UniqueKey=${uniqueKey}`);
+            }
+            
+            return (
             <tr
-              key={report.id}
+              key={uniqueKey}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -123,9 +167,13 @@ const ReportTable = ({ reports, onActionClick }) => {
               onMouseEnter={(e) =>
                 (e.currentTarget.style.backgroundColor = "#fafafa")
               }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "transparent")
-              }
+              onMouseLeave={(e) => {
+                (e.currentTarget.style.backgroundColor = "transparent");
+                // Close dropdown if mouse leaves the row
+                if (openDropdown === uniqueKey) {
+                  setOpenDropdown(null);
+                }
+              }}
             >
                              {/* Report Type Column */}
                <td
@@ -223,7 +271,7 @@ const ReportTable = ({ reports, onActionClick }) => {
                 }}
               >
                 <button
-                  onClick={() => handleDropdownToggle(report.id)}
+                  onClick={(e) => handleDropdownToggle(uniqueKey, e)}
                   style={{
                     color: "#6b7280",
                     background: "transparent",
@@ -248,22 +296,24 @@ const ReportTable = ({ reports, onActionClick }) => {
                 </button>
 
                 {/* Dropdown Menu */}
-                {openDropdown === report.id && (
+                {openDropdown === uniqueKey && (
                   <div
                     style={{
                       position: "absolute",
-                      bottom: "50%",
+                      top: "20%",
                       right: "8px",
+                      marginTop: "4px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
                       borderRadius: "8px",
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                      zIndex: 10,
+                      zIndex: 50,
                       minWidth: "140px",
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <button
-                      onClick={() => handleActionSelect('view', report)}
+                      onClick={(e) => handleActionSelect('view', report, e)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -285,7 +335,7 @@ const ReportTable = ({ reports, onActionClick }) => {
                       Xem chi tiết
                     </button>
                     <button
-                      onClick={() => handleActionSelect('update', report)}
+                      onClick={(e) => handleActionSelect('update', report, e)}
                       style={{
                         width: "100%",
                         padding: "12px 16px",
@@ -311,24 +361,12 @@ const ReportTable = ({ reports, onActionClick }) => {
                 )}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
 
-      {/* Click outside to close dropdown */}
-      {openDropdown && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 5,
-          }}
-          onClick={() => setOpenDropdown(null)}
-        />
-      )}
+
     </div>
   );
 };
