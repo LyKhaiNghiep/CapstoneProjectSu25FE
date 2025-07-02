@@ -77,6 +77,24 @@ export const useUsers = () => {
     }
   }, []);
 
+  // Update user status using specific API endpoint
+  const updateUserStatus = useCallback(async (id, statusData) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await userService.updateUserStatus(id, statusData);
+      // Refresh users list to get updated data
+      await fetchUsers();
+      return result;
+    } catch (err) {
+      setError(err.message || 'Failed to update user status');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchUsers]);
+
   // Delete user
   const deleteUser = useCallback(async (id) => {
     setLoading(true);
@@ -130,6 +148,7 @@ export const useUsers = () => {
     fetchUsers,
     createUser,
     updateUser,
+    updateUserStatus,
     deleteUser,
     searchUsers,
     setUsers,

@@ -52,6 +52,17 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
     }
   };
 
+  const getScheduleTypeDisplay = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case "cleaning":
+        return "Hằng ngày";
+      case "maintenance":
+        return "Đột xuất";
+      default:
+        return type;
+    }
+  };
+
   return (
     <div
       style={{
@@ -69,7 +80,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
         <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
           <tr
             style={{
-              backgroundColor: "#f9fafb",
+              backgroundColor: "#FEF6F4",
               borderBottom: "2px solid #e5e7eb",
             }}
           >
@@ -82,7 +93,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                 color: "#374151",
               }}
             >
-              ID Lịch trình
+              Tên lịch trình
             </th>
             <th
               style={{
@@ -94,6 +105,17 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
               }}
             >
               Khu vực
+            </th>
+            <th
+              style={{
+                padding: "16px",
+                textAlign: "left",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Nhà vệ sinh
             </th>
             <th
               style={{
@@ -167,7 +189,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
-              {/* Schedule ID Column */}
+              {/* Schedule Name Column */}
               <td
                 style={{
                   padding: "16px",
@@ -176,10 +198,10 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   color: "#111827",
                 }}
               >
-                {schedule.scheduleId}
+                {schedule.scheduleName || `Schedule ${schedule.scheduleId.slice(0, 8)}`}
               </td>
 
-              {/* Area ID Column */}
+              {/* Area Name Column */}
               <td
                 style={{
                   padding: "16px",
@@ -187,7 +209,18 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   color: "#6b7280",
                 }}
               >
-                {schedule.areaId}
+                {schedule.areaName || schedule.areaId}
+              </td>
+
+              {/* Restroom Name Column */}
+              <td
+                style={{
+                  padding: "16px",
+                  fontSize: "14px",
+                  color: "#6b7280",
+                }}
+              >
+                {schedule.restroomName || schedule.restroomId || "N/A"}
               </td>
 
               {/* Schedule Type Column */}
@@ -202,7 +235,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                     ...getScheduleTypeColor(schedule.scheduleType),
                   }}
                 >
-                  {schedule.scheduleType}
+                  {getScheduleTypeDisplay(schedule.scheduleType)}
                 </span>
               </td>
 
@@ -242,7 +275,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                 </div>
               </td>
 
-              {/* Shift ID Column */}
+              {/* Shift Name Column */}
               <td
                 style={{
                   padding: "16px",
@@ -250,7 +283,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   color: "#6b7280",
                 }}
               >
-                {schedule.shiftId}
+                {schedule.shiftName || `Shift ${schedule.shiftId.slice(0, 8)}`}
               </td>
 
               {/* Action Column */}
@@ -291,7 +324,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   <div
                     style={{
                       position: "absolute",
-                      bottom: "50%",
+                      bottom: "10%",
                       right: "8px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
@@ -328,57 +361,8 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                       <HiOutlineEye style={{ width: "16px", height: "16px" }} />
                       Xem chi tiết
                     </button>
-                    <button
-                      onClick={() => handleActionSelect("edit", schedule)}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                      onMouseEnter={(e: any) => {
-                        e.target.style.backgroundColor = "#f9fafb";
-                      }}
-                      onMouseLeave={(e: any) => {
-                        e.target.style.backgroundColor = "transparent";
-                      }}
-                    >
-                      <HiOutlinePencil style={{ width: "16px", height: "16px" }} />
-                      Chỉnh sửa
-                    </button>
-                    <button
-                      onClick={() => handleActionSelect("delete", schedule)}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        color: "#dc2626",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        borderRadius: "0 0 8px 8px",
-                      }}
-                      onMouseEnter={(e: any) => {
-                        e.target.style.backgroundColor = "#fef2f2";
-                      }}
-                      onMouseLeave={(e: any) => {
-                        e.target.style.backgroundColor = "transparent";
-                      }}
-                    >
-                      <HiOutlineTrash style={{ width: "16px", height: "16px" }} />
-                      Xóa
-                    </button>
+                    
+                   
                   </div>
                 )}
               </td>

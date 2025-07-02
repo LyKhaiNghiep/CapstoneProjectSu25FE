@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   HiOutlineBell, 
   HiOutlineCheck, 
@@ -8,66 +8,42 @@ import {
   HiOutlineInformationCircle,
   HiOutlineCheckCircle
 } from "react-icons/hi";
+import { useAuth } from '../contexts/AuthContext';
+import { 
+  useNotifications, 
+  useNotificationsByUser, 
+  markNotificationAsRead, 
+  markAllNotificationsAsRead, 
+  deleteNotification as deleteNotificationAPI 
+} from '../hooks/useNotifications';
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "Báo cáo mới từ Nguyễn Văn A",
-      message: "Thùng rác T1-01 đã đầy và cần được xử lý ngay",
-      type: "warning", // info, success, warning, error
-      time: "2 phút trước",
-      read: false,
-      priority: "high"
-    },
-    {
-      id: 2,
-      title: "Hoàn thành bảo trì",
-      message: "Thùng rác T2-03 đã được bảo trì và hoạt động bình thường",
-      type: "success",
-      time: "15 phút trước",
-      read: false,
-      priority: "normal"
-    },
-    {
-      id: 3,
-      title: "Nhân viên mới được thêm",
-      message: "Trần Thị B đã được thêm vào hệ thống với vai trò Công nhân",
-      type: "info",
-      time: "1 giờ trước",
-      read: true,
-      priority: "normal"
-    },
-    {
-      id: 4,
-      title: "Cập nhật lịch làm việc",
-      message: "Lịch làm việc tuần này đã được cập nhật, vui lòng kiểm tra",
-      type: "info",
-      time: "2 giờ trước",
-      read: true,
-      priority: "low"
-    },
-    {
-      id: 5,
-      title: "Lỗi hệ thống",
-      message: "Phát hiện lỗi kết nối với sensor thùng rác T3-05",
-      type: "error",
-      time: "3 giờ trước",
-      read: false,
-      priority: "high"
-    },
-    {
-      id: 6,
-      title: "Báo cáo tuần đã sẵn sàng",
-      message: "Báo cáo tổng hợp tuần 12 đã được tạo và sẵn sàng xem",
-      type: "success",
-      time: "1 ngày trước",
-      read: true,
-      priority: "normal"
-    }
-  ]);
-
+  const { user } = useAuth();
   const [filter, setFilter] = useState("all"); // all, unread, read
+  
+  // Fetch notifications from API
+  const { notifications: allNotifications, isLoading, isError, refetch } = useNotifications();
+  const { notifications: userNotifications, refetch: refetchUserNotifications } = useNotificationsByUser(user?.id || '');
+  
+  // Use user-specific notifications if available, otherwise fall back to all notifications
+  const notifications = user?.id ? userNotifications : allNotifications;
+
+  // Debug: Log the notifications data structure
+  console.log('Notifications data:', notifications);
+
+  // Function to format relative time
+  const getRelativeTime = (timestamp) => {
+    if (!timestamp) return 'Không xác định';
+    
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - time) / 1000);
+    
+    if (diffInSeconds < 60) return 'Vừa xong';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
+    return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
+  };
 
   const getNotificationIcon = (type) => {
     switch (type) {
@@ -111,49 +87,157 @@ const Notifications = () => {
     }
   };
 
-  const markAsRead = (id) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const markAsUnread = (id) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: false } : notif
-      )
-    );
-  };
-
-  const deleteNotification = (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa thông báo này?")) {
-      setNotifications(prev => prev.filter(notif => notif.id !== id));
+  const markAsRead = async (id) => {
+    try {
+      await markNotificationAsRead(id);
+      refetch();
+      if (user?.id) refetchUserNotifications();
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+      alert('Không thể đánh dấu thông báo đã đọc');
     }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    );
+  const markAsUnread = async (id) => {
+    try {
+      // Note: API might not have mark as unread, you may need to implement this
+      // For now, we'll just refetch data
+      refetch();
+      if (user?.id) refetchUserNotifications();
+    } catch (error) {
+      console.error('Failed to mark notification as unread:', error);
+      alert('Không thể đánh dấu thông báo chưa đọc');
+    }
   };
 
-  const filteredNotifications = notifications.filter(notif => {
+  const deleteNotification = async (id) => {
+    if (window.confirm("Bạn có chắc muốn xóa thông báo này?")) {
+      try {
+        await deleteNotificationAPI(id);
+        refetch();
+        if (user?.id) refetchUserNotifications();
+      } catch (error) {
+        console.error('Failed to delete notification:', error);
+        alert('Không thể xóa thông báo');
+      }
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      if (user?.id) {
+        await markAllNotificationsAsRead(user.id);
+      }
+      refetch();
+      if (user?.id) refetchUserNotifications();
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+      alert('Không thể đánh dấu tất cả thông báo đã đọc');
+    }
+  };
+
+  // Ensure notifications is an array and has proper structure
+  const notificationsArray = Array.isArray(notifications) ? notifications : [];
+  
+  const filteredNotifications = notificationsArray.filter(notif => {
+    if (!notif || typeof notif !== 'object') return false;
     if (filter === "unread") return !notif.read;
     if (filter === "read") return notif.read;
     return true;
   });
 
-  const unreadCount = notifications.filter(notif => !notif.read).length;
+  const unreadCount = notificationsArray.filter(notif => notif && !notif.read).length;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div style={{ 
+        backgroundColor: "#ffffff", 
+        minHeight: "100vh", 
+        padding: "24px 32px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center"
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            width: "40px",
+            height: "40px",
+            border: "4px solid #f3f4f6",
+            borderTop: "4px solid #FF5B27",
+            borderRadius: "50%",
+            animation: "spin 1s linear infinite",
+            margin: "0 auto 16px"
+          }}></div>
+          <p style={{ color: "#6b7280", fontSize: "16px" }}>Đang tải thông báo...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div style={{ 
+        backgroundColor: "#ffffff", 
+        minHeight: "100vh", 
+        padding: "24px 32px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center"
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <HiOutlineExclamationCircle style={{
+            width: "48px",
+            height: "48px",
+            color: "#ef4444",
+            margin: "0 auto 16px"
+          }} />
+          <h3 style={{ fontSize: "18px", fontWeight: "500", margin: "0 0 8px 0", color: "#111827" }}>
+            Lỗi tải thông báo
+          </h3>
+          <p style={{ fontSize: "14px", margin: "0 0 16px 0", color: "#6b7280" }}>
+            Không thể tải danh sách thông báo. Vui lòng thử lại.
+          </p>
+          <button
+            onClick={() => {
+              refetch();
+              if (user?.id) refetchUserNotifications();
+            }}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#FF5B27",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: "pointer"
+            }}
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ 
-      backgroundColor: "#ffffff", 
-      minHeight: "100vh", 
-      padding: "24px 32px" 
-    }}>
-      {/* Header */}
+    <>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+      <div style={{ 
+        backgroundColor: "#ffffff", 
+        minHeight: "100vh", 
+        padding: "24px 32px" 
+      }}>
+        {/* Header */}
       <div style={{ marginBottom: "32px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
@@ -191,9 +275,9 @@ const Notifications = () => {
           {/* Filter Tabs */}
           <div style={{ display: "flex", gap: "24px" }}>
             {[
-              { key: "all", label: `Tất cả (${notifications.length})` },
+              { key: "all", label: `Tất cả (${notificationsArray.length})` },
               { key: "unread", label: `Chưa đọc (${unreadCount})` },
-              { key: "read", label: `Đã đọc (${notifications.length - unreadCount})` }
+              { key: "read", label: `Đã đọc (${notificationsArray.length - unreadCount})` }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -286,7 +370,7 @@ const Notifications = () => {
             const colors = getNotificationColor(notification.type);
             return (
               <div
-                key={notification.id}
+                key={notification.id || `notification-${index}`}
                 style={{
                   padding: "20px 24px",
                   borderBottom: index < filteredNotifications.length - 1 ? "1px solid #f3f4f6" : "none",
@@ -364,7 +448,7 @@ const Notifications = () => {
                             fontSize: "12px",
                             color: "#9ca3af"
                           }}>
-                            {notification.time}
+                            {getRelativeTime(notification.createdAt || notification.updatedAt)}
                           </span>
                           {notification.priority === "high" && (
                             <span style={{
@@ -468,6 +552,7 @@ const Notifications = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

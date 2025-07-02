@@ -10,6 +10,7 @@ export const API_URLS = {
     GET_BY_ID: (id: string) => `users/${id}`,
     CREATE: `users`,
     UPDATE: (id: string) => `users/${id}`,
+    UPDATE_STATUS: (id: string) => `users/update-status/${id}`,
     DELETE: (id: string) => `users/${id}`,
     LOGIN: `users/login`, // Backend xử lý login và trả về token
     REGISTER: `users/register`, // Backend xử lý register
@@ -60,6 +61,44 @@ export const API_URLS = {
     DELETE: (id: string) => `schedules/${id}`,
   },
 
+  // Schedule Details management endpoints
+  SCHEDULE_DETAILS: {
+    GET_ALL: `scheduledetails`,
+    GET_BY_ID: (id: string) => `scheduledetails/${id}`,
+    GET_BY_SCHEDULE_ID: (scheduleId: string) => `scheduledetails/schedule/${scheduleId}`,
+    CREATE: `scheduledetails`,
+    CREATE_FOR_SCHEDULE: (scheduleId: string) => `scheduledetails/${scheduleId}/details`,
+    UPDATE: (id: string) => `scheduledetails/${id}`,
+    DELETE: (id: string) => `scheduledetails/${id}`,
+  },
+
+  // Shifts management endpoints
+  SHIFTS: {
+    GET_ALL: `shifts`,
+    GET_BY_ID: (id: string) => `shifts/${id}`,
+    CREATE: `shifts`,
+    UPDATE: (id: string) => `shifts/${id}`,
+    DELETE: (id: string) => `shifts/${id}`,
+  },
+
+  // Assignments management endpoints
+  ASSIGNMENTS: {
+    GET_ALL: `assignments`, // Correct plural form from Swagger
+    GET_BY_ID: (id: string) => `assignments/${id}`,
+    CREATE: `assignments`,
+    UPDATE: (id: string) => `assignments/${id}`,
+    DELETE: (id: string) => `assignments/${id}`,
+  },
+
+  // TrashBin management endpoints
+  TRASHBIN: {
+    GET_ALL: `trashbins`,
+    GET_BY_ID: (id: string) => `trashbins/${id}`,
+    CREATE: `trashbins`,
+    UPDATE: (id: string) => `trashbins/${id}`,
+    DELETE: (id: string) => `trashbins/${id}`,
+  },
+
   // Report management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong ReportManagement.jsx
   REPORT: {
     GET_ALL: `reports`, // GET /api/reports - Báo cáo tổng
@@ -69,5 +108,17 @@ export const API_URLS = {
     CREATE_LEADER: `reports/leader`, // POST /api/reports/leader - Tạo báo cáo cho Leader
     UPDATE: (id: string) => `reports/${id}`,
     DELETE: (id: string) => `reports/${id}`,
+  },
+
+  // Alerts management endpoints
+  ALERTS: {
+    GET_ALL: `alerts`,
+    GET_BY_ID: (id: string) => `alerts/${id}`,
+    GET_BY_USER: (userId: string) => `alerts/user/${userId}`,
+    CREATE: `alerts`,
+    UPDATE: (id: string) => `alerts/${id}`,
+    MARK_AS_READ: (id: string) => `alerts/${id}/read`,
+    MARK_ALL_AS_READ: (userId: string) => `alerts/user/${userId}/read-all`,
+    DELETE: (id: string) => `alerts/${id}`,
   },
 };
