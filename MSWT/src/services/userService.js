@@ -6,8 +6,24 @@ export const userService = {
   // Get all users
   async getAllUsers(params = {}) {
     try {
-      const response = await api.get(API_URLS.USER.GET_ALL, { params });
+      // Prepare query parameters
+      const queryParams = new URLSearchParams();
       
+      // Add roleId to query params if provided
+      if (params.roleId && params.roleId !== 'all') {
+        queryParams.append('roleId', params.roleId);
+      }
+      
+      // Add search term if provided
+      if (params.search) {
+        queryParams.append('search', params.search);
+      }
+
+      // Build the URL with query parameters
+      const url = `${API_URLS.USER.GET_ALL}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      console.log('🔍 Calling API with URL:', url);
+
+      const response = await api.get(url);
       console.log('🔍 Raw API Response:', response.data);
       
       // Handle .NET API response format
@@ -40,7 +56,7 @@ export const userService = {
             status: user.status || "Hoạt động",
             avatar: user.image || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
             createdDate: user.createAt ? user.createAt.split('T')[0] : new Date().toISOString().split('T')[0],
-            // Map role based on roleId or other logic
+            roleId: user.roleId, // Add roleId to the mapped user
             position: this.mapRoleToPosition(user.roleId),
             location: "Chưa cập nhật",
             floor: "Chưa cập nhật"
@@ -62,12 +78,12 @@ export const userService = {
   // Helper function to map roleId to position
   mapRoleToPosition(roleId) {
     const roleMap = {
-      'c2a66975-420d-4961-9edd-d5bdff89be58': 'Công nhân',
-      '7dcd71ae-17c3-4e84-bb9f-dd96fa401976': 'Giám sát viên', 
-      '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37': 'Quản lý',
-      '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75': 'Quản trị viên'
+      'RL01': 'Quản lý',
+      'RL02': 'Quản trị hệ thống',
+      'RL03': 'Giám sát viên vệ sinh',
+      'RL04': 'Nhân viên vệ sinh'
     };
-    return roleMap[roleId] || 'Công nhân';
+    return roleMap[roleId] || 'Nhân viên vệ sinh';
   },
 
   // Get user by ID
@@ -124,12 +140,12 @@ export const userService = {
   // Helper function to map position to roleId
   mapPositionToRoleId(position) {
     const positionMap = {
-      'Công nhân': 'c2a66975-420d-4961-9edd-d5bdff89be58',
-      'Giám sát viên': '7dcd71ae-17c3-4e84-bb9f-dd96fa401976',
-      'Quản lý': '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37',
-      'Quản trị viên': '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75'
+      'Nhân viên vệ sinh': 'RL04',
+      'Giám sát viên vệ sinh': 'RL03',
+      'Quản lý cấp cao': 'RL01',
+      'Quản trị hệ thống': 'RL02'
     };
-    return positionMap[position] || 'c2a66975-420d-4961-9edd-d5bdff89be58'; // Default to worker
+    return positionMap[position] || 'RL04'; // Default to worker
   },
 
   // Update user
@@ -178,12 +194,8 @@ export const userService = {
   // Search users
   async searchUsers(searchParams) {
     try {
-      // Convert role filter to roleId if needed
+      // Add roleId to query params if provided
       const apiParams = { ...searchParams };
-      if (searchParams.role) {
-        apiParams.roleId = this.mapPositionToRoleId(searchParams.role);
-        delete apiParams.role;
-      }
       
       const response = await api.get(API_URLS.USER.GET_ALL, { 
         params: apiParams 
@@ -219,6 +231,7 @@ export const userService = {
         status: user.status || "Hoạt động",
         avatar: user.image || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
         createdDate: user.createAt ? user.createAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        roleId: user.roleId, // Add roleId to the mapped user
         position: this.mapRoleToPosition(user.roleId),
         location: "Chưa cập nhật",
         floor: "Chưa cập nhật"

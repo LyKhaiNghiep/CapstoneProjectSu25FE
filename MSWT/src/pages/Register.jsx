@@ -11,7 +11,7 @@ const Register = () => {
     email: '',
     phone: '',
     address: '',
-    roleId: 'c2a66975-420d-4961-9edd-d5bdff89be58' // Default to Worker
+    roleId: 'RL04' // Default to Worker
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,10 +20,10 @@ const Register = () => {
   const { register } = useAuth();
 
   const roleOptions = [
-    { value: 'c2a66975-420d-4961-9edd-d5bdff89be58', label: 'Nhân viên vệ sinh (Worker)' },
-    { value: '7dcd71ae-17c3-4e84-bb9f-dd96fa401976', label: 'Giám sát viên và sinh (Supervisor)' },
-    { value: '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37', label: 'Quản lý cấp cao (Manager)' },
-    { value: '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75', label: 'Quản trị hệ thống (Leader)' }
+    { value: 'RL04', label: 'Nhân viên vệ sinh (Worker)' },
+    { value: 'RL03', label: 'Giám sát viên vệ sinh (Supervisor)' },
+    { value: 'RL01', label: 'Quản lý cấp cao (Manager)' },
+    { value: 'RL02', label: 'Quản trị hệ thống (Admin)' }
   ];
 
   const handleInputChange = (e) => {

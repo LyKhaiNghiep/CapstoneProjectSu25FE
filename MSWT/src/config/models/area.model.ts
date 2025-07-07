@@ -1,3 +1,14 @@
+export interface Area {
+  areaId: string;
+  floorId: string;
+  description: string;
+  status: string;
+  roomBegin: string;
+  roomEnd: string;
+  areaName: string;
+  floorNumber: number;
+}
+
 export interface ICreateAreaRequest {
   floorId: string;
   description: string;

@@ -5,10 +5,9 @@ import {
   HiOutlineDotsVertical,
   HiOutlineEye,
   HiOutlinePencil,
-  HiChevronUp,
-  HiChevronDown,
   HiOutlineTrash,
 } from "react-icons/hi";
+import { useAreas } from "@/hooks/useArea";
 
 interface IAction {
   action: IActionType;
@@ -18,17 +17,14 @@ interface IAction {
 interface IProps {
   restrooms: Restroom[];
   onActionClick: (action: IAction) => void;
-  sortState: string;
-  onSortClick: () => void;
 }
 
 const RestroomTable = ({
   restrooms,
   onActionClick,
-  sortState,
-  onSortClick,
 }: IProps) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const { areas } = useAreas();
 
   // Debug log to check restrooms data
   console.log("RestroomTable received restrooms:", restrooms);
@@ -36,12 +32,23 @@ const RestroomTable = ({
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "hoạt động":
+      case "hoatdong":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
-      case "bảo trì":
+      case "baotri":
         return { backgroundColor: "#fee2e2", color: "#dc2626" };
       default:
         return { backgroundColor: "#f3f4f6", color: "#374151" };
+    }
+  };
+
+  const getStatusDisplay = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "hoatdong":
+        return "Hoạt động";
+      case "baotri":
+        return "Bảo trì";
+      default:
+        return status;
     }
   };
 
@@ -52,6 +59,12 @@ const RestroomTable = ({
   const handleActionSelect = (action: IActionType, restroom: Restroom) => {
     onActionClick({ action, restroom });
     setOpenDropdown(null);
+  };
+
+  // Function to get area name from areaId
+  const getAreaName = (areaId: string) => {
+    const area = areas.find(a => a.areaId === areaId);
+    return area ? area.areaName : "Chưa có khu vực";
   };
 
   return (
@@ -81,39 +94,7 @@ const RestroomTable = ({
                 position: "relative",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  cursor: "pointer",
-                }}
-                onClick={onSortClick}
-              >
-                Phòng
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "1px",
-                  }}
-                >
-                  <HiChevronUp
-                    style={{
-                      width: "12px",
-                      height: "12px",
-                      color: sortState === "asc" ? "#374151" : "#d1d5db",
-                    }}
-                  />
-                  <HiChevronDown
-                    style={{
-                      width: "12px",
-                      height: "12px",
-                      color: sortState === "desc" ? "#374151" : "#d1d5db",
-                    }}
-                  />
-                </div>
-              </div>
+              Phòng
             </th>
             <th
               style={{
@@ -196,7 +177,7 @@ const RestroomTable = ({
                   color: "#6b7280",
                 }}
               >
-                {restroom.area?.areaName}
+                {getAreaName(restroom.areaId)}
               </td>
 
               {/* Details Column */}
@@ -226,7 +207,7 @@ const RestroomTable = ({
                     ...getStatusColor(restroom.status),
                   }}
                 >
-                  {restroom.status}
+                  {getStatusDisplay(restroom.status)}
                 </span>
               </td>
 
@@ -268,7 +249,7 @@ const RestroomTable = ({
                   <div
                     style={{
                       position: "absolute",
-                      bottom: "50%",
+                      bottom: "0%",
                       right: "8px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",

@@ -72,58 +72,64 @@ export const useNotification = (id: string) => {
 
 // Function to create a new notification
 export const createNotification = async (notificationData: CreateNotificationData): Promise<Notification> => {
-  const token = localStorage.getItem('authToken');
-  const response = await enhancedFetch(`${BASE_API_URL}/${API_URLS.ALERTS.CREATE}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: JSON.stringify(notificationData),
-  });
+  try {
+    const response = await swrFetcher(API_URLS.NOTIFICATIONS.CREATE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(notificationData),
+    }) as Response;
 
-  if (!response.ok) {
-    throw new Error(`Failed to create notification: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Failed to create notification: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 // Function to update a notification
 export const updateNotification = async (id: string, notificationData: Partial<CreateNotificationData>): Promise<Notification> => {
-  const token = localStorage.getItem('authToken');
-  const response = await enhancedFetch(`${BASE_API_URL}/${API_URLS.ALERTS.UPDATE(id)}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    body: JSON.stringify(notificationData),
-  });
+  try {
+    const response = await swrFetcher(API_URLS.NOTIFICATIONS.UPDATE(id), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(notificationData),
+    }) as Response;
 
-  if (!response.ok) {
-    throw new Error(`Failed to update notification: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Failed to update notification: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 // Function to mark notification as read
 export const markNotificationAsRead = async (id: string): Promise<Notification> => {
-  const token = localStorage.getItem('authToken');
-  const response = await enhancedFetch(`${BASE_API_URL}/${API_URLS.ALERTS.MARK_AS_READ(id)}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-  });
+  try {
+    const response = await swrFetcher(API_URLS.NOTIFICATIONS.MARK_AS_READ(id), {
+      method: 'PUT',
+    }) as Response;
 
-  if (!response.ok) {
-    throw new Error(`Failed to mark notification as read: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Failed to mark notification as read: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 // Function to mark all notifications as read for a user
