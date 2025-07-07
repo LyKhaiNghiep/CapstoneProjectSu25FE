@@ -276,7 +276,7 @@ const AreaTable = ({
                   <div
                     style={{
                       position: "absolute",
-                      bottom: "50%",
+                      bottom: "0%",
                       right: "8px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
@@ -287,32 +287,7 @@ const AreaTable = ({
                       minWidth: "140px",
                     }}
                   >
-                    <button
-                      onClick={() => handleActionSelect("view", area)}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        borderRadius: "8px 8px 0 0",
-                      }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#f9fafb")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlineEye style={{ width: "16px", height: "16px" }} />
-                      Xem chi tiết
-                    </button>
+                    
                     <button
                       onClick={() => handleActionSelect("edit", area)}
                       style={{

@@ -1,8 +1,6 @@
 import { Restroom } from "./restroom.model";
 
 export interface ICreateFloorRequest {
-  numberOfRestroom: number;
-  numberOfBin: number;
   status: string;
   floorNumber: number;
 }

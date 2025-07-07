@@ -1,7 +1,6 @@
 import {
   Floor,
   ICreateFloorRequest,
-  IUpdateFloorRequest,
 } from "@/config/models/floor.model";
 import { Restroom } from "@/config/models/restroom.model";
 import { useState } from "react";
@@ -16,19 +15,12 @@ const Floors = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddFloorPopup, setShowAddFloorPopup] = useState(false);
   const [showViewFloorModal, setShowViewFloorModal] = useState(false);
-  const [showUpdateFloorModal, setShowUpdateFloorModal] = useState(false);
+
   const [selectedFloor, setSelectedFloor] = useState<Floor | null>(null);
-  const [sortState, setSortState] = useState("default");
-  const [updateFloorData, setUpdateFloorData] = useState<IUpdateFloorRequest>({
-    floorNumber: 0,
-    numberOfBin: 0,
-    numberOfRestroom: 0,
-    status: "Hoạt động",
-  });
+  const [activeTab, setActiveTab] = useState("all");
+
   const [newFloor, setNewFloor] = useState<ICreateFloorRequest>({
     floorNumber: 0,
-    numberOfBin: 0,
-    numberOfRestroom: 0,
     status: "Hoạt động",
   });
   const [notification, setNotification] = useState({
@@ -39,7 +31,7 @@ const Floors = () => {
 
   const itemsPerPage = 5;
 
-  const { floors, createAsync, updateAsync, deleteAsync } = useFloors();
+  const { floors, createAsync, deleteAsync } = useFloors();
 
   if (floors.length === 0) return null;
 
@@ -47,22 +39,13 @@ const Floors = () => {
     action,
     floor,
   }: {
-    action: "view" | "update" | "delete";
+    action: "view" | "delete";
     floor: Floor;
   }) => {
     console.log("🚀 Floors - handleActionClick called:", { action, floor });
     if (action === "view") {
       setSelectedFloor(floor);
       setShowViewFloorModal(true);
-    } else if (action === "update") {
-      setSelectedFloor(floor);
-      setUpdateFloorData({
-        floorNumber: floor.floorNumber,
-        numberOfBin: floor.numberOfBin,
-        numberOfRestroom: floor.numberOfRestroom,
-        status: floor.status,
-      });
-      setShowUpdateFloorModal(true);
     } else if (action === "delete") {
       if (window.confirm("Bạn có chắc muốn xóa tầng này?")) {
         await deleteAsync(floor.floorId);
@@ -72,38 +55,29 @@ const Floors = () => {
   };
 
   // Filtering and sorting logic
-  const filteredFloors = floors?.filter((floor: Floor) =>
-    floor?.floorNumber
+  const filteredFloors = floors?.filter((floor: Floor) => {
+    const matchesSearch = floor?.floorNumber
       ?.toString()
       .toLowerCase()
-      ?.includes(searchTerm?.toLowerCase())
-  );
-
-  const sortedFloors = [...filteredFloors]?.sort((a, b) => {
-    if (sortState === "default") {
-    } else if (sortState === "asc") {
-      return a.floorNumber
-        ?.toString()
-        .toLowerCase()
-        .localeCompare(b.floorNumber?.toString().toLowerCase());
-    } else if (sortState === "desc") {
-      return b.floorNumber
-        ?.toString()
-        .toLowerCase()
-        .localeCompare(a.floorNumber?.toString().toLowerCase());
-    }
-    return 0;
+      ?.includes(searchTerm?.toLowerCase());
+    
+    const matchesTab = 
+      activeTab === "all" ? true :
+      activeTab === "active" ? floor.status === "Hoạt động" :
+      activeTab === "maintenance" ? floor.status === "Bảo trì" :
+      true;
+    
+    return matchesSearch && matchesTab;
   });
 
-  const handleSortClick = () => {
-    if (sortState === "default") {
-      setSortState("asc");
-    } else if (sortState === "asc") {
-      setSortState("desc");
-    } else {
-      setSortState("default");
-    }
-  };
+  const sortedFloors = [...filteredFloors]?.sort((a, b) => {
+    // Always sort by floor number from low to high (ascending)
+    const aFloorNum = parseInt(a.floorNumber?.toString() || "0");
+    const bFloorNum = parseInt(b.floorNumber?.toString() || "0");
+    return aFloorNum - bFloorNum;
+  });
+
+
 
   // Calculate pagination
   const totalPages = Math.ceil(sortedFloors.length / itemsPerPage);
@@ -115,6 +89,11 @@ const Floors = () => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
+
+  // Calculate counts for each tab
+  const allCount = floors?.length || 0;
+  const activeCount = floors?.filter(floor => floor.status === "Hoạt động")?.length || 0;
+  const maintenanceCount = floors?.filter(floor => floor.status === "Bảo trì")?.length || 0;
 
   const showNotificationMessage = (type: string, message: string) => {
     setNotification({
@@ -136,23 +115,12 @@ const Floors = () => {
     setSelectedFloor(null);
   };
 
-  const handleCloseUpdateModal = () => {
-    setShowUpdateFloorModal(false);
-    setSelectedFloor(null);
-    setUpdateFloorData({
-      floorNumber: 0,
-      numberOfBin: 0,
-      numberOfRestroom: 0,
-      status: "Hoạt động",
-    });
-  };
+
 
   const handleClosePopup = () => {
     setShowAddFloorPopup(false);
     setNewFloor({
       floorNumber: 0,
-      numberOfBin: 0,
-      numberOfRestroom: 0,
       status: "Hoạt động",
     });
   };
@@ -165,13 +133,7 @@ const Floors = () => {
     }));
   };
 
-  const handleUpdateChange = (e: any) => {
-    const { name, value } = e.target;
-    setUpdateFloorData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+
 
   const handleSubmitFloor = async (e: any) => {
     e.preventDefault();
@@ -183,27 +145,17 @@ const Floors = () => {
       return;
     }
 
-    await createAsync(newFloor);
-
-    handleClosePopup();
-    showNotificationMessage("success", "Đã thêm tầng thành công!");
-  };
-
-  const handleSubmitUpdate = async (e: any) => {
-    e.preventDefault();
-    if (!updateFloorData.status) {
-      showNotificationMessage(
-        "error",
-        "Vui lòng điền đầy đủ thông tin bắt buộc!"
-      );
-      return;
+    try {
+      await createAsync(newFloor);
+      handleClosePopup();
+      showNotificationMessage("success", "Đã thêm tầng thành công!");
+    } catch (error) {
+      console.error("Error creating floor:", error);
+      showNotificationMessage("error", "Có lỗi xảy ra khi thêm tầng!");
     }
-
-    await updateAsync(selectedFloor?.floorId!, updateFloorData);
-
-    handleCloseUpdateModal();
-    showNotificationMessage("success", "Đã cập nhật tầng thành công!");
   };
+
+
 
   return (
     <div
@@ -242,6 +194,69 @@ const Floors = () => {
               Quản lý tầng
             </span>
           </nav>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ marginBottom: "24px" }}>
+          <div style={{ display: "flex", gap: "0", borderBottom: "1px solid #e5e7eb" }}>
+            <button
+              onClick={() => {
+                setActiveTab("all");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "transparent",
+                border: "none",
+                borderBottom: activeTab === "all" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "all" ? "#FF5B27" : "#6b7280",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              Tất cả ({allCount})
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("active");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "transparent",
+                border: "none",
+                borderBottom: activeTab === "active" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "active" ? "#FF5B27" : "#6b7280",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              Hoạt động ({activeCount})
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("maintenance");
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "transparent",
+                border: "none",
+                borderBottom: activeTab === "maintenance" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "maintenance" ? "#FF5B27" : "#6b7280",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              Bảo trì ({maintenanceCount})
+            </button>
+          </div>
         </div>
 
         {/* Search and Add Button */}
@@ -322,8 +337,6 @@ const Floors = () => {
         <FloorTable
           floors={currentFloors}
           onActionClick={handleActionClick}
-          sortState={sortState}
-          onSortClick={handleSortClick}
         />
       </div>
 
@@ -414,7 +427,7 @@ const Floors = () => {
                   Số tầng *
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="floorNumber"
                   value={newFloor.floorNumber}
                   onChange={handleInputChange}
@@ -432,67 +445,7 @@ const Floors = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: "20px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Số nhà vệ sinh *
-                </label>
-                <input
-                  type="number"
-                  name="numberOfRestroom"
-                  value={newFloor.numberOfRestroom}
-                  onChange={handleInputChange}
-                  placeholder="Nhập số nhà vệ sinh"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  required
-                />
-              </div>
 
-              <div style={{ marginBottom: "20px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Số thùng rác *
-                </label>
-                <input
-                  type="number"
-                  name="numberOfBin"
-                  value={newFloor.numberOfBin}
-                  onChange={handleInputChange}
-                  placeholder="Nhập số thùng rác"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  required
-                />
-              </div>
 
               <div style={{ marginBottom: "24px" }}>
                 <label
@@ -659,51 +612,9 @@ const Floors = () => {
               </div>
             </div>
 
-            <div style={{ marginBottom: "20px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  color: "#374151",
-                  marginBottom: "8px",
-                }}
-              >
-                Nhà vệ sinh ({selectedFloor.restrooms?.length || 0})
-              </label>
-              <div style={{ maxHeight: "150px", overflowY: "auto" }}>
-                {selectedFloor?.restrooms &&
-                selectedFloor?.restrooms?.length > 0 ? (
-                  selectedFloor?.restrooms?.map(
-                    (restroom: Restroom, index: number) => (
-                      <div
-                        key={index}
-                        style={{
-                          padding: "8px 12px",
-                          backgroundColor: "#f3f4f6",
-                          borderRadius: "6px",
-                          marginBottom: "4px",
-                          fontSize: "14px",
-                          color: "#374151",
-                        }}
-                      >
-                        {restroom.restroomNumber}
-                      </div>
-                    )
-                  )
-                ) : (
-                  <div
-                    style={{
-                      padding: "12px",
-                      color: "#6b7280",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    Chưa có nhà vệ sinh nào
-                  </div>
-                )}
-              </div>
-            </div>
+            
+            
+             
 
             {/* <div style={{ marginBottom: "20px" }}>
               <label
@@ -794,239 +705,7 @@ const Floors = () => {
         </div>
       )}
 
-      {/* Update Floor Modal */}
-      {showUpdateFloorModal && selectedFloor && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-          onClick={handleCloseUpdateModal}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "24px",
-              width: "600px",
-              maxWidth: "90vw",
-              maxHeight: "90vh",
-              overflow: "auto",
-              boxShadow:
-                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "24px",
-              }}
-            >
-              <h2
-                style={{
-                  fontSize: "24px",
-                  fontWeight: "bold",
-                  color: "#111827",
-                  margin: 0,
-                }}
-              >
-                Thêm tầng mới
-              </h2>
-              <button
-                onClick={handleCloseUpdateModal}
-                style={{
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px",
-                  borderRadius: "4px",
-                  color: "#6b7280",
-                }}
-              >
-                <HiX style={{ width: "24px", height: "24px" }} />
-              </button>
-            </div>
 
-            <form onSubmit={handleSubmitUpdate}>
-              <div style={{ marginBottom: "20px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Số tầng *
-                </label>
-                <input
-                  type="number"
-                  name="floorNumber"
-                  value={updateFloorData.floorNumber}
-                  onChange={handleUpdateChange}
-                  placeholder="Nhập số tầng"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "20px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Số nhà vệ sinh *
-                </label>
-                <input
-                  type="number"
-                  name="numberOfRestroom"
-                  value={updateFloorData.numberOfRestroom}
-                  onChange={handleUpdateChange}
-                  placeholder="Nhập số nhà vệ sinh"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "20px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Số thùng rác *
-                </label>
-                <input
-                  type="number"
-                  name="numberOfBin"
-                  value={updateFloorData.numberOfBin}
-                  onChange={handleUpdateChange}
-                  placeholder="Nhập số thùng rác"
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "24px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Trạng thái *
-                </label>
-                <select
-                  name="status"
-                  value={updateFloorData.status}
-                  onChange={handleUpdateChange}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    backgroundColor: "white",
-                  }}
-                  required
-                >
-                  <option value="Hoạt động">Hoạt động</option>
-                  <option value="Bảo trì">Bảo trì</option>
-                </select>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={handleCloseUpdateModal}
-                  style={{
-                    padding: "12px 24px",
-                    backgroundColor: "#f3f4f6",
-                    color: "#374151",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    cursor: "pointer",
-                  }}
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    padding: "12px 24px",
-                    backgroundColor: "#FF5B27",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    cursor: "pointer",
-                  }}
-                >
-                  Cập nhật
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

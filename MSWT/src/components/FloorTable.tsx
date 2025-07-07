@@ -1,29 +1,22 @@
 import { Floor } from "../config/models/floor.model";
 import { useEffect, useState } from "react";
 import {
-  HiChevronDown,
-  HiChevronUp,
   HiOutlineDotsVertical,
   HiOutlineEye,
-  HiOutlinePencil,
   HiOutlineTrash,
 } from "react-icons/hi";
 
 interface FloorTableProps {
   floors: Floor[];
   onActionClick: (params: {
-    action: "view" | "update" | "delete";
+    action: "view" | "delete";
     floor: Floor;
   }) => void;
-  sortState: string;
-  onSortClick: () => void;
 }
 
 const FloorTable: React.FC<FloorTableProps> = ({
   floors,
   onActionClick,
-  sortState,
-  onSortClick,
 }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
@@ -73,7 +66,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
   };
 
   const handleActionSelect = (
-    action: "view" | "update" | "delete",
+    action: "view" | "delete",
     floor: Floor
   ) => {
     console.log("🔥 FloorTable - Action selected:", action, floor);
@@ -108,61 +101,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
                 position: "relative",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  cursor: "pointer",
-                }}
-                onClick={onSortClick}
-              >
-                Tầng
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "1px",
-                  }}
-                >
-                  <HiChevronUp
-                    style={{
-                      width: "12px",
-                      height: "12px",
-                      color: sortState === "asc" ? "#374151" : "#d1d5db",
-                    }}
-                  />
-                  <HiChevronDown
-                    style={{
-                      width: "12px",
-                      height: "12px",
-                      color: sortState === "desc" ? "#374151" : "#d1d5db",
-                    }}
-                  />
-                </div>
-              </div>
-            </th>
-            <th
-              style={{
-                padding: "16px 24px",
-                textAlign: "left",
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
-              Tổng nhà vệ sinh
-            </th>
-            <th
-              style={{
-                padding: "16px 24px",
-                textAlign: "left",
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
-              Tổng thùng rác
+              Tầng
             </th>
             <th
               style={{
@@ -213,28 +152,6 @@ const FloorTable: React.FC<FloorTableProps> = ({
                 }}
               >
                 {floor.floorNumber}
-              </td>
-
-              {/* Total Restrooms Column */}
-              <td
-                style={{
-                  padding: "16px 24px",
-                  fontSize: "14px",
-                  color: "#6b7280",
-                }}
-              >
-                {floor.numberOfRestroom} phòng
-              </td>
-
-              {/* Total Trash Cans Column */}
-              <td
-                style={{
-                  padding: "16px 24px",
-                  fontSize: "14px",
-                  color: "#6b7280",
-                }}
-              >
-                {floor.numberOfBin} thùng
               </td>
 
               {/* Status Column */}
@@ -314,67 +231,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
                       marginTop: "4px",
                     }}
                   >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleActionSelect("view", floor);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        color: "#374151",
-                        backgroundColor: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        transition: "background-color 0.2s",
-                      }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#f9fafb")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlineEye style={{ width: "16px", height: "16px" }} />
-                      Xem chi tiết
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleActionSelect("update", floor);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        color: "#374151",
-                        backgroundColor: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        transition: "background-color 0.2s",
-                        borderTop: "1px solid #f3f4f6",
-                      }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#f9fafb")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlinePencil
-                        style={{ width: "16px", height: "16px" }}
-                      />
-                      Cập nhật
-                    </button>
+                   
+
                     <button
                       onClick={() => handleActionSelect("delete", floor)}
                       style={{

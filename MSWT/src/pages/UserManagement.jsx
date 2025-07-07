@@ -62,8 +62,6 @@ const UserManagement = () => {
     }, 3000);
   };
 
-
-
   // Load dữ liệu khi component mount
   useEffect(() => {
     // Use API users directly
@@ -122,7 +120,7 @@ const UserManagement = () => {
 
   const mapStatusToRole = (status) => {
     const statusToRoleMap = {
-      'Đang làm việc': 'Công nhân',
+      'Đang làm việc': 'Nhân viên vệ sinh',
       'Nghỉ việc': 'Nghỉ việc', 
       'Tạm nghỉ': 'Tạm nghỉ'
     };
@@ -131,13 +129,13 @@ const UserManagement = () => {
 
   const mapStatusToRoleId = (status) => {
     const statusToRoleIdMap = {
-      'Đang làm việc': 'c2a66975-420d-4961-9edd-d5bdff89be58', // Worker roleId
-      'Công nhân': 'c2a66975-420d-4961-9edd-d5bdff89be58',
-      'Giám sát viên': '7dcd71ae-17c3-4e84-bb9f-dd96fa401976', // Supervisor roleId  
-      'Quản lý': '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37', // Manager roleId
-      'Quản trị viên': '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75' // Admin roleId
+      'Đang làm việc': 'RL04', // Worker roleId
+      'Nhân viên vệ sinh': 'RL04',
+      'Giám sát viên vệ sinh': 'RL03', // Supervisor roleId  
+      'Quản lý cấp cao': 'RL01', // Manager roleId
+      'Quản trị hệ thống': 'RL02' // Admin roleId
     };
-    return statusToRoleIdMap[status] || 'c2a66975-420d-4961-9edd-d5bdff89be58'; // Default to worker
+    return statusToRoleIdMap[status] || 'RL04'; // Default to worker
   };
 
   const handleSubmitUpdate = async (e) => {
@@ -255,20 +253,20 @@ const UserManagement = () => {
     }
   };
 
-
-
   // Filter users based on active tab and search term
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = (users || []).filter(user => {
     // Tab filtering
     let tabFilter;
     if (activeTab === "all") {
       tabFilter = true;
     } else if (activeTab === "worker") {
-      tabFilter = user.position === "Công nhân";
+      tabFilter = user.position === "Nhân viên vệ sinh";
     } else if (activeTab === "supervisor") {
-      tabFilter = user.position === "Giám sát viên";
+      tabFilter = user.position === "Giám sát viên vệ sinh";
     } else if (activeTab === "manager") {
-      tabFilter = user.position === "Quản lý";
+      tabFilter = user.position === "Quản lý cấp cao  ";
+    } else if (activeTab === "admin") {
+      tabFilter = user.position === "Quản trị hệ thống";
     }
     
     if (!tabFilter) return false;
@@ -277,19 +275,38 @@ const UserManagement = () => {
     if (!searchTerm) return true;
     
     return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone.includes(searchTerm)
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phone?.includes(searchTerm)
     );
   });
+
+  // Update users when apiUsers changes
+  useEffect(() => {
+    if (apiUsers) {
+      setUsers(apiUsers);
+      console.log('✅ Đã tải dữ liệu từ API:', apiUsers.length, 'users');
+    }
+  }, [apiUsers]);
+
+  // Load initial data
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        await fetchUsers();
+      } catch (error) {
+        console.error('Failed to load users:', error);
+        showNotification("❌ Có lỗi khi tải danh sách người dùng", "error");
+      }
+    };
+    loadUsers();
+  }, []);
 
   // Tính toán pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
-
-
 
   // Reset về trang 1 khi search
   const handleSearchChange = async (e) => {
@@ -484,7 +501,7 @@ const UserManagement = () => {
                 }
               }}
             >
-              Công nhân
+              Nhân viên vệ sinh
             </button>
             <button
               onClick={async () => {
@@ -518,7 +535,7 @@ const UserManagement = () => {
                 }
               }}
             >
-              Giám sát viên
+              Giám sát viên vệ sinh
             </button>
             <button
               onClick={async () => {
@@ -552,7 +569,31 @@ const UserManagement = () => {
                 }
               }}
             >
-              Quản lý
+              Quản lý cấp cao 
+            </button>
+            <button
+              onClick={async () => {
+                setActiveTab("admin");
+                setCurrentPage(1);
+                try {
+                  await searchUsers({ role: "admin" });
+                } catch (error) {
+                  console.log('Failed to filter admins');
+                }
+              }}
+              style={{
+                padding: "12px 24px",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                borderBottom: activeTab === "admin" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "admin" ? "#FF5B27" : "#6b7280",
+                transition: "all 0.2s",
+              }}
+            >
+              Quản trị hệ thống
             </button>
           </div>
         </div>
@@ -938,9 +979,10 @@ const UserManagement = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">Chọn chức vụ</option>
-                  <option value="Công nhân">Công nhân</option>
-                  <option value="Giám sát viên">Giám sát viên</option>
-                  <option value="Quản lý">Quản lý</option>
+                  <option value="Nhân viên vệ sinh">Nhân viên vệ sinh</option>
+                  <option value="Giám sát viên vệ sinh">Giám sát viên vệ sinh</option>
+                  <option value="Quản lý cấp cao">Quản lý cấp cao</option>
+                  <option value="Quản trị hệ thống">Quản trị hệ thống</option>
                 </select>
               </div>
 

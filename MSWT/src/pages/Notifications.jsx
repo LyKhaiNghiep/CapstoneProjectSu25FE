@@ -138,7 +138,7 @@ const Notifications = () => {
 
   // Ensure notifications is an array and has proper structure
   const notificationsArray = Array.isArray(notifications) ? notifications : [];
-  
+
   const filteredNotifications = notificationsArray.filter(notif => {
     if (!notif || typeof notif !== 'object') return false;
     if (filter === "unread") return !notif.read;
@@ -232,12 +232,12 @@ const Notifications = () => {
           }
         `}
       </style>
-      <div style={{ 
-        backgroundColor: "#ffffff", 
-        minHeight: "100vh", 
-        padding: "24px 32px" 
-      }}>
-        {/* Header */}
+    <div style={{ 
+      backgroundColor: "#ffffff", 
+      minHeight: "100vh", 
+      padding: "24px 32px" 
+    }}>
+      {/* Header */}
       <div style={{ marginBottom: "32px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>

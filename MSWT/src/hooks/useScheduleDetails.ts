@@ -92,11 +92,11 @@ export function useScheduleDetails(scheduleId?: string) {
       const response = await swrFetcher(
         API_URLS.SCHEDULE_DETAILS.UPDATE(id),
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedData),
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedData),
         }
       );
       mutate();

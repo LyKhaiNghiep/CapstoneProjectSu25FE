@@ -22,7 +22,7 @@ const Restrooms = () => {
   const [selectedRestroom, setSelectedRestroom] = useState<Restroom | null>(
     null
   );
-  const [sortState, setSortState] = useState("default"); // "asc", "desc", or "default"
+
   const [updateRestroomData, setUpdateRestroomData] =
     useState<RestroomUpdateRequest>();
   const [newRestroom, setNewRestroom] = useState<RestroomCreateRequest>({
@@ -164,38 +164,33 @@ const Restrooms = () => {
       restroom?.restroomNumber
         ?.toLowerCase()
         .includes(searchTerm?.toLowerCase()) ||
-      restroom?.areaId?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+      restroom?.area?.areaName?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
       restroom?.description?.toLowerCase().includes(searchTerm?.toLowerCase())
   );
 
-  // Sort filtered restrooms based on sort state
+  // Sort restrooms by floor number, area name, and room number (ascending)
   const sortedRestrooms = [...filteredRestrooms]?.sort((a: any, b: any) => {
-    if (sortState === "default") {
-      // Sort by creation date (newest first)
-      return new Date(b.createdAt!);
-    } else if (sortState === "asc") {
-      // Sort by room name A-Z
-      return a.restroomNumber
-        .toLowerCase()
-        .localeCompare(b.restroomNumber?.toLowerCase());
-    } else if (sortState === "desc") {
-      // Sort by room name Z-A
-      return b.restroomNumber
-        .toLowerCase()
-        .localeCompare(a.restroomNumber?.toLowerCase());
+    // First sort by floor number (ascending)
+    const aFloorNum = a.area?.floorNumber || 0;
+    const bFloorNum = b.area?.floorNumber || 0;
+    if (aFloorNum !== bFloorNum) {
+      return aFloorNum - bFloorNum;
     }
-    return 0;
+    
+    // Then sort by area name (alphabetical)
+    const aAreaName = a.area?.areaName?.toLowerCase() || "";
+    const bAreaName = b.area?.areaName?.toLowerCase() || "";
+    if (aAreaName !== bAreaName) {
+      return aAreaName.localeCompare(bAreaName);
+    }
+    
+    // Finally sort by room number (ascending)
+    const aRoomNum = parseInt(a.restroomNumber?.toString() || "0");
+    const bRoomNum = parseInt(b.restroomNumber?.toString() || "0");
+    return aRoomNum - bRoomNum;
   });
 
-  const handleSortClick = () => {
-    if (sortState === "default") {
-      setSortState("asc");
-    } else if (sortState === "asc") {
-      setSortState("desc");
-    } else {
-      setSortState("default");
-    }
-  };
+
 
   // Calculate pagination
   const totalPages = Math.ceil(sortedRestrooms.length / itemsPerPage);
@@ -327,8 +322,6 @@ const Restrooms = () => {
         <RestroomTable
           restrooms={currentRestrooms}
           onActionClick={handleActionClick}
-          sortState={sortState}
-          onSortClick={handleSortClick}
         />
       </div>
 
@@ -414,45 +407,7 @@ const Restrooms = () => {
 
             {/* Form */}
             <form onSubmit={handleSubmitRestroom}>
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Tầng *
-                </label>
-                <select
-                  name="floorId"
-                  value={newRestroom.floorId}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  <option value="">Chọn tầng</option>
-                  {floors?.map((floor) => (
-                    <option key={floor.floorId} value={floor.floorId}>
-                      {floor.floorNumber === 0
-                        ? "Tầng trệt"
-                        : `Tầng ${floor.floorNumber}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              
 
               <div style={{ marginBottom: "16px" }}>
                 <label

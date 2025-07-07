@@ -9,7 +9,7 @@ import {
 
 export function useRestrooms() {
   const { data, error, isLoading, mutate } = useSWR<Restroom[]>(
-    API_URLS.RESTROOM.GET_ALL,
+    `${API_URLS.RESTROOM.GET_ALL}?include=area`,
     swrFetcher
   );
 

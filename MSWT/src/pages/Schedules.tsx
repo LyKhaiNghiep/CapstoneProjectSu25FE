@@ -6,7 +6,6 @@ import Pagination from "../components/Pagination";
 import Notification from "../components/Notification";
 import { useSchedules } from "../hooks/useSchedule";
 import { useAreas } from "../hooks/useArea";
-import { useRestrooms } from "../hooks/useRestroom";
 import { useShifts } from "../hooks/useShifts";
 import { useTrashBins } from "../hooks/useTrashBins";
 import { Schedule, ICreateScheduleRequest } from "@/config/models/schedule.model";

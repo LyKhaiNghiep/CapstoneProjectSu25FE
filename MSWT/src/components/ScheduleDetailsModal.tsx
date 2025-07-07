@@ -154,13 +154,13 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
         {/* Content */}
         <div style={{ padding: "24px" }}>
           {/* Schedule Info */}
-          <div
-            style={{
-              backgroundColor: "#f9fafb",
-              borderRadius: "8px",
+            <div
+              style={{
+                backgroundColor: "#f9fafb",
+                borderRadius: "8px",
               padding: "24px",
-            }}
-          >
+                    }}
+                  >
             <h3
               style={{
                 fontSize: "20px",
@@ -175,9 +175,9 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
               <HiOutlineClipboardList style={{ width: "24px", height: "24px" }} />
               {schedule.scheduleName}
             </h3>
-            
-            <div
-              style={{
+
+              <div
+                style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(2, 1fr)",
                 gap: "20px",
@@ -225,34 +225,34 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
 
               <div>
                 <span style={{ 
-                  fontWeight: "600", 
+                            fontWeight: "600",
                   color: "#6b7280",
-                  fontSize: "14px",
+                            fontSize: "14px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em"
                 }}>
                   Ngày bắt đầu
-                </span>
+                        </span>
                 <div style={{ 
                   color: "#111827", 
                   fontSize: "16px", 
-                  fontWeight: "500",
+                            fontWeight: "500",
                   marginTop: "4px"
                 }}>
                   {new Date(schedule.startDate).toLocaleDateString("vi-VN")}
-                </div>
-              </div>
+                      </div>
+                    </div>
 
               <div>
                 <span style={{ 
                   fontWeight: "600", 
                   color: "#6b7280",
-                  fontSize: "14px",
+                        fontSize: "14px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em"
                 }}>
                   Ngày kết thúc
-                </span>
+                        </span>
                 <div style={{ 
                   color: "#111827", 
                   fontSize: "16px", 
@@ -261,7 +261,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                 }}>
                   {new Date(schedule.endDate).toLocaleDateString("vi-VN")}
                 </div>
-              </div>
+                      </div>
 
               <div>
                 <span style={{ 
@@ -272,7 +272,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   letterSpacing: "0.05em"
                 }}>
                   Khu vực
-                </span>
+                        </span>
                 <div style={{ 
                   color: "#111827", 
                   fontSize: "16px", 
@@ -280,8 +280,8 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   marginTop: "4px"
                 }}>
                   {areaName}
-                </div>
-              </div>
+                      </div>
+                      </div>
 
               <div>
                 <span style={{ 
@@ -300,14 +300,14 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   marginTop: "4px"
                 }}>
                   {restroomName}
-                </div>
-              </div>
+                      </div>
+                    </div>
 
               <div>
                 <span style={{ 
                   fontWeight: "600", 
                   color: "#6b7280",
-                  fontSize: "14px",
+                          fontSize: "14px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em"
                 }}>
@@ -320,14 +320,14 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   marginTop: "4px"
                 }}>
                   {assignmentName}
-                </div>
-              </div>
+                        </div>
+                      </div>
 
               <div>
                 <span style={{ 
                   fontWeight: "600", 
                   color: "#6b7280",
-                  fontSize: "14px",
+                           fontSize: "14px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em"
                 }}>
@@ -341,18 +341,18 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                 }}>
                   {shiftName}
                 </div>
-              </div>
+                       </div>
 
               <div>
                 <span style={{ 
                   fontWeight: "600", 
                   color: "#6b7280",
-                  fontSize: "14px",
+                           fontSize: "14px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em"
                 }}>
                   Thùng rác
-                </span>
+                             </span>
                 <div style={{ 
                   color: "#111827", 
                   fontSize: "16px", 
@@ -360,43 +360,43 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   marginTop: "4px"
                 }}>
                   {schedule.trashBinId}
-                </div>
-              </div>
+                           </div>
+                       </div>
 
               <div>
                 
                 
               </div>
-            </div>
           </div>
+        </div>
 
-          {/* Footer */}
+        {/* Footer */}
           <div style={{ 
-            display: "flex", 
-            justifyContent: "flex-end", 
+            display: "flex",
+            justifyContent: "flex-end",
             marginTop: "24px" 
           }}>
-            <button
-              onClick={onClose}
-              style={{
+          <button
+            onClick={onClose}
+            style={{
                 padding: "12px 24px",
-                border: "1px solid #d1d5db",
+              border: "1px solid #d1d5db",
                 borderRadius: "8px",
-                backgroundColor: "white",
-                color: "#374151",
-                cursor: "pointer",
-                fontSize: "14px",
-                fontWeight: "500",
-              }}
-              onMouseEnter={(e: any) => {
-                e.target.style.backgroundColor = "#f9fafb";
-              }}
-              onMouseLeave={(e: any) => {
-                e.target.style.backgroundColor = "white";
-              }}
-            >
-              Đóng
-            </button>
+              backgroundColor: "white",
+              color: "#374151",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "500",
+            }}
+            onMouseEnter={(e: any) => {
+              e.target.style.backgroundColor = "#f9fafb";
+            }}
+            onMouseLeave={(e: any) => {
+              e.target.style.backgroundColor = "white";
+            }}
+          >
+            Đóng
+          </button>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HiOutlineDotsVertical, HiOutlineEye, HiOutlinePencil, HiOutlineTrash } from "react-icons/hi";
+import { HiOutlineDotsVertical, HiOutlineEye } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
 
 interface IProps {

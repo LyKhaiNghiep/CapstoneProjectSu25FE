@@ -188,8 +188,6 @@ const Areas = () => {
       tabFilter = area.status === "Hoạt động";
     } else if (activeTab === "maintenance") {
       tabFilter = area.status === "Bảo trì";
-    } else if (activeTab === "inactive") {
-      tabFilter = area.status === "Tạm ngưng";
     }
 
     if (!tabFilter) return false;
@@ -200,11 +198,24 @@ const Areas = () => {
     return area.areaName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  // Sort areas by floor number and room begin (ascending)
+  const sortedAreas = [...filteredAreas].sort((a, b) => {
+    // First sort by floor number (ascending)
+    if (a.floorNumber !== b.floorNumber) {
+      return a.floorNumber - b.floorNumber;
+    }
+    
+    // Then sort by room begin number (ascending)
+    const aRoomBegin = parseInt(a.roomBegin?.toString() || "0");
+    const bRoomBegin = parseInt(b.roomBegin?.toString() || "0");
+    return aRoomBegin - bRoomBegin;
+  });
+
   // Tính toán pagination
-  const totalPages = Math.ceil(filteredAreas.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedAreas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentAreas = filteredAreas.slice(startIndex, endIndex);
+  const currentAreas = sortedAreas.slice(startIndex, endIndex);
 
   // Reset về trang 1 khi search
   const handleSearchChange = (e: any) => {
@@ -342,38 +353,7 @@ const Areas = () => {
             >
               Bảo trì
             </button>
-            <button
-              onClick={() => {
-                setActiveTab("inactive");
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: "12px 24px",
-                border: "none",
-                backgroundColor: "transparent",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                borderBottom:
-                  activeTab === "inactive"
-                    ? "2px solid #FF5B27"
-                    : "2px solid transparent",
-                color: activeTab === "inactive" ? "#FF5B27" : "#6b7280",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e: any) => {
-                if (activeTab !== "inactive") {
-                  e.target.style.color = "#374151";
-                }
-              }}
-              onMouseLeave={(e: any) => {
-                if (activeTab !== "inactive") {
-                  e.target.style.color = "#6b7280";
-                }
-              }}
-            >
-              Tạm ngưng
-            </button>
+            
           </div>
         </div>
 
@@ -745,7 +725,7 @@ const Areas = () => {
                 >
                   <option value="Hoạt động">Hoạt động</option>
                   <option value="Bảo trì">Bảo trì</option>
-                  <option value="Tạm ngưng">Tạm ngưng</option>
+          
                 </select>
               </div>
 
@@ -1077,7 +1057,7 @@ const Areas = () => {
                 >
                   <option value="Hoạt động">Hoạt động</option>
                   <option value="Bảo trì">Bảo trì</option>
-                  <option value="Tạm ngưng">Tạm ngưng</option>
+                  
                 </select>
               </div>
 
