@@ -106,17 +106,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
             >
               Khu vực
             </th>
-            <th
-              style={{
-                padding: "16px",
-                textAlign: "left",
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
-              Nhà vệ sinh
-            </th>
+           
             <th
               style={{
                 padding: "16px",
@@ -212,17 +202,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                 {schedule.areaName || schedule.areaId}
               </td>
 
-              {/* Restroom Name Column */}
-              <td
-                style={{
-                  padding: "16px",
-                  fontSize: "14px",
-                  color: "#6b7280",
-                }}
-              >
-                {schedule.restroomName || schedule.restroomId || "N/A"}
-              </td>
-
+              
               {/* Schedule Type Column */}
               <td style={{ padding: "16px" }}>
                 <span

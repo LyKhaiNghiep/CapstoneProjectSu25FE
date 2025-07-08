@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { HiOutlineDotsVertical, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
+import { PRIORITY_MAPPING_REVERSE, PRIORITY_MAPPING } from "../hooks/useReport";
 
 const ReportTable = ({ reports, onActionClick }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -31,11 +32,95 @@ const ReportTable = ({ reports, onActionClick }) => {
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "đã duyệt":
-        return { backgroundColor: "#dcfce7", color: "#15803d" };
+      case "da duyet":
+      case "approved":
+        return { backgroundColor: "#dcfce7", color: "#15803d" }; // Green
       case "đang duyệt":
-        return { backgroundColor: "#fef3c7", color: "#d97706" };
+      case "dang duyet":
+      case "pending":
+        return { backgroundColor: "#fef3c7", color: "#d97706" }; // Orange/Yellow
       case "hoàn thành":
-        return { backgroundColor: "#ddd6fe", color: "#7c3aed" };
+      case "hoan thanh":
+      case "completed":
+        return { backgroundColor: "#dbeafe", color: "#1d4ed8" }; // Blue
+      case "đã gửi":
+      case "da gui":
+      case "sent":
+        return { backgroundColor: "#e0f2fe", color: "#0369a1" }; // Light blue
+      case "từ chối":
+      case "tu choi":
+      case "rejected":
+        return { backgroundColor: "#fee2e2", color: "#dc2626" }; // Red
+      case "đã xử lý":
+      case "da xu ly":
+      case "processed":
+        return { backgroundColor: "#e0e7ff", color: "#6366f1" }; // Indigo
+      case "chưa xử lý":
+      case "chua xu ly":
+      case "unprocessed":
+        return { backgroundColor: "#f3f4f6", color: "#6b7280" }; // Gray
+      default:
+        return { backgroundColor: "#f3f4f6", color: "#374151" }; // Default gray
+    }
+  };
+
+  const getPriorityDisplay = (priority) => {
+    console.log('Raw priority value:', priority, 'Type:', typeof priority, 'String value:', String(priority));
+    
+    // If priority is undefined or null
+    if (priority === undefined || priority === null) {
+      console.log('Priority is undefined or null');
+      return "Không xác định";
+    }
+    
+    // Convert to string first to handle all cases
+    const priorityStr = String(priority).trim().toLowerCase();
+    console.log('Priority as lowercase string:', priorityStr);
+    
+    // Check direct string matches first (case-insensitive)
+    switch (priorityStr) {
+      case "1":
+        return "Cao";
+      case "2":
+        return "Trung bình";
+      case "3":
+        return "Thấp";
+      case "cao":
+        return "Cao";
+      case "trung bình":
+        return "Trung bình";
+      case "thấp":
+        return "Thấp";
+    }
+    
+    // Try numeric conversion as fallback
+    const priorityNum = Number(priority);
+    console.log('Priority as number:', priorityNum, 'isNaN:', isNaN(priorityNum));
+    
+    if (!isNaN(priorityNum)) {
+      switch (priorityNum) {
+        case 1:
+          return "Cao";
+        case 2:
+          return "Trung bình";
+        case 3:
+          return "Thấp";
+      }
+    }
+    
+    console.log('No match found, returning default');
+    return "Không xác định";
+  };
+
+  const getPriorityStyle = (priority) => {
+    const priorityText = getPriorityDisplay(priority);
+    switch (priorityText) {
+      case "Cao":
+        return { backgroundColor: "#fee2e2", color: "#dc2626" };
+      case "Trung bình":
+        return { backgroundColor: "#fef3c7", color: "#d97706" };
+      case "Thấp":
+        return { backgroundColor: "#dcfce7", color: "#15803d" };
       default:
         return { backgroundColor: "#f3f4f6", color: "#374151" };
     }
@@ -132,7 +217,7 @@ const ReportTable = ({ reports, onActionClick }) => {
                 color: "#374151",
               }}
             >
-              Thời gian
+              Thời gian tạo
             </th>
             <th
               style={{
@@ -198,18 +283,13 @@ const ReportTable = ({ reports, onActionClick }) => {
                    style={{
                      display: "inline-flex",
                      padding: "4px 12px",
-                     fontSize: "12px",
-                     fontWeight: "600",
                      borderRadius: "9999px",
-                     backgroundColor: 
-                       report.priority === "Cao" ? "#fee2e2" :
-                       report.priority === "Trung bình" ? "#fef3c7" : "#dcfce7",
-                     color: 
-                       report.priority === "Cao" ? "#dc2626" :
-                       report.priority === "Trung bình" ? "#d97706" : "#15803d",
+                     fontSize: "12px",
+                     fontWeight: "500",
+                     ...getPriorityStyle(report.priority)
                    }}
                  >
-                   {report.priority || "Trung bình"}
+                   {getPriorityDisplay(report.priority)}
                  </span>
                </td>
 
@@ -254,10 +334,10 @@ const ReportTable = ({ reports, onActionClick }) => {
               >
                 <div>
                   <div style={{ fontSize: "14px", fontWeight: "500", color: "#111827" }}>
-                    {report.createdDate ? new Date(report.createdDate).toLocaleDateString('vi-VN') : "Chưa cập nhật"}
+                    {report.createdAt ? new Date(report.createdAt).toLocaleDateString('vi-VN') : ""}
                   </div>
                   <div style={{ fontSize: "12px", color: "#6b7280" }}>
-                    {report.timeCreated || "00:00"}
+                    {report.createdAt ? new Date(report.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ""}
                   </div>
                 </div>
               </td>

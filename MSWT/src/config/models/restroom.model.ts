@@ -41,7 +41,6 @@ export interface RestroomCreateRequest {
   restroomNumber: string;
   description: string;
   areaId: string;
-  floorId: string;
   status: string;
 }
 

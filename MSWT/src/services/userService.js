@@ -100,24 +100,61 @@ export const userService = {
   // Create new user
   async createUser(userData) {
     try {
+      console.log('🔄 Creating user with data:', userData);
+      
+      // Validate required fields
+      const requiredFields = ['username', 'password', 'name', 'email', 'position', 'phone'];
+      const missingFields = requiredFields.filter(field => !userData[field]);
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`);
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(userData.email)) {
+        throw new Error("Email không đúng định dạng");
+      }
+
+      // Validate phone format (Vietnamese phone numbers)
+      const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+      if (!phoneRegex.test(userData.phone)) {
+        throw new Error("Số điện thoại không đúng định dạng (VD: 0987654321)");
+      }
+
       // Map frontend data to API expected format
       const apiUserData = {
-        userName: userData.username,
+        userName: userData.username.trim(),
         password: userData.password,
-        fullName: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        address: userData.address,
+        fullName: userData.name.trim(),
+        email: userData.email.toLowerCase().trim(),
+        phone: userData.phone.trim(),
+        address: userData.address?.trim() || "",
         status: userData.status || "Hoạt động",
-        image: userData.avatar,
+        image: userData.avatar || "", // Handle image properly
         roleId: this.mapPositionToRoleId(userData.position)
       };
+
+      console.log('🔄 Sending API request to:', `${BASE_API_URL}/${API_URLS.USER.CREATE}`);
+      console.log('📦 API payload:', {
+        ...apiUserData,
+        password: '[HIDDEN]', // Don't log password
+        image: apiUserData.image ? `[IMAGE DATA: ${apiUserData.image.length} chars]` : 'No image'
+      });
       
       const response = await api.post(API_URLS.USER.CREATE, apiUserData);
       
+      console.log('✅ User creation API response:', response.data);
+      console.log('📊 Response status:', response.status);
+      
       // Map response back to frontend format
       const createdUser = response.data;
-      return {
+      
+      if (!createdUser || !createdUser.userId) {
+        throw new Error("API không trả về thông tin người dùng hợp lệ");
+      }
+
+      const mappedUser = {
         id: createdUser.userId,
         name: createdUser.fullName || createdUser.userName,
         username: createdUser.userName,
@@ -125,15 +162,52 @@ export const userService = {
         phone: createdUser.phone,
         address: createdUser.address || "Chưa cập nhật",
         status: createdUser.status || "Hoạt động",
-        avatar: createdUser.image || userData.avatar,
+        avatar: createdUser.image || userData.avatar || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
         createdDate: createdUser.createAt ? createdUser.createAt.split('T')[0] : new Date().toISOString().split('T')[0],
         position: this.mapRoleToPosition(createdUser.roleId),
+        roleId: createdUser.roleId,
         location: "Chưa cập nhật",
         floor: "Chưa cập nhật"
       };
+
+      console.log('✅ Mapped user for frontend:', mappedUser);
+      return mappedUser;
+      
     } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
+      console.error('❌ Error creating user:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
+      
+      // Enhanced error messages based on status code
+      if (error.response?.status === 400) {
+        const apiError = error.response.data?.message || error.response.data?.title || 'Dữ liệu không hợp lệ';
+        throw new Error(`Lỗi 400: ${apiError}`);
+      } else if (error.response?.status === 409) {
+        throw new Error("Tên đăng nhập hoặc email đã tồn tại trong hệ thống");
+      } else if (error.response?.status === 422) {
+        const validationErrors = error.response.data?.errors;
+        if (validationErrors) {
+          const errorMessages = Object.values(validationErrors).flat();
+          throw new Error(`Lỗi xác thực: ${errorMessages.join(', ')}`);
+        }
+        throw new Error("Dữ liệu không đúng định dạng yêu cầu");
+      } else if (error.response?.status === 500) {
+        throw new Error("Lỗi server khi tạo người dùng. Vui lòng thử lại sau.");
+      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+        throw new Error("Không thể kết nối tới server. Kiểm tra kết nối mạng.");
+      }
+      
+      // If it's our validation error, re-throw as is
+      if (error.message.includes('Thiếu thông tin') || error.message.includes('không đúng định dạng')) {
+        throw error;
+      }
+      
+      throw new Error(error.message || "Có lỗi không xác định khi tạo người dùng");
     }
   },
 

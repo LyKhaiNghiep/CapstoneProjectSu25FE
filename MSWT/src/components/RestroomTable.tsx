@@ -31,21 +31,29 @@ const RestroomTable = ({
   console.log("RestroomTable restrooms length:", restrooms?.length);
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    console.log('🔍 Getting status color for:', status, 'type:', typeof status);
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
       case "hoatdong":
+      case "hoạt động":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
       case "baotri":
+      case "bảo trì":
         return { backgroundColor: "#fee2e2", color: "#dc2626" };
       default:
+        console.log('⚠️ Unknown status, using default color:', status);
         return { backgroundColor: "#f3f4f6", color: "#374151" };
     }
   };
 
   const getStatusDisplay = (status: string) => {
-    switch (status.toLowerCase()) {
+    const statusLower = status.toLowerCase();
+    switch (statusLower) {
       case "hoatdong":
+      case "hoạt động":
         return "Hoạt động";
       case "baotri":
+      case "bảo trì":
         return "Bảo trì";
       default:
         return status;
@@ -315,35 +323,7 @@ const RestroomTable = ({
                       />
                       Cập nhật
                     </button>
-                    <button
-                      onClick={() => handleActionSelect("delete", restroom)}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "14px",
-                        color: "#dc2626",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        borderRadius: "0 0 8px 8px",
-                        borderTop: "1px solid #f3f4f6",
-                      }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#fef2f2")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlineTrash
-                        style={{ width: "16px", height: "16px" }}
-                      />
-                      Xóa
-                    </button>
+                    
                   </div>
                 )}
               </td>

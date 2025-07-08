@@ -107,6 +107,7 @@ export const API_URLS = {
     CREATE: `reports`,
     CREATE_LEADER: `reports/leader`, // POST /api/reports/leader - Tạo báo cáo cho Leader
     UPDATE: (id: string) => `reports/${id}`,
+    UPDATE_STATUS: (id: string) => `reports/${id}/status`, // PATCH /api/reports/{id}/status
     DELETE: (id: string) => `reports/${id}`,
   },
 

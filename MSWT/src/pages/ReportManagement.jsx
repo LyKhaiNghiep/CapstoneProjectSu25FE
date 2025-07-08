@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { HiOutlinePlus, HiX } from "react-icons/hi";
 import ReportTable from "../components/ReportTable";
 import Pagination from "../components/Pagination";
-import { useReports, useReportsWithRole, createReport, updateReport, deleteReport, PRIORITY_MAPPING } from "../hooks/useReport";
+import { useReports, useReportsWithRole, useReport, createReport, updateReport, updateReportStatus, deleteReport, PRIORITY_MAPPING, STATUS_MAPPING } from "../hooks/useReport";
 import { useAuth } from "../contexts/AuthContext";
 
 const ReportManagement = () => {
@@ -13,6 +13,7 @@ const ReportManagement = () => {
   const [showViewReportModal, setShowViewReportModal] = useState(false);
   const [showUpdateReportModal, setShowUpdateReportModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [selectedReportId, setSelectedReportId] = useState(null); // ID for detailed API call
   const [updateReportData, setUpdateReportData] = useState({
     reportType: "",
     location: "",
@@ -21,10 +22,12 @@ const ReportManagement = () => {
   const [newReport, setNewReport] = useState({
     title: "",
     description: "",
-    priority: "Trung bình",
+    priority: 2,
     reportedTo: "", // Nhân viên được báo cáo
     image: null, // File hình ảnh
-    imagePreview: null // URL preview hình ảnh
+    imagePreview: null, // URL preview hình ảnh
+    reportType: "",
+    status: "Đang duyệt"
   });
 
   const itemsPerPage = 5; // Số báo cáo hiển thị mỗi trang
@@ -34,6 +37,16 @@ const ReportManagement = () => {
   // API hooks - now using single call to get all reports with role info
   const { reports: allReports, isLoading: allLoading, isError: allError, refresh: refreshAll } = useReports();
   const { reports: reportsWithRole, isLoading: roleLoading, isError: roleError, refresh: refreshWithRole } = useReportsWithRole();
+  
+  // Hook for detailed report view
+  const { report: detailedReport, isLoading: detailLoading, isError: detailError } = useReport(selectedReportId);
+
+  // Debug detailed report data
+  console.log('🔍 Detailed Report Data:', detailedReport);
+  console.log('🔍 Available fields:', detailedReport ? Object.keys(detailedReport) : 'No data');
+  console.log('🔍 reportedBy field:', detailedReport?.reportedBy);
+  console.log('🔍 createdBy field:', detailedReport?.createdBy);
+  console.log('🔍 userName field:', detailedReport?.userName);
 
   // Get reports based on active tab
   const getReportsForTab = () => {
@@ -75,7 +88,8 @@ const ReportManagement = () => {
 
   const handleActionClick = ({ action, report }) => {
     if (action === 'view') {
-      setSelectedReport(report);
+      setSelectedReportId(report.id); // Set ID to trigger API call
+      setSelectedReport(report); // Keep basic info for immediate display
       setShowViewReportModal(true);
     } else if (action === 'update') {
       setSelectedReport(report);
@@ -91,6 +105,7 @@ const ReportManagement = () => {
   const handleCloseViewModal = () => {
     setShowViewReportModal(false);
     setSelectedReport(null);
+    setSelectedReportId(null); // Reset detailed report ID
   };
 
   const handleCloseUpdateModal = () => {
@@ -113,22 +128,77 @@ const ReportManagement = () => {
   const handleSubmitUpdate = (e) => {
     e.preventDefault();
     if (selectedReport && updateReportData.status) {
-      // Call API to update report
-      updateReport(selectedReport.id, {
-        status: updateReportData.status,
-        reportType: updateReportData.reportType,
-        location: updateReportData.location,
+      // Convert Vietnamese status to number for API
+      const statusNumber = STATUS_MAPPING[updateReportData.status];
+      
+      if (!statusNumber) {
+        alert("❌ Trạng thái không hợp lệ!");
+        return;
+      }
+      
+      // Try different status formats that API might expect
+      const statusFormats = {
+        number: statusNumber,
+        string: updateReportData.status,
+        enum: statusNumber === 1 ? "DaGui" : statusNumber === 2 ? "DangXuLy" : "DaHoanThanh"
+      };
+      
+      console.log('🔄 Trying different status formats:', {
+        reportId: selectedReport.id,
+        statusText: updateReportData.status,
+        statusFormats,
+        apiUrl: `https://capstoneproject-mswt-su25.onrender.com/api/reports/${selectedReport.id}/status`
+      });
+      
+      // Try with number format first
+      updateReportStatus(selectedReport.id, {
+        status: statusNumber
       })
       .then(() => {
         // Refresh all tabs data
         refreshAll();
         refreshWithRole();
-    handleCloseUpdateModal();
-    alert("✅ Đã cập nhật trạng thái báo cáo thành công!");
+        handleCloseUpdateModal();
+        alert("✅ Đã cập nhật trạng thái báo cáo thành công!");
       })
-      .catch((error) => {
-        console.error("Error updating report:", error);
-        alert("❌ Có lỗi xảy ra khi cập nhật báo cáo!");
+      .catch(async (error) => {
+        console.error("Error with number format:", error);
+        
+        // If number format fails, try enum string format
+        try {
+          console.log('🔄 Trying enum string format...');
+          const enumStatus = statusNumber === 1 ? "DaGui" : statusNumber === 2 ? "DangXuLy" : "DaHoanThanh";
+          await updateReportStatus(selectedReport.id, {
+            status: enumStatus
+          });
+          
+          // Success with enum format
+          refreshAll();
+          refreshWithRole();
+          handleCloseUpdateModal();
+          alert("✅ Đã cập nhật trạng thái báo cáo thành công!");
+          
+        } catch (enumError) {
+          console.error("Error with enum format:", enumError);
+          
+          // If enum format also fails, try Vietnamese string
+          try {
+            console.log('🔄 Trying Vietnamese string format...');
+            await updateReportStatus(selectedReport.id, {
+              status: updateReportData.status
+            });
+            
+            // Success with Vietnamese format
+            refreshAll();
+            refreshWithRole();
+            handleCloseUpdateModal();
+            alert("✅ Đã cập nhật trạng thái báo cáo thành công!");
+            
+          } catch (vietnameseError) {
+            console.error("All formats failed:", vietnameseError);
+            alert("❌ Không thể cập nhật báo cáo. Vui lòng kiểm tra lại API: " + vietnameseError.message);
+          }
+        }
       });
     }
   };
@@ -142,10 +212,12 @@ const ReportManagement = () => {
     setNewReport({
       title: "",
       description: "",
-      priority: "Trung bình",
-      reportedTo: "",
+      priority: 2,
+      reportedTo: "", 
       image: null,
-      imagePreview: null
+      imagePreview: null,
+      reportType: "",
+      status: "Đang duyệt"
     });
   };
 
@@ -185,45 +257,53 @@ const ReportManagement = () => {
   const handleSubmitReport = (e) => {
     e.preventDefault();
     
-    if (newReport.title && newReport.description) {
-      // Prepare data for Leader API format
-      const reportData = {
-        description: newReport.description,
-        reportName: newReport.title,
-        image: newReport.imagePreview || "", // Base64 string or empty string
-        priority: PRIORITY_MAPPING[newReport.priority] || 2, // Map to number (default: Medium)
-        reportType: 1, // Default report type
-      };
+    console.log('Form data:', {
+      reportType: newReport.reportType,
+      description: newReport.description,
+      priority: newReport.priority
+    });
 
-      console.log('🔄 Creating report with data:', reportData);
-
-      // Call API to create report
-      createReport(reportData)
-        .then(() => {
-          // Refresh all tabs data
-          refreshAll();
-          refreshWithRole();
-          
-          // Reset form
-          setNewReport({
-            title: "",
-            description: "",
-            priority: "Trung bình",
-            reportedTo: "",
-            image: null,
-            imagePreview: null
-          });
-          
-          handleClosePopup();
-          alert("✅ Đã thêm báo cáo mới thành công!");
-        })
-        .catch((error) => {
-          console.error("Error creating report:", error);
-          alert("❌ Có lỗi xảy ra khi tạo báo cáo: " + error.message);
-        });
-    } else {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+    if (!newReport.reportType) {
+      alert("Vui lòng chọn loại báo cáo!");
+      return;
     }
+
+    if (!newReport.description) {
+      alert("Vui lòng nhập mô tả!");
+      return;
+    }
+
+    if (!newReport.priority) {
+      alert("Vui lòng chọn mức độ ưu tiên!");
+      return;
+    }
+
+    // Prepare data for Leader API format
+    const reportData = {
+      description: newReport.description,
+      reportName: newReport.reportType === "1" ? "Báo cáo sự cố" : "Báo cáo nhân viên",
+      image: newReport.imagePreview || "",
+      priority: typeof newReport.priority === 'string' ? 
+        PRIORITY_MAPPING[newReport.priority] || 2 : 
+        newReport.priority,
+      reportType: parseInt(newReport.reportType),
+    };
+
+    console.log('🔄 Sending report data:', reportData);
+
+    // Call API to create report
+    createReport(reportData)
+      .then(() => {
+        // Refresh all tabs data
+        refreshAll();
+        refreshWithRole();
+        handleClosePopup();
+        alert("✅ Đã tạo báo cáo thành công!");
+      })
+      .catch((error) => {
+        console.error("Error creating report:", error);
+        alert("❌ Có lỗi xảy ra khi tạo báo cáo: " + error.message);
+      });
   };
 
   // Filter reports based on active tab and priority filter
@@ -506,9 +586,9 @@ const ReportManagement = () => {
               onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
             >
               <option value="">Tất cả</option>
-              <option value="Cao">Cao</option>
-              <option value="Trung bình">Trung bình</option>
-              <option value="Thấp">Thấp</option>
+              <option value="1">Cao</option>  
+              <option value="2">Trung bình</option>
+              <option value="3">Thấp</option>
             </select>
           </div>
 
@@ -704,15 +784,13 @@ const ReportManagement = () => {
                     color: "#374151",
                   }}
                 >
-                  Tên báo cáo *
+                  Loại báo cáo *
                 </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={newReport.title}
+                <select
+                  name="reportType"
+                  value={newReport.reportType}
                   onChange={handleInputChange}
                   required
-                  placeholder="Nhập tên báo cáo"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -721,10 +799,15 @@ const ReportManagement = () => {
                     fontSize: "14px",
                     outline: "none",
                     transition: "border-color 0.2s",
+                    backgroundColor: "white",
                   }}
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                />
+                >
+                  <option value="">Chọn loại báo cáo</option>
+                  <option value="1">Báo cáo sự cố</option>
+                  <option value="2">Báo cáo nhân viên</option>
+                </select>
               </div>
 
               <div style={{ marginBottom: "16px" }}>
@@ -757,9 +840,9 @@ const ReportManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="Thấp">Thấp</option>
-                  <option value="Trung bình">Trung bình</option>
-                  <option value="Cao">Cao</option>
+                  <option value="3">Thấp</option>
+                  <option value="2">Trung bình</option>
+                  <option value="1">Cao</option>
                 </select>
               </div>
 
@@ -795,50 +878,6 @@ const ReportManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Báo cáo giám sát viên *
-                </label>
-                <select
-                  name="reportedTo"
-                  value={newReport.reportedTo}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                    backgroundColor: "white",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  <option value="">Chọn nhân viên</option>
-                  <option value="Nguyễn Văn A">Nguyễn Văn A</option>
-                  <option value="Trần Thị B">Trần Thị B</option>
-                  <option value="Lê Văn C">Lê Văn C</option>
-                  <option value="Phạm Thị D">Phạm Thị D</option>
-                  <option value="Hoàng Văn E">Hoàng Văn E</option>
-                  <option value="Võ Thị F">Võ Thị F</option>
-                  <option value="Đặng Văn G">Đặng Văn G</option>
-                  <option value="Bùi Thị H">Bùi Thị H</option>
-                  <option value="Ngô Văn I">Ngô Văn I</option>
-                  <option value="Lý Thị K">Lý Thị K</option>
-                </select>
               </div>
 
               <div style={{ marginBottom: "24px" }}>
@@ -1010,7 +1049,7 @@ const ReportManagement = () => {
                   margin: 0,
                 }}
               >
-                Chi tiết báo cáo
+                Chi tiết báo cáo {detailLoading && "(Đang tải...)"}
               </h2>
               <button
                 onClick={handleCloseViewModal}
@@ -1029,163 +1068,177 @@ const ReportManagement = () => {
               </button>
             </div>
 
-            {/* Image at the top */}
-            {selectedReport.imageUrl && (
-              <div style={{ marginBottom: "24px" }}>
-                <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280", marginBottom: "8px", display: "block" }}>
-                  Hình ảnh minh chứng
-                </label>
-                <div style={{ textAlign: "center" }}>
-                  <img
-                    src={selectedReport.imageUrl}
-                    alt="Hình ảnh báo cáo"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "300px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      objectFit: "contain",
-                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                    }}
-                    onClick={(e) => {
-                      // Mở hình ảnh trong tab mới khi click
-                      window.open(e.target.src, '_blank');
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.cursor = "pointer";
-                      e.target.style.opacity = "0.9";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.opacity = "1";
-                    }}
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                  
-                </div>
+            {/* Loading state */}
+            {detailLoading && (
+              <div style={{ textAlign: "center", padding: "20px", color: "#6b7280" }}>
+                <div style={{ fontSize: "14px" }}>Đang tải chi tiết báo cáo...</div>
               </div>
             )}
 
-            {/* Report Info */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              {/* Report Details */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                    Loại báo cáo
-                  </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedReport.reportType}
-                  </p>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                    Địa điểm
-                  </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedReport.location}
-                  </p>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                    Mức độ ưu tiên
-                  </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        padding: "4px 12px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        borderRadius: "9999px",
-                        backgroundColor: 
-                          selectedReport.priority === "Cao" ? "#fee2e2" :
-                          selectedReport.priority === "Trung bình" ? "#fef3c7" : "#dcfce7",
-                        color: 
-                          selectedReport.priority === "Cao" ? "#dc2626" :
-                          selectedReport.priority === "Trung bình" ? "#d97706" : "#15803d",
-                      }}
-                    >
-                      {selectedReport.priority}
-                    </span>
-                  </p>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                    Trạng thái
-                  </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", margin: "4px 0 0 0" }}>
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        padding: "4px 12px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        borderRadius: "9999px",
-                        backgroundColor: 
-                          selectedReport.status === "Đã duyệt" ? "#dcfce7" :
-                          selectedReport.status === "Đang duyệt" ? "#fef3c7" : "#fee2e2",
-                        color: 
-                          selectedReport.status === "Đã duyệt" ? "#15803d" :
-                          selectedReport.status === "Đang duyệt" ? "#d97706" : "#dc2626",
-                      }}
-                    >
-                      {selectedReport.status}
-                    </span>
-                  </p>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                    Người báo cáo
-                  </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedReport.reportedBy}
-                  </p>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                    Liên hệ
-                  </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedReport.contactInfo}
-                  </p>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                    Ngày tạo
-                  </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedReport.createdDate ? new Date(selectedReport.createdDate).toLocaleDateString('vi-VN') : "Chưa cập nhật"}
-                  </p>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                    Thời gian
-                  </label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
-                    {selectedReport.timeCreated || "Chưa cập nhật"}
-                  </p>
-                </div>
+            {/* Error state */}
+            {detailError && (
+              <div style={{ textAlign: "center", padding: "20px", color: "#dc2626" }}>
+                <div style={{ fontSize: "14px" }}>Không thể tải chi tiết báo cáo. Vui lòng thử lại.</div>
               </div>
+            )}
 
-              {/* Description - Full width */}
-              <div>
-                <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                  Mô tả chi tiết
-                </label>
-                <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0", lineHeight: "1.5" }}>
-                  {selectedReport.description || "Chưa có mô tả"}
-                </p>
-              </div>
-            </div>
+            {/* Report content */}
+            {!detailLoading && !detailError && (
+              <>
+                {/* Image at the top */}
+                {(detailedReport?.imageUrl || selectedReport.imageUrl) && (
+                  <div style={{ marginBottom: "24px" }}>
+                    <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280", marginBottom: "8px", display: "block" }}>
+                      Hình ảnh minh chứng
+                    </label>
+                    <div style={{ textAlign: "center" }}>
+                      <img
+                        src={detailedReport?.imageUrl || selectedReport.imageUrl}
+                        alt="Hình ảnh báo cáo"
+                        style={{
+                          maxWidth: "100%",
+                          maxHeight: "300px",
+                          border: "1px solid #d1d5db",
+                          borderRadius: "8px",
+                          objectFit: "contain",
+                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+                        }}
+                        onClick={(e) => {
+                          // Mở hình ảnh trong tab mới khi click
+                          window.open(e.target.src, '_blank');
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.cursor = "pointer";
+                          e.target.style.opacity = "0.9";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.opacity = "1";
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                        }}
+                      />
+                      
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+                {/* Report Info */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                  {/* Report Details */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                    <div>
+                      <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                        Loại báo cáo
+                      </label>
+                      <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
+                        {detailedReport?.reportType || selectedReport.reportType}
+                      </p>
+                    </div>
+
+                   
+
+                    <div>
+                      <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                        Mức độ ưu tiên
+                      </label>
+                      <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            padding: "4px 12px",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            borderRadius: "9999px",
+                            backgroundColor: 
+                              (detailedReport?.priority || selectedReport.priority) === 1 ? "#fee2e2" :
+                              (detailedReport?.priority || selectedReport.priority) === 2 ? "#fef3c7" : "#dcfce7",
+                            color: 
+                              (detailedReport?.priority || selectedReport.priority) === 1 ? "#dc2626" :
+                              (detailedReport?.priority || selectedReport.priority) === 2 ? "#d97706" : "#15803d",
+                          }}
+                        >
+                          {detailedReport?.priority || selectedReport.priority}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                        Trạng thái
+                      </label>
+                      <p style={{ fontSize: "16px", fontWeight: "600", margin: "4px 0 0 0" }}>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            padding: "4px 12px",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            borderRadius: "9999px",
+                            backgroundColor: 
+                              (detailedReport?.status || selectedReport.status) === "Đã duyệt" ? "#dcfce7" :
+                              (detailedReport?.status || selectedReport.status) === "Đang duyệt" ? "#fef3c7" : "#fee2e2",
+                            color: 
+                              (detailedReport?.status || selectedReport.status) === "Đã duyệt" ? "#15803d" :
+                              (detailedReport?.status || selectedReport.status) === "Đang duyệt" ? "#d97706" : "#dc2626",
+                          }}
+                        >
+                          {detailedReport?.status || selectedReport.status}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                        Người báo cáo
+                      </label>
+                      <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
+                        {detailedReport?.reportedBy || 
+                         detailedReport?.createdBy || 
+                         detailedReport?.userName || 
+                         selectedReport.reportedBy || 
+                         selectedReport.createdBy || 
+                         selectedReport.userName || 
+                         "Không có thông tin"}
+                      </p>
+                    </div>
+
+
+                    <div>
+                      <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                        Thời gian tạo
+                      </label>
+                      <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>
+                        {(detailedReport?.createdAt || selectedReport.createdAt) ? (
+                          <>
+                            <div style={{ fontSize: "16px", fontWeight: "600" }}>
+                              {new Date(detailedReport?.createdAt || selectedReport.createdAt).toLocaleDateString('vi-VN')}
+                            </div>
+                            <div style={{ fontSize: "14px", color: "#6b7280", fontWeight: "normal" }}>
+                              {new Date(detailedReport?.createdAt || selectedReport.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </>
+                        ) : (
+                          "Chưa cập nhật"
+                        )}
+                      </p>
+                    </div>
+
+                    
+
+                    {/* Description - Full width */}
+                    <div style={{ gridColumn: "1 / -1" }}>
+                      <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                        Mô tả chi tiết
+                      </label>
+                      <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0", lineHeight: "1.5" }}>
+                        {detailedReport?.description || selectedReport.description || "Chưa có mô tả"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
             {/* Close Button */}
             <div style={{ textAlign: "right", marginTop: "24px" }}>
@@ -1309,34 +1362,7 @@ const ReportManagement = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Địa điểm 
-                </label>
-                <input
-                  type="text"
-                  value={updateReportData.location}
-                  disabled
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    backgroundColor: "#f9fafb",
-                    color: "#6b7280",
-                    cursor: "not-allowed",
-                  }}
-                />
-              </div>
+             
 
               <div style={{ marginBottom: "24px" }}>
                 <label
@@ -1351,6 +1377,7 @@ const ReportManagement = () => {
                   Trạng thái *
                 </label>
                 <select
+                  name="status"
                   value={updateReportData.status}
                   onChange={handleUpdateStatusChange}
                   required
@@ -1367,9 +1394,10 @@ const ReportManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="Đang duyệt">Đang duyệt</option>
-                  <option value="Đã duyệt">Đã duyệt</option>
-                  <option value="Hoàn thành">Hoàn thành</option>
+                  <option value="">Chọn trạng thái</option>
+                  <option value="Đã gửi">Đã gửi</option>
+                  <option value="Đang xử lý">Đang xử lý</option>
+                  <option value="Đã hoàn thành">Đã hoàn thành</option>
                 </select>
               </div>
 

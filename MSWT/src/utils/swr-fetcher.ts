@@ -4,9 +4,12 @@ import { BASE_API_URL } from "../constants/api-urls";
 // Create axios instance for SWR
 const swrAxios = axios.create({
   baseURL: BASE_API_URL,
-  timeout: 10000,
+  timeout: 30000, // Increase timeout to 30s
   headers: {
     "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
   },
 });
 
@@ -78,10 +81,13 @@ const getErrorMessage = (status: number): string => {
   }
 };
 
-// SWR fetcher function
-export const swrFetcher = async (url: string, options?: RequestInit) => {
-  let response;
+// SWR fetcher function with retry logic
+export const swrFetcher = async (url: string, options?: RequestInit, retryCount = 0) => {
+  const maxRetries = 3;
+  
   try {
+    let response;
+    
     if (options) {
       // For POST, PUT, DELETE requests
       response = await swrAxios({
@@ -100,7 +106,15 @@ export const swrFetcher = async (url: string, options?: RequestInit) => {
 
     return response.data;
   } catch (error: any) {
-    console.error(`SWR Fetcher Error for ${url}:`, error);
+    console.error(`SWR Fetcher Error for ${url} (Attempt ${retryCount + 1}):`, error);
+    
+    // Retry on network errors or timeouts
+    if (retryCount < maxRetries && (!error.response || error.code === 'ECONNABORTED')) {
+      console.log(`Retrying request to ${url} in ${(retryCount + 1) * 1000}ms...`);
+      await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000));
+      return swrFetcher(url, options, retryCount + 1);
+    }
+    
     throw error;
   }
 };

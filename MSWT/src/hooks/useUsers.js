@@ -1,8 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import useSWR, { mutate } from 'swr';
 import userService from '../services/userService';
+import { API_URLS } from '../constants/api-urls';
+
+// SWR fetcher function for users
+const usersFetcher = async (url) => {
+  const params = {};
+  // Extract any query parameters from the URL if needed
+  return await userService.getAllUsers(params);
+};
 
 export const useUsers = () => {
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
@@ -12,25 +20,27 @@ export const useUsers = () => {
     itemsPerPage: 10
   });
 
-  // Fetch users from API
+  // Use SWR for automatic data fetching and caching
+  const { data: users, error: swrError, isLoading } = useSWR(
+    API_URLS.USER.GET_ALL,
+    usersFetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      errorRetryCount: 3
+    }
+  );
+
+  // Fetch users manually (for custom parameters)
   const fetchUsers = useCallback(async (params = {}) => {
     setLoading(true);
     setError(null);
     
     try {
       const response = await userService.getAllUsers(params);
-      
-      // Handle different response structures
-      if (response.data) {
-        setUsers(response.data);
-        if (response.pagination) {
-          setPagination(response.pagination);
-        }
-      } else if (Array.isArray(response)) {
-        setUsers(response);
-      } else {
-        setUsers([]);
-      }
+      // Trigger SWR revalidation
+      mutate(API_URLS.USER.GET_ALL);
+      return response;
     } catch (err) {
       setError(err.message || 'Failed to fetch users');
       console.error('Error fetching users:', err);
@@ -46,7 +56,8 @@ export const useUsers = () => {
     
     try {
       const newUser = await userService.createUser(userData);
-      setUsers(prevUsers => [...prevUsers, newUser]);
+      // Trigger SWR revalidation to refresh the list
+      mutate(API_URLS.USER.GET_ALL);
       return newUser;
     } catch (err) {
       setError(err.message || 'Failed to create user');
@@ -63,11 +74,8 @@ export const useUsers = () => {
     
     try {
       const updatedUser = await userService.updateUser(id, userData);
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === id ? { ...user, ...updatedUser } : user
-        )
-      );
+      // Trigger SWR revalidation to refresh the list
+      mutate(API_URLS.USER.GET_ALL);
       return updatedUser;
     } catch (err) {
       setError(err.message || 'Failed to update user');
@@ -84,8 +92,8 @@ export const useUsers = () => {
     
     try {
       const result = await userService.updateUserStatus(id, statusData);
-      // Refresh users list to get updated data
-      await fetchUsers();
+      // Trigger SWR revalidation to refresh the list
+      mutate(API_URLS.USER.GET_ALL);
       return result;
     } catch (err) {
       setError(err.message || 'Failed to update user status');
@@ -93,7 +101,7 @@ export const useUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchUsers]);
+  }, []);
 
   // Delete user
   const deleteUser = useCallback(async (id) => {
@@ -102,7 +110,8 @@ export const useUsers = () => {
     
     try {
       await userService.deleteUser(id);
-      setUsers(prevUsers => prevUsers.filter(user => user.id !== id));
+      // Trigger SWR revalidation to refresh the list
+      mutate(API_URLS.USER.GET_ALL);
     } catch (err) {
       setError(err.message || 'Failed to delete user');
       throw err;
@@ -118,32 +127,20 @@ export const useUsers = () => {
     
     try {
       const response = await userService.searchUsers(searchParams);
-      
-      if (response.data) {
-        setUsers(response.data);
-        if (response.pagination) {
-          setPagination(response.pagination);
-        }
-      } else if (Array.isArray(response)) {
-        setUsers(response);
-      }
+      return response;
     } catch (err) {
       setError(err.message || 'Failed to search users');
       console.error('Error searching users:', err);
+      return [];
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Initialize users on mount
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
   return {
-    users,
-    loading,
-    error,
+    users: users || [],
+    loading: isLoading || loading,
+    error: swrError || error,
     pagination,
     fetchUsers,
     createUser,
@@ -151,8 +148,7 @@ export const useUsers = () => {
     updateUserStatus,
     deleteUser,
     searchUsers,
-    setUsers,
-    setError
+    refresh: () => mutate(API_URLS.USER.GET_ALL)
   };
 };
 

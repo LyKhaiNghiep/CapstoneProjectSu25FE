@@ -71,3 +71,40 @@ export type IActionType = "view" | "update" | "delete";
 export type IError = {
   message: string;
 };
+
+export interface TrashBin {
+  trashBinId: string;
+  status: string;
+  areaId: string;
+  location?: string;
+  image?: string;
+  restroomId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  area?: {
+    areaId: string;
+    areaName: string;
+    floorNumber: number;
+    floorId: string;
+  };
+  alerts?: any[];
+  requests?: any[];
+  restroom?: any;
+  schedules?: any[];
+  sensorBins?: any[];
+}
+
+export interface TrashBinCreateRequest {
+  areaId: string;
+  location: string;
+  image?: string;
+  restroomId?: string;
+}
+
+export interface TrashBinUpdateRequest {
+  status?: string;
+  areaId?: string;
+  location?: string;
+  image?: string;
+  restroomId?: string;
+}

@@ -100,8 +100,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
                 color: "#374151",
                 position: "relative",
               }}
-            >
-              Tầng
+              >
+                Tầng
             </th>
             <th
               style={{

@@ -146,9 +146,9 @@ const Floors = () => {
     }
 
     try {
-      await createAsync(newFloor);
-      handleClosePopup();
-      showNotificationMessage("success", "Đã thêm tầng thành công!");
+    await createAsync(newFloor);
+    handleClosePopup();
+    showNotificationMessage("success", "Đã thêm tầng thành công!");
     } catch (error) {
       console.error("Error creating floor:", error);
       showNotificationMessage("error", "Có lỗi xảy ra khi thêm tầng!");
