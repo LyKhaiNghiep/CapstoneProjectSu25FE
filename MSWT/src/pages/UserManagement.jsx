@@ -19,7 +19,8 @@ const UserManagement = () => {
     name: "",
     position: "",
     status: "",
-    resignationReason: ""
+    resignationReason: "",
+    terminationNote: ""
   });
   const [newUser, setNewUser] = useState({
     name: "",
@@ -29,11 +30,12 @@ const UserManagement = () => {
     position: "",
     phone: "",
     address: "",
-    status: "Đang làm việc",
+    status: "Đã có lịch",
     avatar: "",
     avatarFile: null
   });
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false); // Local loading state for form submission
 
   const itemsPerPage = 5; // Số user hiển thị mỗi trang
 
@@ -81,7 +83,8 @@ const UserManagement = () => {
         name: user.name,
         position: user.position,
         status: user.status,
-        resignationReason: user.resignationReason || ""
+        resignationReason: user.resignationReason || "",
+        terminationNote: user.terminationNote || ""
       });
       setShowUpdateUserModal(true);
     }
@@ -99,7 +102,8 @@ const UserManagement = () => {
       name: "",
       position: "",
       status: "",
-      resignationReason: ""
+      resignationReason: "",
+      terminationNote: ""
     });
   };
 
@@ -107,7 +111,8 @@ const UserManagement = () => {
     setUpdateUserData(prev => ({
       ...prev,
       status: e.target.value,
-      resignationReason: e.target.value === "Nghỉ việc" ? prev.resignationReason : ""
+      resignationReason: e.target.value === "Nghỉ việc" ? prev.resignationReason : "",
+      terminationNote: e.target.value === "Thôi việc" ? prev.terminationNote : ""
     }));
   };
 
@@ -118,73 +123,97 @@ const UserManagement = () => {
     }));
   };
 
+  const handleTerminationNoteChange = (e) => {
+    setUpdateUserData(prev => ({
+      ...prev,
+      terminationNote: e.target.value
+    }));
+  };
+
   const mapStatusToRole = (status) => {
+    const statusLower = status?.toLowerCase();
     const statusToRoleMap = {
-      'Đang làm việc': 'Nhân viên vệ sinh',
-      'Nghỉ việc': 'Nghỉ việc', 
-      'Tạm nghỉ': 'Tạm nghỉ'
+      'đã có lịch': 'Đã có lịch',
+      'đang làm việc': 'Đã có lịch',
+      'hoạt động': 'Đã có lịch',
+      'nghỉ việc': 'Nghỉ việc', 
+      'thôi việc': 'Thôi việc',
+      'tạm nghỉ': 'Tạm nghỉ',
+      'chưa xác thực': 'Chưa xác thực',
+      'đang trống lịch': 'Đang trống lịch',
+      'nghỉ phép': 'Nghỉ phép'
     };
-    return statusToRoleMap[status] || status;
+    return statusToRoleMap[statusLower] || status;
   };
 
   const mapStatusToRoleId = (status) => {
+    const statusLower = status?.toLowerCase();
     const statusToRoleIdMap = {
-      'Đang làm việc': 'RL04', // Worker roleId
-      'Nhân viên vệ sinh': 'RL04',
-      'Giám sát viên vệ sinh': 'RL03', // Supervisor roleId  
-      'Quản lý cấp cao': 'RL01', // Manager roleId
-      'Quản trị hệ thống': 'RL02' // Admin roleId
+      'đã có lịch': 'RL04', // Worker roleId
+      'đang làm việc': 'RL04', // Worker roleId
+      'hoạt động': 'RL04', // Worker roleId
+      'nhân viên vệ sinh': 'RL04',
+      'giám sát viên vệ sinh': 'RL03', // Supervisor roleId  
+      'quản lý cấp cao': 'RL01', // Manager roleId
+      'quản trị hệ thống': 'RL02', // Admin roleId
+      'chưa xác thực': 'RL04', // Default to worker
+      'đang trống lịch': 'RL04', // Worker roleId
+      'nghỉ phép': 'RL04', // Worker roleId
+      'thôi việc': 'RL04' // Worker roleId
     };
-    return statusToRoleIdMap[status] || 'RL04'; // Default to worker
+    return statusToRoleIdMap[statusLower] || 'RL04'; // Default to worker
   };
 
   const handleSubmitUpdate = async (e) => {
     e.preventDefault();
+    
+    // Validation cho trạng thái "Nghỉ việc"
+    if (updateUserData.status === "Nghỉ việc" && !updateUserData.resignationReason.trim()) {
+      showNotification("❌ Vui lòng nhập lý do nghỉ việc!", "error");
+      return;
+    }
+
+    // Validation cho trạng thái "Thôi việc"
+    if (updateUserData.status === "Thôi việc" && !updateUserData.terminationNote.trim()) {
+      showNotification("❌ Vui lòng nhập ghi chú thôi việc!", "error");
+      return;
+    }
+
     try {
-      // Thử nhiều format khác nhau để tìm đúng API format
-      const formats = [
-        // Format 1: role string theo documentation  
-        { role: mapStatusToRole(updateUserData.status) },
-        // Format 2: roleId (có thể API cần roleId)
-        { roleId: mapStatusToRoleId(updateUserData.status) },
-        // Format 3: status field
-        { status: updateUserData.status },
-        // Format 4: role với roleId value
-        { role: mapStatusToRoleId(updateUserData.status) }
-      ];
+      // API yêu cầu JSON object với field "note"
+      let noteText = "";
+      
+      if (updateUserData.status === "Nghỉ việc") {
+        noteText = updateUserData.resignationReason;
+      } else if (updateUserData.status === "Thôi việc") {
+        noteText = updateUserData.terminationNote;
+      } else {
+        noteText = `Cập nhật trạng thái: ${updateUserData.status}`;
+      }
+
+      const requestBody = {
+        note: noteText
+      };
 
       console.log('🔍 User ID:', selectedUser.id);
-      console.log('🔍 Available formats to try:', formats);
+      console.log('🔍 Request body:', requestBody);
+      console.log('🔍 Status being updated:', updateUserData.status);
 
-      let success = false;
-      let lastError = null;
-
-      // Thử từng format cho đến khi thành công
-      for (let i = 0; i < formats.length; i++) {
-        try {
-          console.log(`🔍 Trying format ${i + 1}:`, formats[i]);
-          await apiUpdateUserStatus(selectedUser.id, formats[i]);
-          console.log(`✅ Format ${i + 1} worked!`);
-          success = true;
-          break;
-        } catch (error) {
-          console.log(`❌ Format ${i + 1} failed:`, error.response?.data || error.message);
-          lastError = error;
-          continue;
-        }
-      }
-
-      if (success) {
-        showNotification("✅ Đã cập nhật trạng thái thành công!");
-        handleCloseUpdateModal();
-      } else {
-        throw lastError;
-      }
+      await apiUpdateUserStatus(selectedUser.id, requestBody);
+      
+      showNotification("✅ Đã cập nhật trạng thái thành công!");
+      
+      // Refresh danh sách user để hiển thị status mới
+      await fetchUsers();
+      
+      handleCloseUpdateModal();
       
     } catch (error) {
-      console.error('Error updating user status - all formats failed:', error);
+      console.error('Error updating user status:', error);
       console.error('Error details:', error.response?.data);
-      showNotification("❌ Có lỗi xảy ra khi cập nhật! Kiểm tra console để debug.", "error");
+      
+      const errorMessage = error.response?.data?.message || error.message || "Có lỗi xảy ra khi cập nhật!";
+      showNotification(`❌ ${errorMessage}`, "error");
     }
   };
 
@@ -202,7 +231,7 @@ const UserManagement = () => {
       position: "",
       phone: "",
       address: "",
-      status: "Đang làm việc",
+      status: "Đã có lịch",
       avatar: "",
       avatarFile: null
     });
@@ -228,28 +257,79 @@ const UserManagement = () => {
 
   const handleSubmitUser = async (e) => {
     e.preventDefault();
-    if (newUser.name && newUser.username && newUser.password && newUser.email && newUser.position && newUser.phone && newUser.address) {
-      try {
-        const userToAdd = {
-          ...newUser,
-          avatar: newUser.avatar || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
-          createdDate: new Date().toISOString().split('T')[0]
-        };
-        // Remove avatarFile from the user object since it's just for preview
-        delete userToAdd.avatarFile;
-        
-        // Create user via API
-        const createdUser = await apiCreateUser(userToAdd);
-        showNotification("✅ Đã thêm nhân viên thành công!");
-        console.log('Created user via API:', createdUser);
-        
-        handleClosePopup();
-      } catch (error) {
-        console.error('Error creating user:', error);
-        showNotification("❌ Có lỗi xảy ra khi thêm nhân viên!", "error");
-      }
-    } else {
-      showNotification("❌ Vui lòng điền đầy đủ thông tin bắt buộc!", "error");
+    
+    console.log('🔄 Submitting user form with data:', newUser);
+    
+    // Enhanced validation
+    const requiredFields = [
+      { field: 'name', label: 'Họ và tên' },
+      { field: 'username', label: 'Tên đăng nhập' },
+      { field: 'password', label: 'Mật khẩu' },
+      { field: 'email', label: 'Email' },
+      { field: 'position', label: 'Chức vụ' },
+      { field: 'phone', label: 'Số điện thoại' }
+    ];
+
+    const missingFields = requiredFields.filter(({ field }) => !newUser[field]?.trim());
+    
+    if (missingFields.length > 0) {
+      const missingLabels = missingFields.map(({ label }) => label).join(', ');
+      showNotification(`❌ Vui lòng điền đầy đủ: ${missingLabels}`, "error");
+      return;
+    }
+
+    // Additional client-side validation
+    if (newUser.password.length < 6) {
+      showNotification("❌ Mật khẩu phải có ít nhất 6 ký tự!", "error");
+      return;
+    }
+
+    if (newUser.username.length < 3) {
+      showNotification("❌ Tên đăng nhập phải có ít nhất 3 ký tự!", "error");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      const userToAdd = {
+        name: newUser.name.trim(),
+        username: newUser.username.trim(),
+        password: newUser.password,
+        email: newUser.email.trim(),
+        position: newUser.position,
+        phone: newUser.phone.trim(),
+        address: newUser.address?.trim() || "",
+        status: newUser.status || "Đã có lịch",
+        avatar: newUser.avatar || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
+        createdDate: new Date().toISOString().split('T')[0]
+      };
+      
+      console.log('🚀 Calling API with clean data:', {
+        ...userToAdd,
+        password: '[HIDDEN]' // Don't log password
+      });
+      
+      // Create user via API
+      const createdUser = await apiCreateUser(userToAdd);
+      
+      console.log('✅ User created successfully:', createdUser);
+      showNotification("🎉 Đã thêm nhân viên thành công!");
+      
+      // Refresh user list
+      await fetchUsers();
+      
+      handleClosePopup();
+      
+    } catch (error) {
+      console.error('❌ Error creating user:', error);
+      
+      // Show specific error message from API or generic message
+      const errorMessage = error.message || "Có lỗi xảy ra khi thêm nhân viên!";
+      showNotification(`❌ ${errorMessage}`, "error");
+      
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -264,7 +344,7 @@ const UserManagement = () => {
     } else if (activeTab === "supervisor") {
       tabFilter = user.position === "Giám sát viên vệ sinh";
     } else if (activeTab === "manager") {
-      tabFilter = user.position === "Quản lý cấp cao  ";
+      tabFilter = user.position === "Quản lý cấp cao";
     } else if (activeTab === "admin") {
       tabFilter = user.position === "Quản trị hệ thống";
     }
@@ -348,7 +428,7 @@ const UserManagement = () => {
       )}
 
       {/* Loading Indicator */}
-      {loading && (
+      {(loading || isSubmitting) && (
         <div style={{
           position: "fixed",
           top: 0,
@@ -376,7 +456,9 @@ const UserManagement = () => {
               animation: "spin 1s linear infinite",
               margin: "0 auto"
             }}></div>
-            <p style={{ marginTop: "10px", textAlign: "center" }}>Đang tải...</p>
+            <p style={{ marginTop: "10px", textAlign: "center" }}>
+              {isSubmitting ? "Đang thêm nhân viên..." : "Đang tải..."}
+            </p>
           </div>
         </div>
       )}
@@ -388,7 +470,7 @@ const UserManagement = () => {
           border: "1px solid #fecaca",
           color: "#dc2626",
           padding: "12px",
-          margin: "16px 32px",
+          margin: "16px",
           borderRadius: "6px",
           display: "flex",
           alignItems: "center",
@@ -411,12 +493,12 @@ const UserManagement = () => {
           </button>
         </div>
       )}
-      <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
+      <div style={{ padding: "16px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
           <h1
           style={{
-            fontSize: "30px",
+            fontSize: "22px",
             fontWeight: "bold",
             color: "#111827",
             marginBottom: "16px",
@@ -524,6 +606,7 @@ const UserManagement = () => {
                 color: activeTab === "supervisor" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
               }}
+              
               onMouseEnter={(e) => {
                 if (activeTab !== "supervisor") {
                   e.target.style.color = "#374151";
@@ -534,6 +617,7 @@ const UserManagement = () => {
                   e.target.style.color = "#6b7280";
                 }
               }}
+              
             >
               Giám sát viên vệ sinh
             </button>
@@ -557,7 +641,9 @@ const UserManagement = () => {
                 borderBottom: activeTab === "manager" ? "2px solid #FF5B27" : "2px solid transparent",
                 color: activeTab === "manager" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
+                
               }}
+              
               onMouseEnter={(e) => {
                 if (activeTab !== "manager") {
                   e.target.style.color = "#374151";
@@ -678,7 +764,7 @@ const UserManagement = () => {
       </div>
 
       {/* Pagination */}
-      <div style={{ flex: "0 0 auto", padding: "16px 32px" }}>
+      <div style={{ flex: "0 0 auto", padding: "16px" }}>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -803,6 +889,7 @@ const UserManagement = () => {
                   name="username"
                   value={newUser.username}
                   onChange={handleInputChange}
+                  placeholder="Nhập tên đăng nhập (ít nhất 3 ký tự)"
                   required
                   style={{
                     width: "100%",
@@ -816,6 +903,7 @@ const UserManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
+                
               </div>
 
               
@@ -837,6 +925,7 @@ const UserManagement = () => {
                   name="password"
                   value={newUser.password}
                   onChange={handleInputChange}
+                  placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
                   required
                   style={{
                     width: "100%",
@@ -850,6 +939,7 @@ const UserManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
+                
               </div>
               <div style={{ marginBottom: "16px" }}>
                 <label
@@ -900,6 +990,7 @@ const UserManagement = () => {
                   name="phone"
                   value={newUser.phone}
                   onChange={handleInputChange}
+                  placeholder="Nhập số điện thoại (VD: 0987654321)"
                   required
                   style={{
                     width: "100%",
@@ -913,6 +1004,7 @@ const UserManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
+                
               </div>
 
               <div style={{ marginBottom: "16px" }}>
@@ -986,43 +1078,7 @@ const UserManagement = () => {
                 </select>
               </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Trạng thái
-                </label>
-                <select
-                  name="status"
-                  value={newUser.status}
-                  onChange={handleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                    backgroundColor: "white",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  <option value="Đang làm việc">Đang làm việc</option>
-                  <option value="Đang kích hoạt">Đang kích hoạt</option>
-                  <option value="Đang trống lịch">Đang trống lịch</option>
-                  <option value="Nghỉ phép">Nghỉ phép</option>
-                  <option value="Nghỉ việc">Nghỉ việc</option>
-                </select>
-              </div>
-
+             
               <div style={{ marginBottom: "24px" }}>
                 <label
                   style={{
@@ -1079,8 +1135,12 @@ const UserManagement = () => {
                   display: "flex",
                   justifyContent: "flex-end",
                   gap: "12px",
+                  marginTop: "24px",
                 }}
               >
+                
+                   
+
                 <button
                   type="button"
                   onClick={handleClosePopup}
@@ -1093,7 +1153,7 @@ const UserManagement = () => {
                     backgroundColor: "white",
                     color: "#374151",
                     cursor: "pointer",
-                    transition: "background-color 0.2s",
+                    transition: "all 0.2s",
                   }}
                   onMouseEnter={(e) => (e.target.style.backgroundColor = "#f9fafb")}
                   onMouseLeave={(e) => (e.target.style.backgroundColor = "white")}
@@ -1102,21 +1162,31 @@ const UserManagement = () => {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   style={{
                     padding: "12px 20px",
                     border: "none",
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontWeight: "500",
-                    backgroundColor: "#FF5B27",
+                    backgroundColor: isSubmitting ? "#9ca3af" : "#FF5B27",
                     color: "white",
-                    cursor: "pointer",
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
                     transition: "background-color 0.2s",
+                    opacity: isSubmitting ? 0.7 : 1,
                   }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#E04B1F")}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
+                  onMouseEnter={(e) => {
+                    if (!isSubmitting) {
+                      e.target.style.backgroundColor = "#E04B1F";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSubmitting) {
+                      e.target.style.backgroundColor = "#FF5B27";
+                    }
+                  }}
                 >
-                  Thêm nhân viên
+                  {isSubmitting ? "Đang thêm..." : "Thêm nhân viên"}
                 </button>
               </div>
             </form>
@@ -1267,18 +1337,20 @@ const UserManagement = () => {
                         fontWeight: "600",
                         borderRadius: "9999px",
                         backgroundColor: 
-                          selectedUser.status === "Đang làm việc" ? "#dcfce7" :
-                          selectedUser.status === "Đang kích hoạt" ? "#dbeafe" :
-                          selectedUser.status === "Đang trống lịch" ? "#ede9fe" :
-                          selectedUser.status === "Nghỉ phép" ? "#fef3c7" : "#fee2e2",
+                          selectedUser.status === "Đã có lịch" || selectedUser.status === "Đang làm việc" || selectedUser.status?.toLowerCase() === "hoạt động" ? "#dcfce7" :
+                          selectedUser.status === "Chưa xác thực" ? "#fef3c7" :
+                          selectedUser.status === "Đang trống lịch" ? "#dbeafe" :
+                          selectedUser.status === "Nghỉ phép" ? "#ede9fe" :
+                          selectedUser.status === "Thôi việc" ? "#fee2e2" : "#f3f4f6",
                         color: 
-                          selectedUser.status === "Đang làm việc" ? "#15803d" :
-                          selectedUser.status === "Đang kích hoạt" ? "#1d4ed8" :
-                          selectedUser.status === "Đang trống lịch" ? "#7c3aed" :
-                          selectedUser.status === "Nghỉ phép" ? "#d97706" : "#dc2626",
+                          selectedUser.status === "Đã có lịch" || selectedUser.status === "Đang làm việc" || selectedUser.status?.toLowerCase() === "hoạt động" ? "#15803d" :
+                          selectedUser.status === "Chưa xác thực" ? "#ea580c" :
+                          selectedUser.status === "Đang trống lịch" ? "#1d4ed8" :
+                          selectedUser.status === "Nghỉ phép" ? "#7c3aed" :
+                          selectedUser.status === "Thôi việc" ? "#dc2626" : "#6b7280",
                       }}
                     >
-                      {selectedUser.status}
+                      {selectedUser.status === "Đang làm việc" || selectedUser.status?.toLowerCase() === "hoạt động" ? "Đã có lịch" : selectedUser.status}
                     </span>
                   </p>
                 </div>
@@ -1312,6 +1384,28 @@ const UserManagement = () => {
                     borderRadius: "6px"
                   }}>
                     {selectedUser.resignationReason}
+                  </p>
+                </div>
+              )}
+
+              {/* Termination Note - Only show when status is "Thôi việc" */}
+              {selectedUser.status === "Thôi việc" && selectedUser.terminationNote && (
+                <div>
+                  <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
+                    Ghi chú thôi việc
+                  </label>
+                  <p style={{ 
+                    fontSize: "16px", 
+                    fontWeight: "600", 
+                    color: "#111827", 
+                    margin: "4px 0 0 0",
+                    lineHeight: "1.5",
+                    padding: "8px",
+                    backgroundColor: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: "6px"
+                  }}>
+                    {selectedUser.terminationNote}
                   </p>
                 </div>
               )}
@@ -1468,7 +1562,8 @@ const UserManagement = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: updateUserData.status === "Nghỉ việc" ? "16px" : "24px" }}>
+              {/* Status Selection */}
+              <div style={{ marginBottom: "16px" }}>
                 <label
                   style={{
                     display: "block",
@@ -1497,16 +1592,18 @@ const UserManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="Đang làm việc">Đang làm việc</option>
-                  <option value="Đang kích hoạt">Đang kích hoạt</option>
+                  <option value="">Chọn trạng thái</option>
+                  <option value="Đã có lịch">Đã có lịch</option>
+                  <option value="Chưa xác thực">Chưa xác thực</option>
                   <option value="Đang trống lịch">Đang trống lịch</option>
                   <option value="Nghỉ phép">Nghỉ phép</option>
-                  <option value="Nghỉ việc">Nghỉ việc</option>
+                  <option value="Thôi việc">Thôi việc</option>
                 </select>
               </div>
 
-              {/* Resignation Reason Field - Only show when status is "Nghỉ việc" */}
-              {updateUserData.status === "Nghỉ việc" && (
+             
+              {/* Termination Note Field - Only show when status is "Thôi việc" */}
+              {updateUserData.status === "Thôi việc" && (
                 <div style={{ marginBottom: "24px" }}>
                   <label
                     style={{
@@ -1517,14 +1614,14 @@ const UserManagement = () => {
                       color: "#374151",
                     }}
                   >
-                    Lý do nghỉ việc *
+                    Ghi chú thôi việc *
                   </label>
                   <textarea
-                    value={updateUserData.resignationReason}
-                    onChange={handleResignationReasonChange}
+                    value={updateUserData.terminationNote}
+                    onChange={handleTerminationNoteChange}
                     required
                     rows="3"
-                    placeholder="Nhập lý do nghỉ việc..."
+                    placeholder="Nhập ghi chú lý do thôi việc..."
                     style={{
                       width: "100%",
                       padding: "12px",

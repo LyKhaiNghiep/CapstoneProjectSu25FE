@@ -46,11 +46,35 @@ export interface UpdateReportData {
   assignedTo?: string;
 }
 
+// Update report status data interface
+export interface UpdateReportStatusData {
+  status: number | string; // Based on enum: 1=DaGui, 2=DangXuLy, 3=DaHoanThanh or string format
+}
+
 // Priority mapping
 export const PRIORITY_MAPPING = {
-  "Thấp": 1,
+  "Thấp": 3,
   "Trung bình": 2, 
-  "Cao": 3
+  "Cao": 1
+};
+
+export const PRIORITY_MAPPING_REVERSE = {
+  1: "Cao",
+  2: "Trung bình",
+  3: "Thấp"
+};
+
+// Status mapping based on enum ReportStatus
+export const STATUS_MAPPING = {
+  "Đã gửi": 1,        // DaGui
+  "Đang xử lý": 2,    // DangXuLy  
+  "Đã hoàn thành": 3  // DaHoanThanh
+};
+
+export const STATUS_MAPPING_REVERSE = {
+  1: "Đã gửi",        // DaGui
+  2: "Đang xử lý",    // DangXuLy
+  3: "Đã hoàn thành"  // DaHoanThanh
 };
 
 // Hook to get all reports (Báo cáo tổng)
@@ -153,6 +177,55 @@ export const updateReport = async (id: string, reportData: UpdateReportData): Pr
     return updatedReport;
   } catch (error) {
     console.error('Error updating report:', error);
+    throw error;
+  }
+};
+
+// Update report status using PATCH API
+export const updateReportStatus = async (id: string, statusData: UpdateReportStatusData): Promise<Report> => {
+  try {
+    const url = `${BASE_API_URL}/${API_URLS.REPORT.UPDATE_STATUS(id)}`;
+    const token = localStorage.getItem('accessToken');
+    
+    console.log('🔍 PATCH Request Details:', {
+      url,
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token.substring(0, 20)}...` : 'No token',
+      },
+      body: JSON.stringify(statusData),
+      statusData
+    });
+
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(statusData),
+    });
+
+    console.log('🔍 Response Status:', response.status);
+    console.log('🔍 Response Headers:', Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('🔍 Error Response Body:', errorText);
+      throw new Error(`Failed to update report status: ${response.status} - ${errorText}`);
+    }
+
+    const updatedReport = await response.json();
+    
+    // Refresh reports data
+    mutate(API_URLS.REPORT.GET_ALL);
+    mutate(API_URLS.REPORT.GET_WITH_ROLE);
+    mutate(API_URLS.REPORT.GET_BY_ID(id));
+    
+    return updatedReport;
+  } catch (error) {
+    console.error('Error updating report status:', error);
     throw error;
   }
 };

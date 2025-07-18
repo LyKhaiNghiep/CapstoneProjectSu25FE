@@ -15,6 +15,7 @@ import NotFound from "../pages/NotFound";
 import Notifications from "../pages/Notifications";
 import Areas from "../pages/Areas";
 import Schedules from "../pages/Schedules";
+import AssignmentManagement from "../pages/AssignmentManagement";
 
 export const router = createBrowserRouter([
   {
@@ -76,6 +77,10 @@ export const router = createBrowserRouter([
       {
         path: "schedules",
         element: <Schedules />,
+      },
+      {
+        path: "assignments",
+        element: <AssignmentManagement />,
       },
       {
         path: "*",

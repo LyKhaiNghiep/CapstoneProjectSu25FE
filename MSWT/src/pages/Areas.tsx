@@ -1,5 +1,4 @@
 import { Area } from "@/config/models/restroom.model";
-import { Floor } from "@/config/models/floor.model";
 import { useAreas } from "../hooks/useArea";
 import { useState } from "react";
 import {
@@ -10,7 +9,6 @@ import {
 } from "react-icons/hi";
 import AreaTable from "../components/AreaTable";
 import Pagination from "../components/Pagination";
-import { useFloors } from "../hooks/useFloor";
 import { ICreateAreaRequest } from "@/config/models/area.model";
 
 const Areas = () => {
@@ -36,13 +34,11 @@ const Areas = () => {
     roomBegin: "",
     roomEnd: "",
     description: "",
-    floorId: "",
     status: "Hoạt động",
   });
 
   const itemsPerPage = 5; // Số khu vực hiển thị mỗi trang
   const { areas, createAsync, deleteAsync, updateAsync } = useAreas();
-  const { floors } = useFloors();
 
   const handleActionClick = async ({
     action,
@@ -127,7 +123,6 @@ const Areas = () => {
       roomEnd: "",
       description: "",
       status: "Hoạt động",
-      floorId: "",
     });
   };
 
@@ -144,7 +139,6 @@ const Areas = () => {
 
     // Kiểm tra đầy đủ thông tin
     if (
-      !newArea.floorId ||
       !newArea.areaName ||
       !newArea.roomBegin ||
       !newArea.roomEnd
@@ -233,12 +227,12 @@ const Areas = () => {
         flexDirection: "column",
       }}
     >
-      <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
+      <div style={{ padding: "16px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
             <h1
               style={{
-                fontSize: "30px",
+                fontSize: "22px",
                 fontWeight: "bold",
                 color: "#111827",
                 marginBottom: "16px",
@@ -437,7 +431,7 @@ const Areas = () => {
       </div>
 
       {/* Pagination */}
-      <div style={{ flex: "0 0 auto", padding: "16px 32px" }}>
+      <div style={{ flex: "0 0 auto", padding: "16px" }}>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -551,46 +545,7 @@ const Areas = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "6px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Tầng *
-                </label>
-                <select
-                  name="floorId"
-                  value={newArea.floorId}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                    backgroundColor: "white",
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                >
-                  <option value="">Chọn tầng</option>
-                  {floors?.map((floor: Floor) => (
-                    <option key={floor.floorId} value={floor.floorId}>
-                      {floor.floorNumber === 0
-                        ? "Tầng trệt"
-                        : `Tầng ${floor.floorNumber}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
 
               <div
                 style={{ display: "flex", gap: "12px", marginBottom: "16px" }}

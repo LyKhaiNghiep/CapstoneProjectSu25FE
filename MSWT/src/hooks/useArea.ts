@@ -60,6 +60,43 @@ export function useAreas() {
     }
   };
 
+  const assignAreaToFloor = async (areaId: string, floorId: string) => {
+    try {
+      const response = await swrFetcher(API_URLS.AREA.ASSIGN_TO_FLOOR(areaId, floorId), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      mutate();
+      return response;
+    } catch (error) {
+      console.error("Error assigning area to floor:", error);
+      throw error;
+    }
+  };
+
+  const assignMultipleAreasToFloor = async (areaIds: string[], floorId: string) => {
+    try {
+      // Gọi API song song cho tất cả các khu vực
+      const promises = areaIds.map(areaId => 
+        swrFetcher(API_URLS.AREA.ASSIGN_TO_FLOOR(areaId, floorId), {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+      );
+
+      const results = await Promise.all(promises);
+      mutate();
+      return results;
+    } catch (error) {
+      console.error("Error assigning multiple areas to floor:", error);
+      throw error;
+    }
+  };
+
   return {
     areas: data ?? [],
     isLoading,
@@ -67,5 +104,7 @@ export function useAreas() {
     createAsync,
     deleteAsync,
     updateAsync,
+    assignAreaToFloor,
+    assignMultipleAreasToFloor,
   };
 }

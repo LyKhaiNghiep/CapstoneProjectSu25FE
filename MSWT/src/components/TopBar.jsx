@@ -1,6 +1,9 @@
-import { HiOutlineHome, HiOutlineChevronRight } from "react-icons/hi";
+import { HiOutlineHome, HiOutlineChevronRight, HiOutlineMenu } from "react-icons/hi";
+import { useSidebar } from "../contexts/SidebarContext";
 
 const TopBar = ({ title, breadcrumbs = [], actionButton }) => {
+  const { toggleSidebar, isMobile } = useSidebar();
+
   return (
     <div
       style={{
@@ -17,18 +20,54 @@ const TopBar = ({ title, breadcrumbs = [], actionButton }) => {
           paddingBottom: "20px",
         }}
       >
-        {/* Page Title */}
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "bold",
-            color: "black",
-            margin: 0,
-            marginBottom: "12px",
-          }}
-        >
-          {title}
-        </h1>
+        {/* Header Row with Toggle Button and Title */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          marginBottom: "12px"
+        }}>
+          {/* Mobile Toggle Button */}
+          {isMobile && (
+            <button
+              onClick={toggleSidebar}
+              style={{
+                background: "transparent",
+                border: "none",
+                padding: "8px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                color: "#6b7280",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = "#f3f4f6";
+                e.target.style.color = "#FF5B27";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = "transparent";
+                e.target.style.color = "#6b7280";
+              }}
+            >
+              <HiOutlineMenu style={{ width: "20px", height: "20px" }} />
+            </button>
+          )}
+
+          {/* Page Title */}
+          <h1
+            style={{
+              fontSize: "24px",
+              fontWeight: "bold",
+              color: "black",
+              margin: 0,
+            }}
+          >
+            {title}
+          </h1>
+        </div>
 
         {/* Breadcrumb and Button on same level */}
         <div

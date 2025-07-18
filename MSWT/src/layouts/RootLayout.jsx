@@ -1,6 +1,61 @@
 import { Outlet, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { SidebarProvider, useSidebar } from "../contexts/SidebarContext";
+import { HiOutlineMenu } from "react-icons/hi";
 import Sidebar from "../components/Sidebar";
+
+// Layout content component that uses sidebar context
+const LayoutContent = () => {
+  const { sidebarWidth, isMobile, isMobileOpen, closeMobileSidebar, toggleSidebar, isCollapsed } = useSidebar();
+
+  return (
+    <div style={{ backgroundColor: "#f5f5f5" }}>
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Mobile Overlay */}
+      {isMobile && isMobileOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 999,
+            transition: "opacity 0.3s ease"
+          }}
+          onClick={closeMobileSidebar}
+        />
+      )}
+
+
+
+      {/* Main Content */}
+      <div
+        style={{
+          marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
+          display: "flex",
+          flexDirection: "column",
+          backgroundColor: "#f5f5f5",
+          minHeight: "100vh",
+          transition: "margin-left 0.3s ease",
+        }}
+      >
+        <main
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            backgroundColor: "#f5f5f5",
+          }}
+        >
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+};
 
 const RootLayout = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -36,31 +91,9 @@ const RootLayout = () => {
 
   // Show with sidebar and layout for authenticated pages
   return (
-    <div style={{ backgroundColor: "#f5f5f5" }}>
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content */}
-      <div
-        style={{
-          marginLeft: "256px",
-          display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#f5f5f5",
-          minHeight: "100vh",
-        }}
-      >
-        <main
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            backgroundColor: "#f5f5f5",
-          }}
-        >
-          <Outlet />
-        </main>
-      </div>
-    </div>
+    <SidebarProvider>
+      <LayoutContent />
+    </SidebarProvider>
   );
 };
 
