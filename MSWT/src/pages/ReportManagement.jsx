@@ -361,12 +361,12 @@ const ReportManagement = () => {
         `}
       </style>
     <div style={{ backgroundColor: "#ffffff", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
+      <div style={{ padding: "16px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
           <h1
           style={{
-            fontSize: "30px",
+            fontSize: "22px",
             fontWeight: "bold",
             color: "#111827",
             marginBottom: "16px",
@@ -698,7 +698,7 @@ const ReportManagement = () => {
       </div>
 
       {/* Pagination */}
-      <div style={{ flex: "0 0 auto", padding: "16px 32px" }}>
+      <div style={{ flex: "0 0 auto", padding: "16px" }}>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}

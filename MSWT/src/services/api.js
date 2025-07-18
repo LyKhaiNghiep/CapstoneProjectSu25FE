@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { BASE_API_URL } from '../constants/api-urls';
 
-// Lấy biến môi trường với fallback
-const BASE_URL   = import.meta.env.VITE_API_URL || 'https://capstoneproject-mswt-su25.onrender.com/api';
+// Use the centralized BASE_API_URL
+const BASE_URL   = import.meta.env.VITE_API_URL || BASE_API_URL;
 const TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT) || 10000;
 
 // Debug log

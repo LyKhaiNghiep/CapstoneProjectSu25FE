@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useSidebar } from "../contexts/SidebarContext";
 import {
   HiOutlineChartBar,
   HiOutlineUsers,
@@ -12,13 +13,16 @@ import {
   HiOutlineClock,
   HiOutlineLogout,
   HiOutlineBell,
+  HiOutlineClipboardList,
+  HiOutlineMenu,
+  HiOutlineX,
 } from "react-icons/hi";
-import { HiOutlineX } from "react-icons/hi";
 
 const Sidebar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { isCollapsed, isMobile, isMobileOpen, toggleSidebar, closeMobileSidebar, sidebarWidth } = useSidebar();
 
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
@@ -41,6 +45,11 @@ const Sidebar = () => {
       title: "Danh sách thùng rác",
       path: "/trash",
       icon: HiOutlineTrash,
+    },
+    {
+      title: "Quản lý công việc",
+      path: "/assignments",
+      icon: HiOutlineClipboardList,
     },
     {
       title: "Các tầng",
@@ -73,111 +82,159 @@ const Sidebar = () => {
     <div
       style={{
         position: "fixed",
-        left: 0,
+        left: isMobile ? (isMobileOpen ? 0 : "-220px") : 0,
         top: 0,
-        width: "256px",
+        width: `${sidebarWidth}px`,
         height: "100vh",
         backgroundColor: "white",
         borderRight: "1px solid #e5e7eb",
         display: "flex",
         flexDirection: "column",
         zIndex: 1000,
+        transition: "all 0.3s ease",
+        overflow: "hidden",
       }}
     >
-      {/* Header với MSWT và Icon thông báo */}
+      {/* Header với toggle button, MSWT và Icon thông báo */}
       <div style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        padding: "24px 20px",
+        justifyContent: isCollapsed ? "center" : "space-between",
+        padding: isCollapsed ? "18px 8px" : "18px 16px",
         borderBottom: "2px solid #f1f5f9",
-        backgroundColor: "white"
+        backgroundColor: "white",
+        transition: "all 0.3s ease",
+        flexWrap: "nowrap",
+        minHeight: "70px"
       }}>
-        {/* MSWT Logo */}
-        <div 
-          onClick={() => navigate('/dashboard')}
+        {/* Toggle Button */}
+        <button
+          onClick={toggleSidebar}
           style={{
-            fontSize: "28px",
-            fontWeight: "800",
-            color: "#FF5B27",
+            background: "transparent",
+            border: "none",
+            padding: "8px",
+            borderRadius: "6px",
             cursor: "pointer",
-            letterSpacing: "1px",
-            textShadow: "0 2px 4px rgba(255, 91, 39, 0.2)",
-            transition: "all 0.3s ease"
+            color: "#6b7280",
+            transition: "all 0.2s ease",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: isCollapsed ? 0 : "12px",
+            order: isCollapsed ? 0 : -1
           }}
           onMouseEnter={(e) => {
-            e.target.style.transform = "scale(1.05)";
-            e.target.style.textShadow = "0 4px 8px rgba(255, 91, 39, 0.3)";
+            e.target.style.backgroundColor = "#f3f4f6";
+            e.target.style.color = "#FF5B27";
           }}
           onMouseLeave={(e) => {
-            e.target.style.transform = "scale(1)";
-            e.target.style.textShadow = "0 2px 4px rgba(255, 91, 39, 0.2)";
+            e.target.style.backgroundColor = "transparent";
+            e.target.style.color = "#6b7280";
           }}
         >
-          MSWT
-        </div>
+          <HiOutlineMenu style={{ width: "20px", height: "20px" }} />
+        </button>
+
+        {/* MSWT Logo */}
+        {!isCollapsed && (
+          <div 
+            onClick={() => navigate('/dashboard')}
+            style={{
+              fontSize: "24px",
+              fontWeight: "800",
+              color: "#FF5B27",
+              cursor: "pointer",
+              letterSpacing: "1px",
+              textShadow: "0 2px 4px rgba(255, 91, 39, 0.2)",
+              transition: "all 0.3s ease",
+              opacity: isCollapsed ? 0 : 1,
+              transform: isCollapsed ? "scale(0)" : "scale(1)",
+              whiteSpace: "nowrap"
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = "scale(1.05)";
+              e.target.style.textShadow = "0 4px 8px rgba(255, 91, 39, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = "scale(1)";
+              e.target.style.textShadow = "0 2px 4px rgba(255, 91, 39, 0.2)";
+            }}
+          >
+            MSWT
+          </div>
+        )}
 
         {/* Icon thông báo */}
-        <div 
-          onClick={() => navigate('/notifications')}
-          style={{
-            position: "relative",
-            padding: "8px",
-            backgroundColor: "#ffffff",
-            borderRadius: "12px",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            border: "2px solid transparent"
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = "#FF5B27";
-            e.target.style.borderColor = "#FF5B27";
-            e.target.style.transform = "scale(1.1)";
-            e.target.style.boxShadow = "0 4px 12px rgba(255, 91, 39, 0.3)";
-            // Change icon color to white on hover
-            const icon = e.target.querySelector('svg');
-            if (icon) icon.style.color = "white";
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = "#ffffff";
-            e.target.style.borderColor = "transparent";
-            e.target.style.transform = "scale(1)";
-            e.target.style.boxShadow = "none";
-            // Reset icon color
-            const icon = e.target.querySelector('svg');
-            if (icon) icon.style.color = "#FF5B27";
-          }}
-        >
-          <HiOutlineBell 
-            style={{ 
-              width: "24px", 
-              height: "24px", 
-              color: "#FF5B27",
-              transition: "color 0.3s ease"
-            }} 
-          />
-          {/* Badge cho số thông báo chưa đọc */}
-          <div style={{
-            position: "absolute",
-            top: "4px",
-            right: "4px",
-            width: "8px",
-            height: "8px",
-            backgroundColor: "#ef4444",
-            borderRadius: "50%",
-            border: "2px solid white"
-          }} />
-        </div>
+        {!isCollapsed && (
+          <div 
+            onClick={() => navigate('/notifications')}
+            style={{
+              position: "relative",
+              padding: "6px",
+              backgroundColor: "#ffffff",
+              borderRadius: "10px",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              border: "2px solid transparent",
+              opacity: isCollapsed ? 0 : 1,
+              transform: isCollapsed ? "scale(0)" : "scale(1)"
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#FF5B27";
+              e.target.style.borderColor = "#FF5B27";
+              e.target.style.transform = "scale(1.1)";
+              e.target.style.boxShadow = "0 4px 12px rgba(255, 91, 39, 0.3)";
+              // Change icon color to white on hover
+              const icon = e.target.querySelector('svg');
+              if (icon) icon.style.color = "white";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "#ffffff";
+              e.target.style.borderColor = "transparent";
+              e.target.style.transform = "scale(1)";
+              e.target.style.boxShadow = "none";
+              // Reset icon color
+              const icon = e.target.querySelector('svg');
+              if (icon) icon.style.color = "#FF5B27";
+            }}
+          >
+            <HiOutlineBell 
+              style={{ 
+                width: "20px", 
+                height: "20px", 
+                color: "#FF5B27",
+                transition: "color 0.3s ease"
+              }} 
+            />
+            {/* Badge cho số thông báo chưa đọc */}
+            <div style={{
+              position: "absolute",
+              top: "3px",
+              right: "3px",
+              width: "6px",
+              height: "6px",
+              backgroundColor: "#ef4444",
+              borderRadius: "50%",
+              border: "1px solid white"
+            }} />
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: "0 20px" }}>
+      <nav style={{ 
+        flex: 1, 
+        padding: isCollapsed ? "0 8px" : "0 16px", 
+        marginTop: "10px",
+        transition: "padding 0.3s ease"
+      }}>
         <ul
           style={{
             listStyle: "none",
             margin: 0,
             padding: 0,
-            gap: "8px",
+            gap: "4px",
             display: "flex",
             flexDirection: "column",
           }}
@@ -193,22 +250,27 @@ const Sidebar = () => {
                   listStyle: "none",
                   margin: 0,
                   padding: 0,
+                  position: "relative",
                 }}
               >
                 <Link
                   to={item.path}
+                  onClick={isMobile ? closeMobileSidebar : undefined}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    padding: "16px 20px",
-                    fontSize: "14px",
+                    justifyContent: isCollapsed ? "center" : "flex-start",
+                    padding: isCollapsed ? "12px 8px" : "12px 16px",
+                    fontSize: "13px",
                     fontWeight: "500",
-                    borderRadius: "8px",
+                    borderRadius: "6px",
                     textDecoration: "none",
                     transition: "all 0.2s",
                     backgroundColor: isActive ? "#d1d5db" : "transparent",
                     color: "#000000",
-                    marginBottom: "4px",
+                    marginBottom: "2px",
+                    position: "relative",
+                    overflow: "hidden",
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -220,16 +282,28 @@ const Sidebar = () => {
                       e.target.style.backgroundColor = "transparent";
                     }
                   }}
+                  title={isCollapsed ? item.title : ""}
                 >
                   <Icon
                     style={{
                       width: "20px",
-                      height: "20px",
-                      marginRight: "16px",
+                      height: "18px",
+                      marginRight: isCollapsed ? 0 : "12px",
                       color: "#000000",
+                      flexShrink: 0,
+                      transition: "margin-right 0.3s ease"
                     }}
                   />
-                  {item.title}
+                  {!isCollapsed && (
+                    <span style={{
+                      opacity: isCollapsed ? 0 : 1,
+                      transform: isCollapsed ? "translateX(-10px)" : "translateX(0)",
+                      transition: "all 0.3s ease",
+                      whiteSpace: "nowrap"
+                    }}>
+                      {item.title}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
@@ -240,82 +314,100 @@ const Sidebar = () => {
       {/* User Info & Logout */}
       <div
         style={{
-          padding: "24px",
+          padding: isCollapsed ? "18px 8px" : "18px 16px",
           borderTop: "1px solid #e5e7eb",
           marginTop: "auto",
+          transition: "padding 0.3s ease"
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "16px" }}>
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: isCollapsed ? "center" : "flex-start",
+          marginBottom: isCollapsed ? "8px" : "12px",
+          transition: "all 0.3s ease"
+        }}>
           <div
             style={{
-              width: "48px",
-              height: "48px",
+              width: "36px",
+              height: "36px",
               backgroundColor: "#3b82f6",
               borderRadius: "50%",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              flexShrink: 0
             }}
           >
             <span
               style={{
                 color: "white",
                 fontWeight: "500",
-                fontSize: "16px",
+                fontSize: "14px",
               }}
             >
               {user?.username?.charAt(0).toUpperCase() || user?.fullName?.charAt(0).toUpperCase() || 'U'}
             </span>
           </div>
-          <div style={{ marginLeft: "16px" }}>
-            <p
-              style={{
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#000000",
-                margin: 0,
-                marginBottom: "2px",
-              }}
-            >
-              {user?.fullName || user?.username || 'User'}
-            </p>
-            <p
-              style={{
-                fontSize: "12px",
-                color: "#6b7280",
-                margin: 0,
-                marginBottom: "2px",
-              }}
-            >
-              {user?.position || user?.role || 'User'}
-            </p>
-            {user?.email && (
+          {!isCollapsed && (
+            <div style={{ 
+              marginLeft: "10px",
+              opacity: isCollapsed ? 0 : 1,
+              transform: isCollapsed ? "translateX(-10px)" : "translateX(0)",
+              transition: "all 0.3s ease",
+              overflow: "hidden"
+            }}>
               <p
                 style={{
-                  fontSize: "10px",
-                  color: "#9ca3af",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  color: "#000000",
                   margin: 0,
+                  marginBottom: "2px",
+                  whiteSpace: "nowrap"
                 }}
               >
-                {user.email}
+                {user?.fullName || user?.username || 'User'}
               </p>
-            )}
-          </div>
+              <p
+                style={{
+                  fontSize: "11px",
+                  color: "#6b7280",
+                  margin: 0,
+                  marginBottom: "1px",
+                  whiteSpace: "nowrap"
+                }}
+              >
+                {user?.position || user?.role || 'User'}
+              </p>
+              {user?.email && (
+                <p
+                  style={{
+                    fontSize: "9px",
+                    color: "#9ca3af",
+                    margin: 0,
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  {user.email}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
-       
-        
         {/* Logout Button */}
         <button
           onClick={handleLogout}
           style={{
             display: "flex",
             alignItems: "center",
+            justifyContent: isCollapsed ? "center" : "flex-start",
             width: "100%",
-            padding: "12px 16px",
-            fontSize: "14px",
+            padding: isCollapsed ? "10px 8px" : "10px 12px",
+            fontSize: "13px",
             fontWeight: "500",
-            borderRadius: "8px",
+            borderRadius: "6px",
             border: "none",
             backgroundColor: "transparent",
             color: "#dc2626",
@@ -328,15 +420,27 @@ const Sidebar = () => {
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = "transparent";
           }}
+          title={isCollapsed ? "Đăng xuất" : ""}
         >
           <HiOutlineLogout
             style={{
-              width: "20px",
-              height: "20px",
-              marginRight: "12px",
+              width: "18px",
+              height: "18px",
+              marginRight: isCollapsed ? 0 : "10px",
+              flexShrink: 0,
+              transition: "margin-right 0.3s ease"
             }}
           />
-          Đăng xuất
+          {!isCollapsed && (
+            <span style={{
+              opacity: isCollapsed ? 0 : 1,
+              transform: isCollapsed ? "translateX(-10px)" : "translateX(0)",
+              transition: "all 0.3s ease",
+              whiteSpace: "nowrap"
+            }}>
+              Đăng xuất
+            </span>
+          )}
         </button>
       </div>
     </div>

@@ -35,7 +35,7 @@ const TrashBinList = () => {
   });
 
   // Use API data instead of static data
-  const { trashBins, isLoading, error, updateAsync, createAsync } = useTrashBins();
+  const { trashBins, isLoading, error, updateAsync, createAsync, mutate } = useTrashBins();
   const { areas } = useAreas();
   const { restrooms } = useRestrooms();
   
@@ -146,15 +146,77 @@ const TrashBinList = () => {
   const handleSaveStatus = async () => {
     if (editingBin) {
       try {
-        await updateAsync(editingBin.trashBinId || editingBin.id, {
-          status: editingBin.status
+        const trashBinId = editingBin.trashBinId || editingBin.id;
+        
+        console.log('🔄 Updating trash bin status:', {
+          trashBinId,
+          newStatus: editingBin.status
         });
+
+        // Try PATCH method first, then fallback to PUT
+        let response;
+        try {
+          response = await fetch(`${BASE_API_URL}/${API_URLS.TRASHBIN.UPDATE(trashBinId)}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: editingBin.status
+            }),
+          });
+        } catch (error) {
+          console.log('PATCH failed, trying PUT...');
+          response = await fetch(`${BASE_API_URL}/${API_URLS.TRASHBIN.UPDATE(trashBinId)}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: editingBin.status
+            }),
+          });
+        }
+
+        console.log('📡 API Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API Error Response:', errorText);
+          
+          // Try toggle-status endpoint as fallback
+          console.log('🔄 Trying toggle-status endpoint as fallback...');
+          const toggleResponse = await fetch(`${BASE_API_URL}/${API_URLS.TRASHBIN.TOGGLE_STATUS(trashBinId)}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (!toggleResponse.ok) {
+            const toggleErrorText = await toggleResponse.text();
+            console.error('❌ Toggle API Error Response:', toggleErrorText);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+          }
+          
+          console.log('✅ Toggle-status API worked as fallback');
+        }
+
         console.log('✅ Trash bin status updated successfully');
+
+        // Refresh the trash bins data using SWR mutate
+        await mutate();
+
+        showNotificationMessage("success", "✅ Đã cập nhật trạng thái thùng rác thành công!");
         setShowEditModal(false);
         setEditingBin(null);
       } catch (error) {
         console.error('❌ Error updating trash bin status:', error);
-        // Optionally show error notification here
+        showNotificationMessage("error", "❌ Có lỗi xảy ra khi cập nhật trạng thái thùng rác!");
       }
     }
   };
@@ -523,12 +585,12 @@ const TrashBinList = () => {
 
   return (
     <div style={{ backgroundColor: "#ffffff", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
+      <div style={{ padding: "16px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
             <h1
               style={{
-                fontSize: "30px",
+                fontSize: "22px",
                 fontWeight: "bold",
                 color: "#111827",
                 marginBottom: "16px",
@@ -761,7 +823,7 @@ const TrashBinList = () => {
       </div>
 
       {/* Pagination */}
-      <div style={{ flex: "0 0 auto", padding: "16px 32px" }}>
+      <div style={{ flex: "0 0 auto", padding: "16px" }}>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -913,19 +975,19 @@ const TrashBinList = () => {
                         <strong style={{ color: "#374151" }}>Vị trí:</strong>
                         <span style={{ color: "#6b7280" }}>{displayData.location || "Chưa có vị trí"}</span>
 
-                        <strong style={{ color: "#374151" }}>Area ID:</strong>
-                        <span style={{ color: "#6b7280", fontFamily: "monospace" }}>{displayData.areaId}</span>
-
+                       
                         <strong style={{ color: "#374151" }}>Khu vực:</strong>
-                        <span style={{ color: "#6b7280" }}>{displayData.area?.areaName || "Chưa cập nhật"}</span>
-
-                        <strong style={{ color: "#374151" }}>Tầng:</strong>
                         <span style={{ color: "#6b7280" }}>
-                          {displayData.area?.floorNumber !== undefined 
-                            ? (displayData.area.floorNumber === 0 ? "Tầng trệt" : `Tầng ${displayData.area.floorNumber}`)
-                            : "Chưa cập nhật"
-                          }
+                          {(() => {
+                            if (!displayData.areaId || displayData.areaId === "string") {
+                              return "Không có khu vực";
+                            }
+                            const area = areas?.find(a => a.areaId === displayData.areaId);
+                            return area?.areaName || `Area: ${displayData.areaId.slice(-8)}`;
+                          })()}
                         </span>
+
+                        
 
                         {displayData.restroomId && displayData.restroomId !== "string" && (
                           <>
@@ -934,7 +996,7 @@ const TrashBinList = () => {
                               {(() => {
                                 const linkedRestroom = restrooms?.find(r => r.restroomId === displayData.restroomId);
                                 return linkedRestroom 
-                                  ? `${linkedRestroom.restroomNumber} - ${linkedRestroom.area?.areaName || "Khu vực không xác định"}`
+                                  ? `${linkedRestroom.restroomNumber}`
                                   : displayData.restroomId;
                               })()}
                             </span>
@@ -953,49 +1015,8 @@ const TrashBinList = () => {
                           {getStatusBadge(displayData.status)}
                         </div>
 
-                        <strong style={{ color: "#374151" }}>Số cảnh báo:</strong>
-                        <span style={{ color: "#6b7280" }}>{displayData.alerts?.length || 0}</span>
-
-                        <strong style={{ color: "#374151" }}>Số yêu cầu:</strong>
-                        <span style={{ color: "#6b7280" }}>{displayData.requests?.length || 0}</span>
-
-                        <strong style={{ color: "#374151" }}>Số lịch làm việc:</strong>
-                        <span style={{ color: "#6b7280" }}>{displayData.schedules?.length || 0}</span>
-
-                        {/* Additional fields from API */}
-                        {trashBinDetail && (
-                          <>
-                            {trashBinDetail.createdAt && (
-                              <>
-                                <strong style={{ color: "#374151" }}>Ngày tạo:</strong>
-                                <span style={{ color: "#6b7280" }}>
-                                  {new Date(trashBinDetail.createdAt).toLocaleDateString('vi-VN')}
-                                </span>
-                              </>
-                            )}
-                            
-                            {trashBinDetail.updatedAt && (
-                              <>
-                                <strong style={{ color: "#374151" }}>Cập nhật lần cuối:</strong>
-                                <span style={{ color: "#6b7280" }}>
-                                  {new Date(trashBinDetail.updatedAt).toLocaleDateString('vi-VN')}
-                                </span>
-                              </>
-                            )}
-
-                            {trashBinDetail.sensorBins && trashBinDetail.sensorBins.length > 0 && (
-                              <>
-                                <strong style={{ color: "#374151" }}>Sensor:</strong>
-                                <span style={{ color: "#6b7280" }}>{trashBinDetail.sensorBins.length} sensor(s)</span>
-                              </>
-                            )}
-
-                            <strong style={{ color: "#374151" }}>Nguồn dữ liệu:</strong>
-                            <span style={{ color: "#10b981", fontSize: "12px", fontWeight: "500" }}>
-                              📡 API (Chi tiết đầy đủ)
-                            </span>
-                          </>
-                        )}
+                      
+                       
                         
                         {!trashBinDetail && selectedBin && (
                           <>
@@ -1108,24 +1129,121 @@ const TrashBinList = () => {
 
               <div>
                 <label style={{ color: "#374151", fontWeight: "500", display: "block", marginBottom: "8px" }}>
-                  Trạng thái:
+                  Trạng thái hiện tại:
                 </label>
-                <select
-                  value={editingBin.status}
-                  onChange={(e) => setEditingBin({ ...editingBin, status: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                    outline: "none",
+                <div style={{
+                  padding: "12px 16px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "6px",
+                  border: "1px solid #e5e7eb",
+                  marginBottom: "12px"
+                }}>
+                  <span style={{
+                    display: "inline-flex",
+                    padding: "4px 12px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    borderRadius: "9999px",
+                    backgroundColor: editingBin.status === "DangHoatDong" ? "#dcfce7" : "#fef3c7",
+                    color: editingBin.status === "DangHoatDong" ? "#15803d" : "#d97706"
+                  }}>
+                    {editingBin.status === "DangHoatDong" ? "Đang hoạt động" : "Ngưng hoạt động"}
+                  </span>
+                </div>
+                <div style={{
+                  padding: "16px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "8px",
+                  border: "1px solid #e5e7eb",
+                  marginTop: "12px"
+                }}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "16px",
+                    padding: "12px 16px",
                     backgroundColor: "white",
-                  }}
-                >
-                  <option value="DangHoatDong">Đang hoạt động</option>
-                  <option value="DangBaoTri">Đang bảo trì</option>
-                </select>
+                    borderRadius: "8px",
+                    border: "1px solid #e5e7eb"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span style={{
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#374151"
+                      }}>
+                        Chuyển đổi trạng thái:
+                      </span>
+                      
+                    </div>
+                    <label style={{
+                      position: "relative",
+                      display: "inline-block",
+                      width: "56px",
+                      height: "28px",
+                      cursor: "pointer",
+                      borderRadius: "28px",
+                      backgroundColor: editingBin.status === "DangHoatDong" ? "#10b981" : "#d1d5db",
+                      transition: "background-color 0.3s ease",
+                      boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)"
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={editingBin.status === "DangHoatDong"}
+                        onChange={(e) => {
+                          const newStatus = e.target.checked ? "DangHoatDong" : "DangBaoTri";
+                          setEditingBin({ ...editingBin, status: newStatus });
+                        }}
+                        style={{
+                          opacity: 0,
+                          width: 0,
+                          height: 0,
+                          position: "absolute"
+                        }}
+                      />
+                      <span style={{
+                        position: "absolute",
+                        top: "2px",
+                        left: editingBin.status === "DangHoatDong" ? "30px" : "2px",
+                        width: "24px",
+                        height: "24px",
+                        backgroundColor: "white",
+                        borderRadius: "50%",
+                        transition: "all 0.3s ease",
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}>
+                        {editingBin.status === "DangHoatDong" ? (
+                          <span style={{ fontSize: "10px", color: "#10b981" }}>✓</span>
+                        ) : (
+                          <span style={{ fontSize: "10px", color: "#9ca3af" }}>✕</span>
+                        )}
+                      </span>
+                    </label>
+                  </div>
+                  <div style={{
+                    fontSize: "13px",
+                    color: "#6b7280",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 12px",
+                    backgroundColor: "white",
+                    borderRadius: "6px",
+                    border: "1px solid #e5e7eb"
+                  }}>
+                    <span style={{
+                      color: editingBin.status === "DangHoatDong" ? "#10b981" : "#d97706",
+                      fontWeight: "500"
+                    }}>
+                      {editingBin.status === "DangHoatDong" ? "🟢 Đang hoạt động" : "🟡 Ngưng hoạt động"}
+                    </span>
+                    
+                  </div>
+                </div>
               </div>
             </div>
 

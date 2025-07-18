@@ -7,7 +7,6 @@ export interface Schedule {
   assignmentId: string;
   startDate: string;
   endDate: string;
-  trashBinId: string;
   restroomId: string;
   scheduleType: string;
   shiftId: string;
@@ -17,7 +16,6 @@ export interface Schedule {
   scheduleName?: string;
   areaName?: string;
   restroomName?: string;
-  trashBinName?: string;
   shiftName?: string;
   assignmentName?: string;
 }
@@ -28,18 +26,18 @@ export interface ICreateScheduleRequest {
   assignmentId: string;
   startDate: string;
   endDate: string;
-  trashBinId?: string;
   restroomId?: string;
   scheduleType: string;
   shiftId: string;
+  supervisorId?: string;
 }
 
 export interface IUpdateScheduleRequest {
+  scheduleName?: string; // Add scheduleName to update request
   areaId?: string;
   assignmentId?: string;
   startDate?: string;
   endDate?: string;
-  trashBinId?: string;
   restroomId?: string;
   scheduleType?: string;
   shiftId?: string;

@@ -46,6 +46,14 @@ export const userService = {
       // Map API fields to frontend expected format
       const mappedUsers = users.map((user, index) => {
         try {
+          const mappedPosition = this.mapRoleToPosition(user.roleId);
+          console.log(`🔄 Mapping user ${index + 1}:`, {
+            userId: user.userId,
+            fullName: user.fullName,
+            roleId: user.roleId,
+            mappedPosition: mappedPosition
+          });
+          
           return {
             id: user.userId || `temp-${index}`,
             name: user.fullName || user.userName || "Unknown User",
@@ -57,7 +65,7 @@ export const userService = {
             avatar: user.image || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
             createdDate: user.createAt ? user.createAt.split('T')[0] : new Date().toISOString().split('T')[0],
             roleId: user.roleId, // Add roleId to the mapped user
-            position: this.mapRoleToPosition(user.roleId),
+            position: mappedPosition,
             location: "Chưa cập nhật",
             floor: "Chưa cập nhật"
           };
@@ -78,7 +86,7 @@ export const userService = {
   // Helper function to map roleId to position
   mapRoleToPosition(roleId) {
     const roleMap = {
-      'RL01': 'Quản lý',
+      'RL01': 'Quản lý cấp cao',
       'RL02': 'Quản trị hệ thống',
       'RL03': 'Giám sát viên vệ sinh',
       'RL04': 'Nhân viên vệ sinh'
@@ -123,6 +131,12 @@ export const userService = {
       }
 
       // Map frontend data to API expected format
+      const mappedRoleId = this.mapPositionToRoleId(userData.position);
+      console.log('🎭 Position to RoleId mapping:', {
+        inputPosition: userData.position,
+        mappedRoleId: mappedRoleId
+      });
+      
       const apiUserData = {
         userName: userData.username.trim(),
         password: userData.password,
@@ -132,7 +146,7 @@ export const userService = {
         address: userData.address?.trim() || "",
         status: userData.status || "Hoạt động",
         image: userData.avatar || "", // Handle image properly
-        roleId: this.mapPositionToRoleId(userData.position)
+        roleId: mappedRoleId
       };
 
       console.log('🔄 Sending API request to:', `${BASE_API_URL}/${API_URLS.USER.CREATE}`);
@@ -154,6 +168,12 @@ export const userService = {
         throw new Error("API không trả về thông tin người dùng hợp lệ");
       }
 
+      const responsePosition = this.mapRoleToPosition(createdUser.roleId);
+      console.log('🔄 Response RoleId to Position mapping:', {
+        responseRoleId: createdUser.roleId,
+        mappedPosition: responsePosition
+      });
+      
       const mappedUser = {
         id: createdUser.userId,
         name: createdUser.fullName || createdUser.userName,
@@ -164,7 +184,7 @@ export const userService = {
         status: createdUser.status || "Hoạt động",
         avatar: createdUser.image || userData.avatar || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
         createdDate: createdUser.createAt ? createdUser.createAt.split('T')[0] : new Date().toISOString().split('T')[0],
-        position: this.mapRoleToPosition(createdUser.roleId),
+        position: responsePosition,
         roleId: createdUser.roleId,
         location: "Chưa cập nhật",
         floor: "Chưa cập nhật"
@@ -219,7 +239,13 @@ export const userService = {
       'Quản lý cấp cao': 'RL01',
       'Quản trị hệ thống': 'RL02'
     };
-    return positionMap[position] || 'RL04'; // Default to worker
+    const roleId = positionMap[position] || 'RL04';
+    console.log('📋 mapPositionToRoleId:', {
+      inputPosition: position,
+      outputRoleId: roleId,
+      available: Object.keys(positionMap)
+    });
+    return roleId;
   },
 
   // Update user
@@ -234,15 +260,16 @@ export const userService = {
   },
 
   // Update user status using specific API endpoint
-  async updateUserStatus(id, statusData) {
+  async updateUserStatus(id, noteData) {
     try {
       const endpoint = API_URLS.USER.UPDATE_STATUS(id);
       console.log('🚀 API Request Details:');
       console.log('📍 Endpoint:', endpoint);
-      console.log('📦 Request Data:', statusData);
-      console.log('🔗 Full URL:', `${BASE_API_URL}/${endpoint}`);
+      console.log('📦 Request Data:', noteData);
+      console.log('🔗 Base URL:', BASE_API_URL);
       
-      const response = await api.put(endpoint, statusData);
+      // Use the configured api instance (with proxy support)
+      const response = await api.put(endpoint, noteData);
       console.log('✅ API Response:', response.data);
       return response.data;
     } catch (error) {

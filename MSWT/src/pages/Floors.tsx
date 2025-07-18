@@ -9,14 +9,17 @@ import FloorTable from "../components/FloorTable";
 import Notification from "../components/Notification";
 import Pagination from "../components/Pagination";
 import { useFloors } from "../hooks/useFloor";
+import { useAreas } from "../hooks/useArea";
 
 const Floors = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddFloorPopup, setShowAddFloorPopup] = useState(false);
   const [showViewFloorModal, setShowViewFloorModal] = useState(false);
+  const [showAssignAreaModal, setShowAssignAreaModal] = useState(false);
 
   const [selectedFloor, setSelectedFloor] = useState<Floor | null>(null);
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState("all");
 
   const [newFloor, setNewFloor] = useState<ICreateFloorRequest>({
@@ -32,6 +35,7 @@ const Floors = () => {
   const itemsPerPage = 5;
 
   const { floors, createAsync, deleteAsync } = useFloors();
+  const { areas, assignAreaToFloor, assignMultipleAreasToFloor } = useAreas();
 
   if (floors.length === 0) return null;
 
@@ -39,7 +43,7 @@ const Floors = () => {
     action,
     floor,
   }: {
-    action: "view" | "delete";
+    action: "view" | "delete" | "assign";
     floor: Floor;
   }) => {
     console.log("🚀 Floors - handleActionClick called:", { action, floor });
@@ -51,6 +55,10 @@ const Floors = () => {
         await deleteAsync(floor.floorId);
         alert("✅ Đã xóa tầng thành công!");
       }
+    } else if (action === "assign") {
+      setSelectedFloor(floor);
+      setSelectedAreaIds([]);
+      setShowAssignAreaModal(true);
     }
   };
 
@@ -175,12 +183,12 @@ const Floors = () => {
         onClose={hideNotification}
       />
 
-      <div style={{ padding: "16px 32px", flex: "0 0 auto" }}>
+      <div style={{ padding: "16px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
             <h1
               style={{
-                fontSize: "30px",
+                fontSize: "22px",
                 fontWeight: "bold",
                 color: "#111827",
                 marginBottom: "16px",
@@ -608,56 +616,94 @@ const Floors = () => {
                   color: "#111827",
                 }}
               >
-                {selectedFloor.floorNumber}
+                {selectedFloor.floorNumber === 0 ? "Tầng trệt" : `Tầng ${selectedFloor.floorNumber}`}
               </div>
             </div>
 
-            
-            
-             
-
-            {/* <div style={{ marginBottom: "20px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  color: "#374151",
-                  marginBottom: "8px",
-                }}
-              >
-                Thùng rác ({selectedFloor.trashCans?.length || 0})
-              </label>
-              <div style={{ maxHeight: "150px", overflowY: "auto" }}>
-                {selectedFloor.trashCans?.length > 0 ? (
-                  selectedFloor.trashCans.map((trashCan, index) => (
-                    <div
-                      key={index}
+            {/* Areas Section */}
+            <div style={{ marginBottom: "20px" }}>
+              {(() => {
+                const floorAreas = areas.filter(area => area.floorId === selectedFloor.floorId);
+                return (
+                  <>
+                    <label
                       style={{
-                        padding: "8px 12px",
-                        backgroundColor: "#f3f4f6",
-                        borderRadius: "6px",
-                        marginBottom: "4px",
+                        display: "block",
                         fontSize: "14px",
+                        fontWeight: "500",
                         color: "#374151",
+                        marginBottom: "8px",
                       }}
                     >
-                      {trashCan}
+                      Khu vực ({floorAreas.length})
+                    </label>
+                    <div 
+                      style={{ 
+                        maxHeight: "200px", 
+                        overflowY: "auto",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "8px",
+                        backgroundColor: "#ffffff"
+                      }}
+                    >
+                      {floorAreas.length > 0 ? (
+                        floorAreas.map((area, index) => (
+                          <div
+                            key={area.areaId}
+                            style={{
+                              padding: "12px 16px",
+                              borderBottom: index < floorAreas.length - 1 ? "1px solid #f3f4f6" : "none",
+                              fontSize: "14px",
+                              color: "#374151",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: "500", color: "#111827" }}>
+                                {area.areaName}
+                              </div>
+                              <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "2px" }}>
+                                Phòng {area.roomBegin} - {area.roomEnd}
+                              </div>
+                            </div>
+                            <span
+                              style={{
+                                padding: "2px 8px",
+                                fontSize: "10px",
+                                fontWeight: "500",
+                                borderRadius: "4px",
+                                backgroundColor: area.status === "Hoạt động" ? "#dcfce7" : "#fed7d7",
+                                color: area.status === "Hoạt động" ? "#166534" : "#9b2c2c",
+                              }}
+                            >
+                              {area.status}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div
+                          style={{
+                            padding: "24px",
+                            textAlign: "center",
+                            color: "#6b7280",
+                            fontStyle: "italic",
+                          }}
+                        >
+                          <div style={{ marginBottom: "8px", fontSize: "14px" }}>
+                            Chưa có khu vực nào
+                          </div>
+                          <div style={{ fontSize: "12px" }}>
+                            Sử dụng nút "Gán khu vực" để thêm khu vực vào tầng này
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))
-                ) : (
-                  <div
-                    style={{
-                      padding: "12px",
-                      color: "#6b7280",
-                      fontStyle: "italic",
-                    }}
-                  >
-                    Chưa có thùng rác nào
-                  </div>
-                )}
-              </div>
-            </div> */}
+                  </>
+                );
+              })()}
+            </div>
 
             <div style={{ marginBottom: "24px" }}>
               <label
@@ -705,6 +751,255 @@ const Floors = () => {
         </div>
       )}
 
+      {/* Assign Area Modal */}
+      {showAssignAreaModal && selectedFloor && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            borderRadius: "12px",
+            width: "500px",
+            maxHeight: "80vh",
+            overflow: "auto",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+          }}>
+            {/* Header */}
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "24px",
+              borderBottom: "1px solid #e5e7eb",
+            }}>
+              <h2 style={{
+                fontSize: "20px",
+                fontWeight: "600",
+                color: "#111827",
+                margin: 0,
+              }}>
+                Gán khu vực vào {selectedFloor.floorNumber === 0 ? "Tầng trệt" : `Tầng ${selectedFloor.floorNumber}`}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowAssignAreaModal(false);
+                  setSelectedFloor(null);
+                  setSelectedAreaIds([]);
+                }}
+                style={{
+                  padding: "8px",
+                  border: "none",
+                  borderRadius: "6px",
+                  backgroundColor: "transparent",
+                  cursor: "pointer",
+                  color: "#6b7280",
+                }}
+              >
+                <HiX style={{ width: "20px", height: "20px" }} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: "24px" }}>
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{
+                  display: "block",
+                  marginBottom: "12px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#374151",
+                }}>
+                  Chọn khu vực * (có thể chọn nhiều)
+                </label>
+                
+                {/* Select All / Deselect All */}
+                <div style={{
+                  marginBottom: "12px",
+                  padding: "8px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "6px",
+                  display: "flex",
+                  gap: "12px",
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAreaIds(areas.map(area => area.areaId))}
+                    style={{
+                      padding: "4px 12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "4px",
+                      backgroundColor: "white",
+                      color: "#374151",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                    }}
+                  >
+                    Chọn tất cả
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAreaIds([])}
+                    style={{
+                      padding: "4px 12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "4px",
+                      backgroundColor: "white",
+                      color: "#374151",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                    }}
+                  >
+                    Bỏ chọn tất cả
+                  </button>
+                </div>
+
+                {/* Area Checkboxes */}
+                <div style={{
+                  maxHeight: "250px",
+                  overflow: "auto",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "8px",
+                  backgroundColor: "white",
+                }}>
+                  {areas.map((area, index) => (
+                    <label
+                      key={area.areaId}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "12px 16px",
+                        borderBottom: index < areas.length - 1 ? "1px solid #e5e7eb" : "none",
+                        cursor: "pointer",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target as HTMLElement).style.backgroundColor = "#f9fafb";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target as HTMLElement).style.backgroundColor = "transparent";
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedAreaIds.includes(area.areaId)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedAreaIds([...selectedAreaIds, area.areaId]);
+                          } else {
+                            setSelectedAreaIds(selectedAreaIds.filter(id => id !== area.areaId));
+                          }
+                        }}
+                        style={{
+                          marginRight: "12px",
+                          width: "16px",
+                          height: "16px",
+                          cursor: "pointer",
+                        }}
+                      />
+                      <div>
+                        <div style={{
+                          fontWeight: "500",
+                          color: "#111827",
+                          fontSize: "14px",
+                        }}>
+                          {area.areaName}
+                        </div>
+                        <div style={{
+                          color: "#6b7280",
+                          fontSize: "12px",
+                          marginTop: "2px",
+                        }}>
+                          Phòng {area.roomBegin} - {area.roomEnd}
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                {selectedAreaIds.length > 0 && (
+                  <div style={{
+                    marginTop: "12px",
+                    padding: "8px 12px",
+                    backgroundColor: "#dbeafe",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    color: "#1e40af",
+                  }}>
+                    Đã chọn {selectedAreaIds.length} khu vực
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+              }}>
+                <button
+                  onClick={() => {
+                    setShowAssignAreaModal(false);
+                    setSelectedFloor(null);
+                    setSelectedAreaIds([]);
+                  }}
+                  style={{
+                    padding: "12px 24px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                    color: "#374151",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={async () => {
+                    if (selectedAreaIds.length === 0) {
+                      alert("Vui lòng chọn khu vực!");
+                      return;
+                    }
+                    
+                                          try {
+                        await assignMultipleAreasToFloor(selectedAreaIds, selectedFloor.floorId);
+                        alert(`✅ Đã gán ${selectedAreaIds.length} khu vực vào tầng thành công!`);
+                        setShowAssignAreaModal(false);
+                        setSelectedFloor(null);
+                        setSelectedAreaIds([]);
+                      } catch (error) {
+                        console.error("Error assigning areas to floor:", error);
+                        alert("❌ Có lỗi xảy ra khi gán khu vực!");
+                      }
+                  }}
+                  style={{
+                    padding: "12px 24px",
+                    border: "none",
+                    borderRadius: "8px",
+                    backgroundColor: "#FF5B27",
+                    color: "white",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                                  >
+                    {selectedAreaIds.length > 1 ? `Gán ${selectedAreaIds.length} khu vực` : "Gán khu vực"}
+                  </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

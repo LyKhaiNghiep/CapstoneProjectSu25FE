@@ -1,6 +1,9 @@
 // Base API URL for the backend
-export const BASE_API_URL =
-  "https://capstoneproject-mswt-su25.onrender.com/api";
+// Use proxy in development, direct URL in production
+export const BASE_API_URL = 
+  import.meta.env.DEV 
+    ? "/api" // Use Vite proxy in development
+    : "https://capstoneproject-mswt-su25.onrender.com/api"; // Direct URL in production
 
 export const API_URLS = {
   // User management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong userService.js
@@ -32,6 +35,7 @@ export const API_URLS = {
     CREATE: `areas`,
     UPDATE: (id: string) => `areas/${id}`,
     DELETE: (id: string) => `areas/${id}`,
+    ASSIGN_TO_FLOOR: (areaId: string, floorId: string) => `areas/${areaId}/${floorId}`,
   },
 
   // Shift management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong shifts.ts
@@ -69,6 +73,9 @@ export const API_URLS = {
     CREATE: `scheduledetails`,
     CREATE_FOR_SCHEDULE: (scheduleId: string) => `scheduledetails/${scheduleId}/details`,
     UPDATE: (id: string) => `scheduledetails/${id}`,
+    UPDATE_RATING: (id: string) => `scheduledetails/scheduledetails/rating/${id}`,
+    ASSIGN_WORKER: (id: string) => `scheduledetails/user/worker/${id}`,
+    ASSIGN_SUPERVISOR: (id: string) => `scheduledetails/user/supervisor/${id}`,
     DELETE: (id: string) => `scheduledetails/${id}`,
   },
 
@@ -97,6 +104,7 @@ export const API_URLS = {
     CREATE: `trashbins`,
     UPDATE: (id: string) => `trashbins/${id}`,
     DELETE: (id: string) => `trashbins/${id}`,
+    TOGGLE_STATUS: (id: string) => `trashbins/toggle-status/${id}`,
   },
 
   // Report management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong ReportManagement.jsx

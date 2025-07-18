@@ -261,28 +261,27 @@ const RestroomTable = ({
                       right: "8px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      boxShadow:
-                        "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                      borderRadius: "6px",
+                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
                       zIndex: 10,
-                      minWidth: "140px",
+                      minWidth: "100px",
                     }}
                   >
                     <button
                       onClick={() => handleActionSelect("view", restroom)}
                       style={{
                         width: "100%",
-                        padding: "12px 16px",
+                        padding: "6px 10px",
                         border: "none",
                         backgroundColor: "transparent",
                         textAlign: "left",
-                        fontSize: "14px",
+                        fontSize: "12px",
                         color: "#374151",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
-                        borderRadius: "8px 8px 0 0",
+                        gap: "6px",
+                        borderRadius: "6px 6px 0 0",
                       }}
                       onMouseEnter={(e: any) =>
                         (e.target.style.backgroundColor = "#f9fafb")
@@ -291,24 +290,24 @@ const RestroomTable = ({
                         (e.target.style.backgroundColor = "transparent")
                       }
                     >
-                      <HiOutlineEye style={{ width: "16px", height: "16px" }} />
+                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
                       Xem chi tiết
                     </button>
                     <button
                       onClick={() => handleActionSelect("update", restroom)}
                       style={{
                         width: "100%",
-                        padding: "12px 16px",
+                        padding: "6px 10px",
                         border: "none",
                         backgroundColor: "transparent",
                         textAlign: "left",
-                        fontSize: "14px",
+                        fontSize: "12px",
                         color: "#374151",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
-                        borderRadius: "0 0 8px 8px",
+                        gap: "6px",
+                        borderRadius: "0 0 6px 6px",
                         borderTop: "1px solid #f3f4f6",
                       }}
                       onMouseEnter={(e: any) =>
@@ -319,7 +318,7 @@ const RestroomTable = ({
                       }
                     >
                       <HiOutlinePencil
-                        style={{ width: "16px", height: "16px" }}
+                        style={{ width: "14px", height: "14px" }}
                       />
                       Cập nhật
                     </button>

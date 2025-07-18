@@ -10,7 +10,6 @@ export interface Area {
 }
 
 export interface ICreateAreaRequest {
-  floorId: string;
   description: string;
   status: string;
   roomBegin: string;

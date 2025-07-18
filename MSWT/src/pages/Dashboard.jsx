@@ -270,14 +270,14 @@ const Dashboard = () => {
     <div style={{ 
       backgroundColor: "#ffffff", 
       minHeight: "100vh", 
-      padding: "24px 32px" 
+      padding: "16px" 
     }}>
       {/* Header */}
       <div style={{ marginBottom: "32px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <h1 style={{ 
-              fontSize: "32px", 
+              fontSize: "22px", 
               fontWeight: "700", 
               color: "#111827", 
               margin: "0 0 8px 0" 

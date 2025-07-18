@@ -62,15 +62,15 @@ const AreaTable = ({
         <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
           <tr
             style={{
-              backgroundColor: "#f9fafb",
+              backgroundColor: "#FEF6F4",
               borderBottom: "2px solid #e5e7eb",
             }}
           >
             <th
               style={{
-                padding: "16px",
+                padding: "12px 16px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -79,9 +79,9 @@ const AreaTable = ({
             </th>
             <th
               style={{
-                padding: "16px",
+                padding: "12px 16px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -90,9 +90,9 @@ const AreaTable = ({
             </th>
             <th
               style={{
-                padding: "16px",
+                padding: "12px 16px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -101,9 +101,9 @@ const AreaTable = ({
             </th>
             <th
               style={{
-                padding: "16px",
+                padding: "12px 16px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -112,9 +112,9 @@ const AreaTable = ({
             </th>
             <th
               style={{
-                padding: "16px",
+                padding: "12px 16px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -123,9 +123,9 @@ const AreaTable = ({
             </th>
             <th
               style={{
-                padding: "16px",
+                padding: "12px 16px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -134,9 +134,9 @@ const AreaTable = ({
             </th>
             <th
               style={{
-                padding: "16px",
+                padding: "12px 16px",
                 textAlign: "center",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -163,8 +163,8 @@ const AreaTable = ({
               {/* Area Name Column */}
               <td
                 style={{
-                  padding: "16px",
-                  fontSize: "14px",
+                  padding: "12px 16px",
+                  fontSize: "13px",
                   fontWeight: "500",
                   color: "#111827",
                 }}
@@ -175,8 +175,8 @@ const AreaTable = ({
               {/* Floor Column */}
               <td
                 style={{
-                  padding: "16px",
-                  fontSize: "14px",
+                  padding: "12px 16px",
+                  fontSize: "13px",
                   color: "#6b7280",
                 }}
               >
@@ -188,8 +188,8 @@ const AreaTable = ({
               {/* Start Room Column */}
               <td
                 style={{
-                  padding: "16px",
-                  fontSize: "14px",
+                  padding: "12px 16px",
+                  fontSize: "13px",
                   color: "#6b7280",
                 }}
               >
@@ -199,8 +199,8 @@ const AreaTable = ({
               {/* End Room Column */}
               <td
                 style={{
-                  padding: "16px",
-                  fontSize: "14px",
+                  padding: "12px 16px",
+                  fontSize: "13px",
                   color: "#6b7280",
                 }}
               >
@@ -210,10 +210,10 @@ const AreaTable = ({
               {/* Description Column */}
               <td
                 style={{
-                  padding: "16px",
-                  fontSize: "14px",
+                  padding: "12px 16px",
+                  fontSize: "13px",
                   color: "#6b7280",
-                  maxWidth: "200px",
+                  maxWidth: "180px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -223,12 +223,12 @@ const AreaTable = ({
               </td>
 
               {/* Status Column */}
-              <td style={{ padding: "16px" }}>
+              <td style={{ padding: "12px 16px" }}>
                 <span
                   style={{
                     display: "inline-flex",
-                    padding: "4px 12px",
-                    fontSize: "12px",
+                    padding: "3px 10px",
+                    fontSize: "11px",
                     fontWeight: "600",
                     borderRadius: "9999px",
                     ...getStatusColor(area.status),
@@ -241,7 +241,7 @@ const AreaTable = ({
               {/* Action Column */}
               <td
                 style={{
-                  padding: "16px",
+                  padding: "12px 16px",
                   textAlign: "center",
                   position: "relative",
                 }}
@@ -280,28 +280,53 @@ const AreaTable = ({
                       right: "8px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      boxShadow:
-                        "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                      borderRadius: "6px",
+                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
                       zIndex: 10,
-                      minWidth: "140px",
+                      minWidth: "90px",
                     }}
                   >
-                    
                     <button
-                      onClick={() => handleActionSelect("edit", area)}
+                      onClick={() => handleActionSelect("view", area)}
                       style={{
                         width: "100%",
-                        padding: "12px 16px",
+                        padding: "6px 10px",
                         border: "none",
                         backgroundColor: "transparent",
                         textAlign: "left",
-                        fontSize: "14px",
+                        fontSize: "12px",
                         color: "#374151",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
+                        gap: "6px",
+                        borderRadius: "6px 6px 0 0",
+                      }}
+                      onMouseEnter={(e: any) =>
+                        (e.target.style.backgroundColor = "#f9fafb")
+                      }
+                      onMouseLeave={(e: any) =>
+                        (e.target.style.backgroundColor = "transparent")
+                      }
+                    >
+                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
+                      Xem
+                    </button>
+                    <button
+                      onClick={() => handleActionSelect("edit", area)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        border: "none",
+                        backgroundColor: "transparent",
+                        textAlign: "left",
+                        fontSize: "12px",
+                        color: "#374151",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        borderRadius: "0 0 6px 6px",
                         borderTop: "1px solid #f3f4f6",
                       }}
                       onMouseEnter={(e: any) =>
@@ -312,7 +337,7 @@ const AreaTable = ({
                       }
                     >
                       <HiOutlinePencil
-                        style={{ width: "16px", height: "16px" }}
+                        style={{ width: "14px", height: "14px" }}
                       />
                       Sửa
                     </button>

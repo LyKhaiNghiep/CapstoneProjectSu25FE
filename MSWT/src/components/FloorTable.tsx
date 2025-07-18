@@ -4,12 +4,14 @@ import {
   HiOutlineDotsVertical,
   HiOutlineEye,
   HiOutlineTrash,
+  HiOutlinePlus,
 } from "react-icons/hi";
+import { useAreas } from "../hooks/useArea";
 
 interface FloorTableProps {
   floors: Floor[];
   onActionClick: (params: {
-    action: "view" | "delete";
+    action: "view" | "delete" | "assign";
     floor: Floor;
   }) => void;
 }
@@ -19,6 +21,12 @@ const FloorTable: React.FC<FloorTableProps> = ({
   onActionClick,
 }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const { areas } = useAreas();
+
+  // Function to get areas for a specific floor
+  const getAreasForFloor = (floorId: string) => {
+    return areas.filter(area => area.floorId === floorId);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: any) => {
@@ -66,13 +74,14 @@ const FloorTable: React.FC<FloorTableProps> = ({
   };
 
   const handleActionSelect = (
-    action: "view" | "delete",
+    action: "view" | "delete" | "assign",
     floor: Floor
   ) => {
     console.log("🔥 FloorTable - Action selected:", action, floor);
     onActionClick({ action, floor });
     setOpenDropdown(null);
   };
+
 
   return (
     <div
@@ -93,9 +102,9 @@ const FloorTable: React.FC<FloorTableProps> = ({
           <tr style={{ backgroundColor: "#FEF6F4" }}>
             <th
               style={{
-                padding: "16px 24px",
+                padding: "12px 16px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
                 position: "relative",
@@ -105,9 +114,20 @@ const FloorTable: React.FC<FloorTableProps> = ({
             </th>
             <th
               style={{
-                padding: "16px 24px",
+                padding: "12px 16px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Khu vực
+            </th>
+            <th
+              style={{
+                padding: "12px 16px",
+                textAlign: "left",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -116,7 +136,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
             </th>
             <th
               style={{
-                padding: "18px 24px",
+                padding: "12px 16px",
                 textAlign: "center",
                 fontSize: "12px",
                 fontWeight: "600",
@@ -145,8 +165,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
               {/* Floor Name Column */}
               <td
                 style={{
-                  padding: "16px 24px",
-                  fontSize: "14px",
+                  padding: "12px 16px",
+                  fontSize: "13px",
                   fontWeight: "500",
                   color: "#111827",
                 }}
@@ -154,13 +174,66 @@ const FloorTable: React.FC<FloorTableProps> = ({
                 {floor.floorNumber}
               </td>
 
+              {/* Areas Column */}
+              <td style={{ padding: "12px 16px" }}>
+                {(() => {
+                  const floorAreas = getAreasForFloor(floor.floorId);
+                  if (floorAreas.length === 0) {
+                    return (
+                      <span style={{
+                        color: "#6b7280",
+                        fontSize: "12px",
+                        fontStyle: "italic"
+                      }}>
+                        Chưa có khu vực
+                      </span>
+                    );
+                  }
+                  
+                  return (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {floorAreas.slice(0, 3).map((area, areaIndex) => (
+                        <span
+                          key={area.areaId}
+                          style={{
+                            display: "inline-flex",
+                            padding: "2px 8px",
+                            fontSize: "11px",
+                            fontWeight: "500",
+                            borderRadius: "4px",
+                            backgroundColor: "#dbeafe",
+                            color: "#1e40af",
+                            border: "1px solid #bfdbfe",
+                          }}
+                          title={`${area.areaName} (Phòng ${area.roomBegin} - ${area.roomEnd})`}
+                        >
+                          {area.areaName}
+                        </span>
+                      ))}
+                      {floorAreas.length > 3 && (
+                        <span 
+                          style={{
+                            fontSize: "11px",
+                            color: "#6b7280",
+                            fontWeight: "500"
+                          }}
+                          title={`Tổng cộng ${floorAreas.length} khu vực: ${floorAreas.map(a => a.areaName).join(', ')}`}
+                        >
+                          +{floorAreas.length - 3} khác
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
+              </td>
+
               {/* Status Column */}
-              <td style={{ padding: "16px 24px" }}>
+              <td style={{ padding: "12px 16px" }}>
                 <span
                   style={{
                     display: "inline-flex",
-                    padding: "4px 12px",
-                    fontSize: "12px",
+                    padding: "3px 10px",
+                    fontSize: "11px",
                     fontWeight: "600",
                     borderRadius: "9999px",
                     ...getStatusColor(floor.status),
@@ -173,7 +246,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
               {/* Action Column */}
               <td
                 style={{
-                  padding: "16px 24px",
+                  padding: "12px 16px",
                   textAlign: "center",
                   position: "relative",
                   overflow: "visible",
@@ -220,48 +293,64 @@ const FloorTable: React.FC<FloorTableProps> = ({
                     data-dropdown-container="true"
                     style={{
                       position: "absolute",
-                      top: "100%",
-                      right: "0px",
+                      top: "20%",
+                      right: "110px",
                       backgroundColor: "white",
                       border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                      borderRadius: "6px",
+                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
                       zIndex: 1000,
-                      minWidth: "160px",
+                      minWidth: "10px",
                       marginTop: "4px",
                     }}
                   >
-                   
-
                     <button
-                      onClick={() => handleActionSelect("delete", floor)}
+                      onClick={() => handleActionSelect("view", floor)}
                       style={{
                         width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        backgroundColor: "transparent",
+                        padding: "6px 10px",
                         textAlign: "left",
-                        fontSize: "14px",
-                        color: "#dc2626",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        color: "#374151",
+                        background: "transparent",
+                        border: "none",
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
-                        borderRadius: "0 0 8px 8px",
-                        borderTop: "1px solid #f3f4f6",
+                        gap: "6px",
                       }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#fef2f2")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
+                      onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#f3f4f6")}
+                      onMouseLeave={(e: any) => (e.target.style.backgroundColor = "transparent")}
                     >
-                      <HiOutlineTrash
-                        style={{ width: "16px", height: "16px" }}
-                      />
-                      Xóa
+                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
+                      Xem chi tiết
                     </button>
+                   
+                    <button
+                      onClick={() => handleActionSelect("assign", floor)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        textAlign: "left",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        color: "#374151",
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                      onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#f3f4f6")}
+                      onMouseLeave={(e: any) => (e.target.style.backgroundColor = "transparent")}
+                                         >
+                       <HiOutlinePlus style={{ width: "14px", height: "14px" }} />
+                       Gán khu vực
+                     </button>
+
+                    
                   </div>
                 )}
               </td>

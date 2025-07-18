@@ -1,6 +1,7 @@
 export interface ScheduleDetails {
   scheduleDetailId: string;
   scheduleId: string;
+  assignmentId: string; // Add assignmentId directly to ScheduleDetails
   description: string;
   date: string;
   status: string;
@@ -36,16 +37,18 @@ export interface ScheduleDetails {
   supervisorName?: string;
   backupForUserName?: string;
   taskType?: string;
+  assignmentName?: string; // Add assignmentName for display
 }
 
 export interface ICreateScheduleDetailsRequest {
   scheduleId: string;
+  assignmentId: string; // Add assignmentId to create request
   description: string;
   date: string;
   status: string;
-  supervisorId: string;
-  rating: string;
-  workerId: string;
+  supervisorId?: string; // Make optional for direct creation
+  rating?: string; // Make optional for direct creation
+  workerId?: string; // Make optional for direct creation
   evidenceImage?: string;
   startTime?: string;
   endTime?: string;
@@ -54,6 +57,7 @@ export interface ICreateScheduleDetailsRequest {
 }
 
 export interface IUpdateScheduleDetailsRequest {
+  assignmentId?: string; // Add assignmentId to update request
   description?: string;
   date?: string;
   status?: string;
